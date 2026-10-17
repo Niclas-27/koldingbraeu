@@ -18,9 +18,13 @@ Die Domain ist in den Repo-Einstellungen unter *Pages → Custom domain* eingetr
 
 | Datei / Ordner | Inhalt |
 |----------------|--------|
-| `index.html`   | Seitengerüst |
-| `app.js`       | Programmlogik: Anmeldung, Liste, Details, Bearbeiten, Verwaltung |
-| `braubuch.css` | Gestaltung (auch für Impressum und Datenschutz) |
+| `index.html`, `sude.js` | Seite „Sude“: das Braubuch mit Liste, Details und Editor |
+| `verkostung.html`, `verkostung.js` | Seite „Verkostungen“: anlegen, QR-Einladung, Bewertungsbogen für Gäste, Live-Zwischenstand |
+| `liga.html`, `liga.js` | Seite „Liga“: öffentliche Rangliste aller verkosteten Biere, filterbar nach Bierstil |
+| `rezepte.html` | Platzhalter für das Rezeptbuch |
+| `kern.js`      | Gemeinsamer Kern aller Seiten: Anmeldung, Konto, Verwaltung, Menü |
+| `qr.js`        | Kleiner eigener QR-Code-Erzeuger (ohne fremde Dienste) |
+| `braubuch.css` | Gestaltung aller Seiten |
 | `impressum.html`, `datenschutz.html` | Rechtstexte |
 | `fonts/`       | Schriften, lokal ausgeliefert (keine Verbindung zu Google) |
 | `vendor/`      | Supabase-Bibliothek, lokal ausgeliefert |
@@ -37,6 +41,14 @@ Die Sude liegen in Supabase (Projekt `koldingbraeu`, Frankfurt). Die Rechte setz
 - **Admin** darf zusätzlich löschen, Braumeister einladen und Rollen vergeben.
 
 Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
+
+## Verkostungen und Liga
+
+- Ein Braumeister legt eine Verkostung an, fügt Biere hinzu und zeigt den QR-Code. Gäste scannen ihn, geben nur ihren Namen ein und bewerten am Handy (Gesamtnote 0–10 Pflicht, alles andere freiwillig).
+- Ablauf: *In Vorbereitung* (Gäste können mitgebrachte Biere vorschlagen) → *Läuft* (bewerten, Live-Zwischenstand) → *Abgeschlossen* (Ergebnis aufgedeckt, zählt für die Liga).
+- Gäste haben keinen Tabellenzugriff; sie arbeiten nur über die Datenbankfunktionen `vk_*` mit dem Code der Verkostung und einem persönlichen Schlüssel, der auf ihrem Handy liegt.
+- Öffentlich sind nur abgeschlossene Ergebnisse und die Liga – ohne Gästenamen und Kommentare. Braumeister können einzelne Bewertungen ausblenden.
+- Datenbank: `supabase/verkostung.sql`.
 
 ## Arbeitsweise
 

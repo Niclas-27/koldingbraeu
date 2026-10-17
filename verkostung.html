@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Verkostungen · Koldingbräu</title>
+<meta name="description" content="Verkostungen von Koldingbräu – Biere nebeneinander probieren, bewerten und das Ranking aufdecken.">
+<meta name="theme-color" content="#1f1a14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="braubuch.css">
+<script src="vendor/supabase.js" defer></script>
+<script src="kern.js" defer></script>
+<script src="qr.js" defer></script>
+<script src="verkostung.js" defer></script>
+</head>
+<body data-seite="verkostung">
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Kolding<span>bräu</span></h1>
+      <p id="subtitle">Verkostungen</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="adminBtn" hidden>Verwaltung</button>
+      <button class="btn" id="loginBtn" hidden>Anmelden</button>
+      <button class="btn ghost who" id="accountBtn" hidden title="Mein Konto"></button>
+    </div>
+  </header>
+  <nav class="menu" aria-label="Bereiche">
+    <a href="./" data-seite="sude">Sude</a>
+    <a href="verkostung.html" data-seite="verkostung">Verkostungen</a>
+    <a href="liga.html" data-seite="liga">Liga</a>
+    <a href="rezepte.html" data-seite="rezepte">Rezepte</a>
+  </nav>
+
+  <div id="notice" class="notice" hidden></div>
+  <main id="vk" class="vk"><p class="empty">Wird geladen …</p></main>
+
+  <footer class="foot">
+    <span>Koldingbräu · Hobbybrauerei in Hamburg</span>
+    <nav><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></nav>
+  </footer>
+</div>
+
+<div id="scrim" class="scrim" hidden></div>
+<aside id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-head"><h2 id="sheetTitle"></h2><button class="btn ghost" id="closeBtn" aria-label="Schließen">✕</button></div>
+  <div class="sheet-body" id="sheetBody"></div>
+  <div class="sheet-foot" id="sheetFoot"></div>
+</aside>
+<div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

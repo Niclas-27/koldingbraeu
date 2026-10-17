@@ -29,7 +29,7 @@ jobs:
       - name: Seite zusammenstellen
         run: |
           mkdir -p _site
-          cp index.html app.js braubuch.css impressum.html datenschutz.html .nojekyll _site/
+          cp *.html *.js braubuch.css .nojekyll _site/
           cp -r fonts vendor _site/
           [ -f CNAME ] && cp CNAME _site/ || true
       - uses: actions/upload-pages-artifact@v3
