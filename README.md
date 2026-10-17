@@ -1,37 +1,49 @@
 # Koldingbräu – Das Braubuch
 
-Alle Sude von Koldingbräu seit 2018: Schüttung, Maischplan, Hopfengaben, Hefe, Messwerte, Abfüllung und Bewertung – durchsuchbar, filterbar nach Stil und mit Notenverlauf.
+Unsere Sude seit 2018: Schüttung, Maischplan, Hopfengaben, Hefe, Messwerte und Abfüllung. Gäste sehen die freigegebenen Sude, Braumeister melden sich an und pflegen alles im Browser.
 
-**Online:** <https://niclas-27.github.io/koldingbraeu/>
+**Online:** <https://niclas-27.github.io/koldingbraeu/> (später <https://kolding.de>)
 
 ## Aufbau
 
 | Datei / Ordner | Inhalt |
 |----------------|--------|
-| `index.html`   | Die komplette Seite (HTML, CSS und JavaScript in einer Datei) |
-| `sude.json`    | Alle Sude als Datensätze, die Seite liest sie beim Laden ein |
+| `index.html`   | Seitengerüst |
+| `app.js`       | Programmlogik: Anmeldung, Liste, Details, Bearbeiten, Verwaltung |
+| `braubuch.css` | Gestaltung (auch für Impressum und Datenschutz) |
+| `impressum.html`, `datenschutz.html` | Rechtstexte |
+| `fonts/`       | Schriften, lokal ausgeliefert (keine Verbindung zu Google) |
+| `vendor/`      | Supabase-Bibliothek, lokal ausgeliefert |
+| `supabase/`    | Dokumentation des Backends: Datenbankschema, Rechte, Edge Function `einladen` |
 | `.nojekyll`    | Sorgt dafür, dass GitHub Pages die Dateien unverändert ausliefert |
 | `archiv/`      | Nur lokal, nicht auf GitHub: alte Offline-Fassung und frühere Exporte |
 
+## Daten und Rechte
+
+Die Sude liegen in Supabase (Projekt `koldingbraeu`, Frankfurt). Die Rechte setzt die Datenbank durch:
+
+- **Gäste** sehen freigegebene Sude ohne Notizen und Bewertung.
+- **Braumeister** sehen alle Sude, legen an und bearbeiten. Jeder Sud hat einen Schalter „Öffentlich zeigen“.
+- **Admin** darf zusätzlich löschen, Braumeister einladen und Rollen vergeben.
+
+Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
+
 ## Arbeitsweise
 
-Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repos.
-Änderungen werden dort gemacht, dann zu GitHub hochgeladen – nach etwa einer Minute ist die Seite live.
-
-## Fassungen des Braubuchs
-
-- **GitHub Pages** (diese Seite): Lesefassung, für alle sichtbar.
-- **Claude** (Artifact): Dort werden Sude derzeit angelegt und bearbeitet. Neue Einträge erscheinen online erst, wenn `sude.json` neu exportiert wird.
-- **Offline-Fassung** (`archiv/offline-version.html`): läuft ohne Internet per Doppelklick und speichert Änderungen nur im Browser dieses Computers. Mit „Sicherung speichern/laden“ lassen sie sich sichern. Wird nicht mehr weiterentwickelt.
-
-Geplant: Umzug der Daten nach Supabase mit Login, Nutzern und Rollen – dann gibt es nur noch eine Datenquelle.
+Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repos. Änderungen werden dort gemacht und zu GitHub hochgeladen – nach etwa einer Minute ist die Seite live.
 
 ## Lokal ansehen
 
-Die Seite lädt `sude.json` per `fetch`, darum im Ordner einen kleinen Server starten:
+Im Ordner einen kleinen Server starten und <http://localhost:8000> öffnen:
 
 ```bash
 python3 -m http.server
 ```
 
-und dann <http://localhost:8000> öffnen.
+Die Seite spricht dabei mit der echten Datenbank.
+
+## Bibliothek und Schriften
+
+`vendor/` und die Schriftdateien in `fonts/` stehen nicht im Repo. Beim Veröffentlichen holt sie GitHub Actions
+(`.github/workflows/pages.yml` → `scripts/assets.sh`) in fest eingestellten Versionen. Zum lokalen Testen einmal
+`./scripts/assets.sh` ausführen (braucht Node.js und Internet).

@@ -1,159 +1,18 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Koldingbräu Braubuch</title>
-<meta name="description" content="Das Braubuch von Koldingbräu – alle Sude mit Rezept, Messwerten und Bewertung.">
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Koldingbräu Braubuch</title>
+<meta name="description" content="Das Braubuch von Koldingbräu – unsere Sude mit Schüttung, Hopfen, Hefe und Messwerten.">
 <meta name="theme-color" content="#1f1a14">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BA%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
-</head><body>
-<style>
-/* Layout: Braubuch — Kopf mit Kennzahlen und Notenverlauf, darunter die Sude nach Jahrgang, Details und Editor in einem Seitenblatt */
-:root{
-  --bg:#f3f4ef;          /* Kellerputz, leicht hopfengrün */
-  --surface:#fbfbf8;
-  --ink:#1f1a14;         /* Röstmalz */
-  --muted:#6c675c;
-  --line:#dcdcd2;
-  --amber:#b8690f;       /* Würze */
-  --amber-soft:#f4e3c7;
-  --hop:#4e7a34;         /* Dolde */
-  --hop-soft:#e1ecd5;
-  --warn:#a3402a;
-  --warn-soft:#f5ddd5;
-  --font-display:"Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
-  --font-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-data:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --radius:10px;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#16120e; --surface:#201a14; --ink:#efe8dc; --muted:#a59c8c; --line:#382f25;
-    --amber:#e59a3a; --amber-soft:#3a2a15; --hop:#94c26f; --hop-soft:#22301a;
-    --warn:#e2826b; --warn-soft:#3a1d16; color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#16120e; --surface:#201a14; --ink:#efe8dc; --muted:#a59c8c; --line:#382f25;
-  --amber:#e59a3a; --amber-soft:#3a2a15; --hop:#94c26f; --hop-soft:#22301a;
-  --warn:#e2826b; --warn-soft:#3a1d16; color-scheme:dark;
-}
-*{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;
-  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));}
-.wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
-h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0}
-button,input,select,textarea{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
-
-/* Kopf */
-header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
-.brand h1{font-size:clamp(2.4rem,7vw,4rem);font-weight:800;font-stretch:78%;letter-spacing:-.01em;line-height:.95}
-.brand h1 span{color:var(--amber)}
-.brand p{margin:6px 0 0;color:var(--muted);font-size:.95rem}
-.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;cursor:pointer;font-weight:600;font-size:.9rem;white-space:nowrap}
-.btn:hover{border-color:var(--muted)}
-.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.btn.primary:hover{opacity:.9}
-.btn.danger{color:var(--warn);border-color:var(--warn)}
-.btn.ghost{border-color:transparent;background:transparent}
-.btn[disabled]{opacity:.5;cursor:not-allowed}
-.top-actions{display:flex;gap:8px;flex-wrap:wrap}
-
-/* Kennzahlen */
-.overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px;align-items:stretch}
-@media (max-width:760px){.overview{grid-template-columns:1fr}}
-.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px;padding:20px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
-.stat b{display:block;font-family:var(--font-display);font-size:2.2rem;font-weight:700;font-stretch:85%;line-height:1}
-.stat span{display:block;margin-top:4px;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.07em}
-.chart{border-top:2px solid var(--ink);border-bottom:1px solid var(--line);padding:16px 0 8px;min-width:0}
-.chart-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-.chart-head h2{font-size:1rem;font-weight:700}
-.chart-head small{color:var(--muted);font-size:.78rem}
-.chart svg{width:100%;height:auto;display:block;margin-top:8px}
-.chart text{font-family:var(--font-data);font-size:11px;fill:var(--muted)}
-
-/* Filter */
-.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.search{flex:1 1 240px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 12px;font-size:.84rem;cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber);color:var(--ink)}
-select.sort{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px}
-
-/* Liste */
-.year{display:flex;flex-direction:column;gap:0}
-.year-head{display:flex;align-items:baseline;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-.year-head h2{font-size:1.6rem;font-weight:800;font-stretch:80%}
-.year-head span{color:var(--muted);font-size:.85rem}
-.brew{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left;width:100%}
-.brew:hover{background:var(--surface)}
-.brew .date{font-family:var(--font-data);font-size:.8rem;color:var(--muted);line-height:1.25}
-.brew .date b{display:block;font-size:1.05rem;color:var(--ink);font-weight:500}
-.brew .main{min-width:0;display:flex;flex-direction:column;gap:3px}
-.brew .title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.brew .title h3{font-size:1.15rem;font-weight:700}
-.brew .nr{font-family:var(--font-data);font-size:.75rem;color:var(--muted)}
-.brew .meta{color:var(--muted);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.brew .facts{display:flex;align-items:center;gap:14px}
-.brew .facts .num{font-size:.82rem;color:var(--muted);text-align:right;line-height:1.3}
-@media (max-width:560px){.brew{grid-template-columns:48px minmax(0,1fr) auto;gap:10px}.brew .facts .num{display:none}}
-.cap{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
-.grade{min-width:42px;text-align:center;font-family:var(--font-display);font-weight:800;font-size:1.1rem;padding:4px 8px;border-radius:8px;background:var(--line);color:var(--ink)}
-.grade.g1{background:var(--hop-soft);color:var(--hop)}
-.grade.g2{background:var(--amber-soft);color:var(--amber)}
-.grade.g3{background:var(--warn-soft);color:var(--warn)}
-.empty{padding:40px 0;color:var(--muted);text-align:center}
-.notice{padding:12px 16px;border-radius:var(--radius);background:var(--amber-soft);font-size:.9rem}
-
-/* Seitenblatt */
-.scrim{position:fixed;inset:0;background:rgba(10,8,5,.45);z-index:20}
-.sheet{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--bg);z-index:21;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.2);
-  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
-.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
-.sheet-head h2{font-size:1.5rem;font-weight:800;font-stretch:82%}
-.sheet-body{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:22px;flex:1}
-.sheet-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line)}
-.sheet-foot .spacer{flex:1}
-@media (prefers-reduced-motion:no-preference){.sheet{animation:slide .22s ease-out}}
-@keyframes slide{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
-
-.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 18px}
-.kv div{min-width:0}
-.kv dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-.kv dd{margin:2px 0 0;font-family:var(--font-data);font-size:.92rem;overflow-wrap:anywhere}
-.sec h3{font-size:.8rem;font-family:var(--font-body);font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin-bottom:10px}
-.grist{display:flex;flex-direction:column;gap:6px}
-.grist-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;font-size:.92rem}
-.grist-bar{grid-column:1/-1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
-.grist-bar i{display:block;height:100%;background:var(--amber)}
-.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
-.steps li{display:flex;gap:10px;font-size:.92rem}
-.steps li b{font-family:var(--font-data);font-weight:500;color:var(--muted);min-width:20px}
-.hops{display:flex;flex-direction:column;gap:6px}
-.hops div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;font-size:.92rem;padding-bottom:6px;border-bottom:1px dashed var(--line)}
-.hops span{color:var(--muted);font-family:var(--font-data);font-size:.82rem}
-.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;white-space:pre-wrap}
-.tag{font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
-
-/* Formular */
-form{display:flex;flex-direction:column;gap:22px}
-fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
-legend{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin-bottom:6px;padding:0}
-.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
-@media (max-width:480px){.grid2{grid-template-columns:1fr}}
-label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);min-width:0}
-label.f input,label.f select,label.f textarea,.rowlist input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:.95rem;color:var(--ink);width:100%;min-width:0}
-textarea{resize:vertical;min-height:70px}
-.rowlist{display:flex;flex-direction:column;gap:6px}
-.rowlist .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.6fr) 36px;gap:6px}
-.rowlist .r.one{grid-template-columns:minmax(0,1fr) 36px}
-.x{border:1px solid var(--line);background:transparent;border-radius:8px;cursor:pointer;color:var(--muted)}
-.add{align-self:flex-start;border:1px dashed var(--line);background:transparent;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.85rem;color:var(--muted)}
-.err{color:var(--warn);font-size:.85rem}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:30;font-size:.9rem}
-</style>
-
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="braubuch.css">
+<script src="vendor/supabase.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -162,25 +21,28 @@ textarea{resize:vertical;min-height:70px}
     </div>
     <div class="top-actions">
       <button class="btn" id="exportBtn" hidden>Als CSV sichern</button>
-      <button class="btn primary" id="newBtn">+ Neuer Sud</button>
+      <button class="btn" id="adminBtn" hidden>Verwaltung</button>
+      <button class="btn primary" id="newBtn" hidden>+ Neuer Sud</button>
+      <button class="btn" id="loginBtn" hidden>Anmelden</button>
+      <button class="btn ghost who" id="accountBtn" hidden title="Mein Konto"></button>
     </div>
   </header>
 
-  <section class="overview" aria-label="Überblick">
+  <section class="overview" id="overview" aria-label="Überblick">
     <div class="stats" id="stats">
       <div class="stat"><b>–</b><span>Sude</span></div>
       <div class="stat"><b>–</b><span>kg Malz verbraut</span></div>
-      <div class="stat"><b>–</b><span>Flaschen abgefüllt</span></div>
-      <div class="stat"><b>–</b><span>Ø Note</span></div>
+      <div class="stat"><b>–</b><span>Flaschen notiert</span></div>
+      <div class="stat"><b>–</b><span>Jahrgänge</span></div>
     </div>
-    <div class="chart">
+    <div class="chart" id="chartBox" hidden>
       <div class="chart-head"><h2>Notenverlauf</h2><small>1 = sehr gut</small></div>
       <div id="chart"></div>
     </div>
   </section>
 
   <section class="controls" aria-label="Filter">
-    <input class="search" id="q" type="search" placeholder="Suchen: Malz, Hopfen, Hefe, Notiz …" aria-label="Sude durchsuchen">
+    <input class="search" id="q" type="search" placeholder="Suchen: Malz, Hopfen, Hefe …" aria-label="Sude durchsuchen">
     <select class="sort" id="sort" aria-label="Sortierung">
       <option value="neu">Neueste zuerst</option>
       <option value="alt">Älteste zuerst</option>
@@ -191,6 +53,11 @@ textarea{resize:vertical;min-height:70px}
 
   <div id="notice" class="notice" hidden></div>
   <main id="list"><p class="empty">Die Sude werden geladen …</p></main>
+
+  <footer class="foot">
+    <span>Koldingbräu · Hobbybrauerei in Hamburg</span>
+    <nav><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></nav>
+  </footer>
 </div>
 
 <div id="scrim" class="scrim" hidden></div>
@@ -199,257 +66,6 @@ textarea{resize:vertical;min-height:70px}
   <div class="sheet-body" id="sheetBody"></div>
   <div class="sheet-foot" id="sheetFoot"></div>
 </aside>
-<div id="toast" class="toast" hidden></div>
-
-<script>
-(function(){
-const $=s=>document.querySelector(s);
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const CAPS={rot:"#c23b2b",blau:"#2f5fa8",orange:"#e5862b",silber:"#b9bec4",gruen:"#3f8a3a",gold:"#c9a227",schwarz:"#1c1c1c",weiss:"#f4f4f0",gelb:"#e8c82e"};
-const CAP_LABEL={rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"Grün",gold:"Gold",schwarz:"Schwarz",weiss:"Weiß",gelb:"Gelb"};
-const state={brews:[],q:"",style:"",sort:"neu",db:null,canWrite:true,downloads:null};
-
-/* --- Helfer --- */
-function gradeVal(g){const m=String(g||"").match(/(\d)\s*([+-])?/);if(!m)return null;let v=+m[1];if(m[2]==="+")v-=.3;if(m[2]==="-")v+=.3;return v;}
-function gradeCls(v){if(v==null)return"";return v<=1.7?"g1":v<=2.7?"g2":"g3";}
-function fmtDate(iso,guess){if(!iso)return"–";const [y,m,d]=iso.split("-");return `${+d}.${+m}.`;}
-function ageText(iso){if(!iso)return"";const ms=Date.now()-new Date(iso+"T12:00:00").getTime();const days=Math.floor(ms/864e5);
-  if(days<0)return"geplant";if(days<1)return"heute";if(days<14)return`vor ${days} Tag${days===1?"":"en"}`;if(days<60)return`vor ${Math.round(days/7)} Wochen`;
-  const months=Math.round(days/30.44);if(months<24)return`vor ${months} Monaten`;return`vor ${(days/365.25).toFixed(1).replace(".",",")} Jahren`;}
-function title(b){return b.stil||b.name||`Sud ${b.nr}`;}
-function malzSum(b){return(b.malz||[]).reduce((a,m)=>a+(+m.gramm||0),0);}
-function fmtKg(g){return(g/1000).toLocaleString("de-DE",{maximumFractionDigits:2})+" kg";}
-function haystack(b){return JSON.stringify(b).toLowerCase();}
-function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400);}
-
-/* --- Übersicht --- */
-function renderStats(){
-  const b=state.brews;const years=[...new Set(b.map(x=>x.datum?.slice(0,4)).filter(Boolean))].sort();
-  const malz=b.reduce((a,x)=>a+malzSum(x),0);
-  const fl=b.reduce((a,x)=>a+(+x.flaschen||0),0);
-  const gv=b.map(x=>gradeVal(x.bewertung)).filter(v=>v!=null);
-  const avg=gv.length?(gv.reduce((a,v)=>a+v,0)/gv.length):null;
-  $("#subtitle").textContent=years.length?`Das Braubuch · ${years[0]}–${years[years.length-1]}`:"Das Braubuch";
-  $("#stats").innerHTML=`
-    <div class="stat"><b class="num">${b.length}</b><span>Sude</span></div>
-    <div class="stat"><b class="num">${Math.round(malz/1000)}</b><span>kg Malz verbraut</span></div>
-    <div class="stat"><b class="num">${fl.toLocaleString("de-DE")}</b><span>Flaschen notiert</span></div>
-    <div class="stat"><b class="num">${avg==null?"–":avg.toFixed(1).replace(".",",")}</b><span>Ø Note</span></div>`;
-  renderChart();
-}
-function renderChart(){
-  const pts=state.brews.filter(b=>b.datum&&gradeVal(b.bewertung)!=null).map(b=>({b,t:new Date(b.datum+"T12:00:00").getTime(),v:gradeVal(b.bewertung)})).sort((a,c)=>a.t-c.t);
-  if(pts.length<2){$("#chart").innerHTML=`<p class="empty">Ab zwei bewerteten Suden erscheint hier der Verlauf.</p>`;return;}
-  const W=600,H=170,L=26,R=12,T=12,B=26;const t0=pts[0].t,t1=pts[pts.length-1].t;
-  const x=t=>L+(t-t0)/(t1-t0||1)*(W-L-R);const y=v=>T+(Math.min(Math.max(v,0.7),5.3)-0.7)/(5.3-0.7)*(H-T-B);
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Noten aller Sude im Zeitverlauf">`;
-  [1,2,3,4,5].forEach(g=>{s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(g)+4}" text-anchor="end">${g}</text>`;});
-  const y0=new Date(t0).getFullYear(),y1=new Date(t1).getFullYear();
-  for(let yr=y0+1;yr<=y1;yr++){const tx=x(new Date(yr,0,1).getTime());s+=`<text x="${tx}" y="${H-6}" text-anchor="middle">${yr}</text><line x1="${tx}" x2="${tx}" y1="${T}" y2="${H-B}" stroke="var(--line)" stroke-dasharray="2 4"/>`;}
-  s+=`<polyline fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-opacity=".5" points="${pts.map(p=>x(p.t)+","+y(p.v)).join(" ")}"/>`;
-  pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${x(p.t)}" cy="${y(p.v)}" r="${last?6:4.5}" fill="${p.v<=1.7?"var(--hop)":p.v<=2.7?"var(--amber)":"var(--warn)"}" stroke="var(--bg)" stroke-width="1.5" style="cursor:pointer" data-id="${esc(p.b.id)}"><title>${esc(title(p.b))} · ${esc(fmtDate(p.b.datum))}${esc(p.b.datum.slice(0,4))} · Note ${esc(p.b.bewertung)}</title></circle>`;});
-  s+=`</svg>`;$("#chart").innerHTML=s;
-  $("#chart").querySelectorAll("circle[data-id]").forEach(c=>c.addEventListener("click",()=>openDetail(c.dataset.id)));
-}
-function renderChips(){
-  const styles=[...new Set(state.brews.map(b=>b.stil).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"de"));
-  $("#chips").innerHTML=[`<button class="chip" data-s="" aria-pressed="${state.style===""}">Alle</button>`].concat(styles.map(s=>`<button class="chip" data-s="${esc(s)}" aria-pressed="${state.style===s}">${esc(s)}</button>`)).join("");
-  $("#chips").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{state.style=c.dataset.s;renderChips();renderList();});
-}
-function renderList(){
-  let b=state.brews.slice();
-  if(state.style)b=b.filter(x=>x.stil===state.style);
-  const q=state.q.trim().toLowerCase();if(q)b=b.filter(x=>haystack(x).includes(q));
-  if(state.sort==="note")b.sort((a,c)=>(gradeVal(a.bewertung)??9)-(gradeVal(c.bewertung)??9)||(c.datum||"").localeCompare(a.datum||""));
-  else b.sort((a,c)=>state.sort==="alt"?(a.datum||"").localeCompare(c.datum||""):(c.datum||"").localeCompare(a.datum||""));
-  if(!state.brews.length){$("#list").innerHTML=`<p class="empty">Noch keine Sude eingetragen. Leg mit „Neuer Sud“ deinen ersten Braugang an.</p>`;return;}
-  if(!b.length){$("#list").innerHTML=`<p class="empty">Kein Sud passt zu dieser Suche.</p>`;return;}
-  const groups=[];if(state.sort==="note"){groups.push({k:"Nach Note",items:b});}
-  else b.forEach(x=>{const k=x.datum?x.datum.slice(0,4):"Ohne Datum";let g=groups[groups.length-1];if(!g||g.k!==k){g={k,items:[]};groups.push(g);}g.items.push(x);});
-  $("#list").innerHTML=groups.map(g=>`<section class="year"><div class="year-head"><h2>${esc(g.k)}</h2><span>${g.items.length} Sud${g.items.length===1?"":"e"}</span></div>${g.items.map(rowHTML).join("")}</section>`).join("");
-  $("#list").querySelectorAll(".brew").forEach(r=>r.onclick=()=>openDetail(r.dataset.id));
-}
-function rowHTML(b){
-  const gv=gradeVal(b.bewertung);const malz=(b.malz||[]).map(m=>m.sorte).filter(Boolean).join(", ");
-  const cap=b.etikett?`<i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}" title="Kronkorken ${esc(CAP_LABEL[b.etikett]||b.etikett)}"></i>`:"";
-  const sub=[malz,b.hopfensorten,b.hefe].filter(Boolean).join(" · ");
-  return `<button class="brew" data-id="${esc(b.id)}">
-    <div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
-    <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span></div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
-    <div class="facts"><div class="num">${b.stammwuerze?esc(b.stammwuerze)+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div><span class="grade ${gradeCls(gv)}" title="Bewertung">${esc(b.bewertung||"–")}</span></div>
-  </button>`;
-}
-function renderAll(){renderStats();renderChips();renderList();}
-
-/* --- Seitenblatt --- */
-let current=null;
-function openSheet(){$("#sheet").hidden=false;$("#scrim").hidden=false;document.body.style.overflow="hidden";}
-function closeSheet(){$("#sheet").hidden=true;$("#scrim").hidden=true;document.body.style.overflow="";current=null;}
-$("#closeBtn").onclick=closeSheet;$("#scrim").onclick=closeSheet;
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet();});
-
-function kv(pairs){const p=pairs.filter(([,v])=>v!=null&&v!=="");if(!p.length)return"";return`<dl class="kv">${p.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;}
-function sec(h,inner){return inner?`<section class="sec"><h3>${esc(h)}</h3>${inner}</section>`:"";}
-
-function openDetail(id){
-  const b=state.brews.find(x=>x.id===id);if(!b)return;current=b;
-  $("#sheetTitle").textContent=title(b);
-  const total=malzSum(b);
-  const grist=(b.malz||[]).length?`<div class="grist">${b.malz.map(m=>`<div class="grist-row"><span>${esc(m.sorte)}</span><span class="num">${m.gramm?esc((+m.gramm).toLocaleString("de-DE"))+" g":"–"}</span><div class="grist-bar"><i style="width:${total?Math.round((+m.gramm||0)/total*100):0}%"></i></div></div>`).join("")}<div class="grist-row" style="color:var(--muted)"><span>Schüttung gesamt</span><span class="num">${fmtKg(total)}</span></div></div>`:"";
-  const steps=(b.maischplan||[]).filter(Boolean).length?`<ol class="steps">${b.maischplan.filter(Boolean).map((s,i)=>`<li><b>${i+1}</b><span>${esc(s)}</span></li>`).join("")}</ol>`:"";
-  const hops=(b.hopfen||[]).length?`<div class="hops">${b.hopfen.map(h=>`<div><b style="font-weight:500">${esc(h.menge)}</b><span>${esc(h.zeit)}</span></div>`).join("")}</div>`:"";
-  const head=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <span class="grade ${gradeCls(gradeVal(b.bewertung))}">${esc(b.bewertung||"–")}</span>
-      <span class="num">${esc(fmtDate(b.datum))}${esc(b.datum?b.datum.slice(0,4):"")}</span>
-      <span class="tag">Nr. ${esc(b.nr)}</span>
-      ${b.etikett?`<span class="tag" style="display:inline-flex;gap:6px;align-items:center"><i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}"></i>${esc(CAP_LABEL[b.etikett]||b.etikett)}</span>`:""}
-      <span class="tag">${esc(ageText(b.datum))}</span>
-      ${b.datumGeschaetzt?`<span class="tag" title="In der Tabelle stand das Datum ohne Jahr">Jahr ergänzt</span>`:""}
-    </div>`;
-  $("#sheetBody").innerHTML=head
-    +sec("Schüttung",grist)
-    +sec("Wasser & Maische",kv([["Hauptguss",b.hauptguss],["Nachguss",b.nachguss],["Wasserbehandlung",b.wasser]])+(steps?`<div style="margin-top:12px">${steps}</div>`:""))
-    +sec("Läutern & Kochen",kv([["Läutern",b.laeutern],["Kochzeit",b.kochzeit],["Würzemenge",b.wuerze],["Stammwürze",b.stammwuerze]]))
-    +sec("Hopfen",(b.hopfensorten?`<p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")+hops)
-    +sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Messung vor Abfüllung",b.restextrakt]]))
-    +sec("Abfüllung",kv([["Ausschlagwürze",b.ausschlag],["Biermenge",b.biermenge!=null&&b.biermenge!==""?String(b.biermenge).replace(".",",")+" L":""],["Speise / Zucker",b.zucker],["Flaschen",b.flaschen],["Alkohol",b.alkohol],["Abgefüllt am",b.abgefuellt]]))
-    +sec("Notizen",b.notizen?`<div class="note">${esc(b.notizen)}</div>`:"");
-  const foot=$("#sheetFoot");
-  foot.innerHTML=state.canWrite?`<button class="btn danger" id="delBtn">Löschen</button><span class="spacer"></span><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn primary" id="editBtn">Bearbeiten</button>`:`<span class="spacer"></span><button class="btn" id="closeBtn2">Schließen</button>`;
-  if(state.canWrite){
-    $("#editBtn").onclick=()=>openEditor(b,false);
-    $("#dupBtn").onclick=()=>openEditor(b,true);
-    $("#delBtn").onclick=()=>confirmDelete(b);
-  }else $("#closeBtn2").onclick=closeSheet;
-  openSheet();$("#sheetBody").scrollTop=0;
-}
-function confirmDelete(b){
-  const foot=$("#sheetFoot");
-  foot.innerHTML=`<span style="align-self:center;font-size:.9rem">„${esc(title(b))}“ vom ${esc(fmtDate(b.datum))}${esc(b.datum?.slice(0,4)||"")} endgültig löschen?</span><span class="spacer"></span><button class="btn" id="noDel">Abbrechen</button><button class="btn danger" id="yesDel">Ja, löschen</button>`;
-  $("#noDel").onclick=()=>openDetail(b.id);
-  $("#yesDel").onclick=async()=>{ $("#yesDel").disabled=true;
-    try{await state.db.collection("sude").doc(b.id).delete();closeSheet();toast("Sud gelöscht");}
-    catch(e){handleWriteError(e);openDetail(b.id);} };
-}
-
-/* --- Editor --- */
-const FIELDS=[
- ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (Schulnote, z. B. 2+)"]]],
- ["Wasser",[["hauptguss","Hauptguss"],["nachguss","Nachguss"],["wasser","Wasserbehandlung (Milchsäure, pH)"]]],
- ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit"],["wuerze","Würzemenge"],["stammwuerze","Stammwürze"]]],
- ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge"],["messungen","Messungen"],["restextrakt","Messung vor Abfüllung"]]],
- ["Abfüllung",[["ausschlag","Ausschlagwürze"],["biermenge","Biermenge in Litern","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","number"],["alkohol","Alkohol"],["abgefuellt","Abgefüllt am"]]],
-];
-function field([k,label,type],v){
-  const id="f_"+k;
-  if(type==="cap")return`<label class="f" for="${id}">${label}<select id="${id}" name="${k}"><option value="">Keiner</option>${Object.keys(CAPS).map(c=>`<option value="${c}"${v===c?" selected":""}>${CAP_LABEL[c]}</option>`).join("")}</select></label>`;
-  return`<label class="f" for="${id}">${label}<input id="${id}" name="${k}" type="${type||"text"}"${type==="number"?' step="any" inputmode="decimal"':""} value="${esc(v??"")}"></label>`;
-}
-function rowsHTML(kind,items){
-  if(kind==="malz")return items.map((m,i)=>`<div class="r"><input id="malz_s_${i}" placeholder="Malzsorte" value="${esc(m.sorte)}" aria-label="Malzsorte"><input id="malz_g_${i}" type="number" step="any" inputmode="decimal" placeholder="Gramm" value="${esc(m.gramm??"")}" aria-label="Menge in Gramm"><button type="button" class="x" data-del="malz" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
-  if(kind==="hopfen")return items.map((h,i)=>`<div class="r"><input id="hop_m_${i}" placeholder="Menge & Sorte, z. B. 22 g Magnum" value="${esc(h.menge)}" aria-label="Hopfengabe"><input id="hop_z_${i}" placeholder="Zeitpunkt" value="${esc(h.zeit)}" aria-label="Zeitpunkt"><button type="button" class="x" data-del="hopfen" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
-  return items.map((s,i)=>`<div class="r one"><input id="rast_${i}" placeholder="z. B. 63 °C 30 Min." value="${esc(s)}" aria-label="Rast ${i+1}"><button type="button" class="x" data-del="maischplan" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
-}
-let draft=null,editingId=null;
-function openEditor(src,asCopy){
-  const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
-  const today=new Date();const iso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-  if(!src){draft={nr:nextNr,datum:iso,malz:[{sorte:"",gramm:""}],maischplan:[""],hopfen:[{menge:"",zeit:""}]};editingId=null;}
-  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;Object.assign(draft,{nr:nextNr,datum:iso,bewertung:"",messungen:"",restextrakt:"",ausschlag:"",biermenge:"",flaschen:"",alkohol:"",abgefuellt:"",notizen:"",datumGeschaetzt:false,quelle:""});editingId=null;}
-  else{draft=JSON.parse(JSON.stringify(src));editingId=src.id;}
-  ["malz","maischplan","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
-  $("#sheetTitle").textContent=editingId?`Sud ${draft.nr} bearbeiten`:asCopy?`Neuer Sud nach Vorlage`:"Neuer Sud";
-  drawForm();
-  $("#sheetFoot").innerHTML=`<span class="err" id="formErr"></span><span class="spacer"></span><button class="btn" id="cancelEdit">Abbrechen</button><button class="btn primary" id="saveBtn">${editingId?"Änderungen speichern":"Sud anlegen"}</button>`;
-  $("#cancelEdit").onclick=()=>editingId?openDetail(editingId):closeSheet();
-  $("#saveBtn").onclick=save;
-  openSheet();$("#sheetBody").scrollTop=0;
-}
-function drawForm(){
-  const d=draft;const sec=(t,inner)=>`<fieldset><legend>${t}</legend>${inner}</fieldset>`;
-  $("#sheetBody").innerHTML=`<form id="form" novalidate>
-    ${sec("Grunddaten",`<div class="grid2">${FIELDS[0][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
-    ${sec("Schüttung",`<div class="rowlist" id="rl_malz">${rowsHTML("malz",d.malz)}</div><button type="button" class="add" data-add="malz">+ Malz</button>`)}
-    ${sec("Wasser & Maischplan",`<div class="grid2">${FIELDS[1][1].map(f=>field(f,d[f[0]])).join("")}</div><div class="rowlist" id="rl_maischplan">${rowsHTML("maischplan",d.maischplan)}</div><button type="button" class="add" data-add="maischplan">+ Rast</button>`)}
-    ${sec("Läutern & Kochen",`<div class="grid2">${FIELDS[2][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
-    ${sec("Hopfen",`<label class="f" for="f_hopfensorten">Hopfensorten mit Alphasäure<input id="f_hopfensorten" name="hopfensorten" value="${esc(d.hopfensorten??"")}"></label><div class="rowlist" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-add="hopfen">+ Hopfengabe</button>`)}
-    ${sec("Gärung",`<div class="grid2">${FIELDS[3][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
-    ${sec("Abfüllung",`<div class="grid2">${FIELDS[4][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
-    ${sec("Notizen",`<label class="f" for="f_notizen">Was ist aufgefallen?<textarea id="f_notizen" name="notizen">${esc(d.notizen??"")}</textarea></label>`)}
-  </form>`;
-  $("#form").onsubmit=e=>{e.preventDefault();save();};
-  $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:""}:k==="hopfen"?{menge:"",zeit:""}:"");const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
-  $("#form").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{collect();draft[b.dataset.del].splice(+b.dataset.i,1);const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
-}
-function collect(){
-  const f=$("#form");if(!f)return;
-  f.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{draft[el.name]=el.type==="number"?(el.value===""?null:+el.value):el.value.trim();});
-  draft.malz=draft.malz.map((_,i)=>({sorte:($("#malz_s_"+i)?.value||"").trim(),gramm:$("#malz_g_"+i)?.value===""?null:+$("#malz_g_"+i).value}));
-  draft.hopfen=draft.hopfen.map((_,i)=>({menge:($("#hop_m_"+i)?.value||"").trim(),zeit:($("#hop_z_"+i)?.value||"").trim()}));
-  draft.maischplan=draft.maischplan.map((_,i)=>($("#rast_"+i)?.value||"").trim());
-}
-async function save(){
-  collect();
-  const err=$("#formErr");
-  if(!draft.datum){err.textContent="Bitte ein Braudatum eintragen.";$("#f_datum")?.focus();return;}
-  const out=JSON.parse(JSON.stringify(draft));
-  out.malz=out.malz.filter(m=>m.sorte||m.gramm);out.hopfen=out.hopfen.filter(h=>h.menge||h.zeit);out.maischplan=out.maischplan.filter(Boolean);
-  if(editingId&&out.datum!==state.brews.find(b=>b.id===editingId)?.datum)out.datumGeschaetzt=false;
-  out.geaendert=new Date().toISOString();
-  const btn=$("#saveBtn");btn.disabled=true;err.textContent="";
-  try{
-    const col=state.db.collection("sude");
-    if(editingId){await col.doc(editingId).set(out);toast("Gespeichert");openDetail(editingId);}
-    else{const ref=col.doc();out.angelegt=out.geaendert;await ref.set(out);toast(`Sud ${out.nr} angelegt`);
-      state.brews=state.brews.filter(b=>b.id!==ref.id).concat([{...out,id:ref.id}]);openDetail(ref.id);}
-  }catch(e){btn.disabled=false;handleWriteError(e,err);}
-}
-function handleWriteError(e,target){
-  let msg="Speichern hat nicht geklappt. Bitte gleich noch einmal versuchen.";
-  if(e&&e.code==="invalid_argument"){msg="Du kannst in diesem Braubuch nur lesen, nicht schreiben.";state.canWrite=false;}
-  if(e&&e.code==="quota_exceeded")msg="Das Braubuch ist voll. Lösche alte Einträge, um neue anzulegen.";
-  if(target)target.textContent=msg;else toast(msg);
-}
-$("#newBtn").onclick=()=>openEditor(null,false);
-$("#q").addEventListener("input",e=>{state.q=e.target.value;renderList();});
-$("#sort").addEventListener("change",e=>{state.sort=e.target.value;try{localStorage.setItem("kb_sort",state.sort)}catch(_){}renderList();});
-try{const s=localStorage.getItem("kb_sort");if(s){state.sort=s;$("#sort").value=s;}}catch(_){}
-
-/* --- CSV-Export --- */
-function toCSV(){
-  const cols=["nr","datum","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","maischplan","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","abgefuellt","notizen"];
-  const v=(b,c)=>c==="malz"?(b.malz||[]).map(m=>`${m.sorte} ${m.gramm??""}g`).join(" | "):c==="hopfen"?(b.hopfen||[]).map(h=>`${h.menge} (${h.zeit})`).join(" | "):c==="maischplan"?(b.maischplan||[]).join(" | "):(b[c]??"");
-  const q=x=>`"${String(x).replace(/"/g,'""')}"`;
-  return [cols.join(";")].concat(state.brews.slice().sort((a,c)=>(a.datum||"").localeCompare(c.datum||"")).map(b=>cols.map(c=>q(v(b,c))).join(";"))).join("\n");
-}
-$("#exportBtn").onclick=async()=>{try{await state.downloads.save({filename:"koldingbraeu-sude.csv",data:"﻿"+toCSV()});}catch(e){toast("Export abgebrochen");}};
-
-/* --- Daten --- */
-async function boot(){
-  for(let i=0;i<30&&!(window.claude&&window.claude.use);i++)await new Promise(r=>setTimeout(r,100));
-  if(!window.claude||!window.claude.use){return bootStatic();}
-  const [db,user,dl]=await Promise.all([claude.use("db"),claude.use("user"),claude.use("downloads")]);
-  if(dl){state.downloads=dl;$("#exportBtn").hidden=false;}
-  if(!db){return bootStatic();}
-  state.db=db;
-  if(user){const w=await user.can("data.write");if(w===false){state.canWrite=false;$("#newBtn").hidden=true;}}
-  db.collection("sude").onSnapshot(snap=>{
-    state.brews=snap.docs.map(d=>({...d.data(),id:d.id}));renderAll();
-    if(current&&!$("#sheet").hidden&&!$("#form")){const still=state.brews.find(b=>b.id===current.id);if(still)openDetail(still.id);else closeSheet();}
-  },e=>{const n=$("#notice");n.hidden=false;n.textContent="Die Verbindung zum Braubuch ist abgebrochen. Lade die Seite neu, um weiterzumachen.";});
-}
-/* Öffentliche Fassung (z. B. GitHub Pages): liest den Schnappschuss aus sude.json, nur lesend */
-async function bootStatic(){
-  state.canWrite=false;$("#newBtn").hidden=true;
-  state.downloads={save:async({filename,data})=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"text/csv;charset=utf-8"}));a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}};
-  try{
-    const r=await fetch("sude.json",{cache:"no-cache"});if(!r.ok)throw new Error(r.status);
-    state.brews=await r.json();$("#exportBtn").hidden=false;renderAll();
-  }catch(e){showOffline();}
-}
-function showOffline(){$("#list").innerHTML=`<p class="empty">Die Sude konnten nicht geladen werden. Bitte die Seite neu laden.</p>`;$("#newBtn").hidden=true;}
-boot();
-})();
-</script>
-
-</body></html>
+<div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

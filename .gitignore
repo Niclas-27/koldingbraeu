@@ -1,2 +1,5 @@
 archiv/
 .DS_Store
+# werden beim Veröffentlichen geholt (scripts/assets.sh)
+vendor/*.js
+fonts/*.woff2
