@@ -2,7 +2,17 @@
 
 Unsere Sude seit 2018: Schüttung, Maischplan, Hopfengaben, Hefe, Messwerte und Abfüllung. Gäste sehen die freigegebenen Sude, Braumeister melden sich an und pflegen alles im Browser.
 
-**Online:** <https://niclas-27.github.io/koldingbraeu/> (später <https://kolding.de>)
+**Online:** <https://kolding.de> (`www.kolding.de` und <https://niclas-27.github.io/koldingbraeu/> leiten dorthin weiter)
+
+## Domain
+
+`kolding.de` liegt bei Host Europe (KIS → Domainservices → Nameserver / DNS-Einträge). Für GitHub Pages gesetzt:
+
+- `kolding.de` A: 185.199.108.153, .109.153, .110.153, .111.153
+- `kolding.de` AAAA: 2606:50c0:8000::153, 8001::153, 8002::153, 8003::153
+- `www.kolding.de` CNAME: niclas-27.github.io
+
+Die Domain ist in den Repo-Einstellungen unter *Pages → Custom domain* eingetragen. E-Mail (MX, SPF, DKIM, `mail.`, `mailout.`) und die übrigen Subdomains bleiben unverändert bei Host Europe.
 
 ## Aufbau
 
