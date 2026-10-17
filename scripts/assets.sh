@@ -18,8 +18,20 @@ mkdir -p vendor && cp "$tmp/supabase/package/dist/umd/supabase.js" vendor/supaba
 hol "@fontsource-variable/bricolage-grotesque@5" bricolage
 hol "@fontsource-variable/figtree@5" figtree
 hol "@fontsource/ibm-plex-mono@5" plexmono
-cp "$tmp/bricolage/package/files/bricolage-grotesque-latin-full-normal.woff2" fonts/bricolage-grotesque.woff2
-cp "$tmp/figtree/package/files/figtree-latin-wght-normal.woff2"              fonts/figtree.woff2
-cp "$tmp/plexmono/package/files/ibm-plex-mono-latin-400-normal.woff2"        fonts/ibm-plex-mono-400.woff2
-cp "$tmp/plexmono/package/files/ibm-plex-mono-latin-500-normal.woff2"        fonts/ibm-plex-mono-500.woff2
+# Datei im Paket finden: erstes passendes Muster gewinnt (Namen unterscheiden sich je nach Version)
+nimm () {
+  local dir="$1" ziel="$2"; shift 2
+  for muster in "$@"; do
+    local f; f="$(ls "$dir" | grep -E "^${muster}$" | head -1 || true)"
+    if [ -n "$f" ]; then cp "$dir/$f" "$ziel"; echo "$ziel <- $f"; return 0; fi
+  done
+  echo "Keine passende Datei in $dir. Vorhanden:" >&2; ls "$dir" | grep -- '-latin-' >&2; return 1
+}
+nimm "$tmp/bricolage/package/files" fonts/bricolage-grotesque.woff2 \
+  'bricolage-grotesque-latin-full-normal\.woff2' 'bricolage-grotesque-latin-standard-normal\.woff2' \
+  'bricolage-grotesque-latin-opsz-wdth-wght-normal\.woff2' 'bricolage-grotesque-latin-wdth-wght-normal\.woff2' \
+  'bricolage-grotesque-latin-wght-normal\.woff2'
+nimm "$tmp/figtree/package/files" fonts/figtree.woff2 'figtree-latin-wght-normal\.woff2' 'figtree-latin-.*-normal\.woff2'
+nimm "$tmp/plexmono/package/files" fonts/ibm-plex-mono-400.woff2 'ibm-plex-mono-latin-400-normal\.woff2'
+nimm "$tmp/plexmono/package/files" fonts/ibm-plex-mono-500.woff2 'ibm-plex-mono-latin-500-normal\.woff2'
 ls -l vendor fonts
