@@ -1,0 +1,1278 @@
+[
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "",
+  "bewertung": "3-",
+  "biermenge": 13.2,
+  "datum": "2018-09-08",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": null,
+  "hauptguss": "17 L",
+  "hefe": "Brians Kultur",
+  "hefemenge": "20",
+  "hopfen": [
+   {
+    "menge": "14 g",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "22 g",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Cascade 7,7 %",
+  "kochzeit": "",
+  "laeutern": "fester Treber",
+  "maischplan": [
+   "1x Rast"
+  ],
+  "malz": [
+   {
+    "gramm": 3750,
+    "sorte": "Wiener Best"
+   }
+  ],
+  "messungen": "1. Messung 10 °P · 2. Messung 12,2 °P · 3. Messung 4,3–4,5",
+  "nachguss": "10 L",
+  "notizen": "",
+  "nr": 1,
+  "quelle": "Google Sheets",
+  "restextrakt": "4,3–4,5 °P",
+  "stammwuerze": "",
+  "stil": "",
+  "wasser": "",
+  "wuerze": "",
+  "zucker": "",
+  "id": "sud-001"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "",
+  "bewertung": "2",
+  "biermenge": 17,
+  "datum": "2018-10-19",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": null,
+  "hauptguss": "20 L",
+  "hefe": "Brians Kultur",
+  "hefemenge": "20",
+  "hopfen": [
+   {
+    "menge": "8 g",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "20 g",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Herkules 16,6 %",
+  "kochzeit": "",
+  "laeutern": "lockerer Treber",
+  "maischplan": [
+   "1x Rast"
+  ],
+  "malz": [
+   {
+    "gramm": 2500,
+    "sorte": "Pale Ale"
+   },
+   {
+    "gramm": 1350,
+    "sorte": "Caramel"
+   },
+   {
+    "gramm": 600,
+    "sorte": "Wiener Best"
+   }
+  ],
+  "messungen": "1. Messung 13 °P · 2. Messung 11,5 °P",
+  "nachguss": "6 + 2 L",
+  "notizen": "",
+  "nr": 2,
+  "quelle": "Google Sheets",
+  "restextrakt": "5,5",
+  "stammwuerze": "",
+  "stil": "Pale Ale",
+  "wasser": "",
+  "wuerze": "23 L",
+  "zucker": "145 g",
+  "id": "sud-002"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "19,2 L",
+  "bewertung": "2-",
+  "biermenge": 17.5,
+  "datum": "2018-12-01",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": null,
+  "hauptguss": "26 L",
+  "hefe": "Brians Kultur",
+  "hefemenge": "17",
+  "hopfen": [
+   {
+    "menge": "18 g Azacca",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "39 g Cascade",
+    "zeit": "2. Gabe"
+   },
+   {
+    "menge": "18 g Azacca",
+    "zeit": "3. Gabe"
+   },
+   {
+    "menge": "Whirlpool",
+    "zeit": "Stopfen"
+   }
+  ],
+  "hopfensorten": "Azacca 12,7 %, Cascade 5,9 %",
+  "kochzeit": "",
+  "laeutern": "lockerer Treber",
+  "maischplan": [
+   "4x Rast"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pale Ale"
+   },
+   {
+    "gramm": 600,
+    "sorte": "CARAMÜNCH II"
+   },
+   {
+    "gramm": 400,
+    "sorte": "Wiener Best"
+   }
+  ],
+  "messungen": "1. Messung 12,5 °P · 2. Messung 12,7 °P · 3. Messung 5",
+  "nachguss": "8 + 3,5 L",
+  "notizen": "Farbe: dunkler Bernstein (sehr klar)",
+  "nr": 3,
+  "quelle": "Google Sheets",
+  "restextrakt": "5,5",
+  "stammwuerze": "",
+  "stil": "Pale Ale",
+  "wasser": "",
+  "wuerze": "26,5 L",
+  "zucker": "140 g",
+  "id": "sud-003"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "21 L",
+  "bewertung": "1",
+  "biermenge": 17.6,
+  "datum": "2019-01-19",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": null,
+  "hauptguss": "27 L",
+  "hefe": "Brians Kultur",
+  "hefemenge": "13",
+  "hopfen": [
+   {
+    "menge": "14 g",
+    "zeit": "nach 10 Min."
+   },
+   {
+    "menge": "10 g",
+    "zeit": "nach 40 Min."
+   },
+   {
+    "menge": "11 g",
+    "zeit": "nach 60 Min."
+   },
+   {
+    "menge": "23 g",
+    "zeit": "Whirlpool"
+   }
+  ],
+  "hopfensorten": "Citra 14,4 %",
+  "kochzeit": "",
+  "laeutern": "fester Treber",
+  "maischplan": [
+   "4x Rast"
+  ],
+  "malz": [
+   {
+    "gramm": 2500,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 2500,
+    "sorte": "Pale Ale"
+   },
+   {
+    "gramm": 600,
+    "sorte": "Münchner"
+   },
+   {
+    "gramm": 600,
+    "sorte": "Wiener"
+   }
+  ],
+  "messungen": "vor Nachguss 14,7 · 2. Messung 14 · 3. Messung 5",
+  "nachguss": "12 L",
+  "notizen": "EBC 8, bislang hellste Farbe, wenig Hefe am Boden",
+  "nr": 4,
+  "quelle": "Google Sheets",
+  "restextrakt": "5",
+  "stammwuerze": "",
+  "stil": "Pale Ale",
+  "wasser": "",
+  "wuerze": "31 L",
+  "zucker": "147 g",
+  "id": "sud-004"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "19,3 L",
+  "bewertung": "2+",
+  "biermenge": 19,
+  "datum": "2019-02-22",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": 54,
+  "hauptguss": "27 L",
+  "hefe": "Brians Kultur",
+  "hefemenge": "15",
+  "hopfen": [
+   {
+    "menge": "16 g",
+    "zeit": "ab Beginn"
+   },
+   {
+    "menge": "16 g",
+    "zeit": "ab 45 Min."
+   },
+   {
+    "menge": "16 g",
+    "zeit": "ab 80 Min."
+   }
+  ],
+  "hopfensorten": "Citra 14,4 %",
+  "kochzeit": "",
+  "laeutern": "fester Treber",
+  "maischplan": [
+   "4x Rast"
+  ],
+  "malz": [
+   {
+    "gramm": 2000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 2000,
+    "sorte": "Pale Ale"
+   },
+   {
+    "gramm": 2000,
+    "sorte": "Wiener Best"
+   }
+  ],
+  "messungen": "vor Nachguss 13,3 · 2. Messung 15,6 · 3. Messung 4,3",
+  "nachguss": "8,5 L",
+  "notizen": "",
+  "nr": 5,
+  "quelle": "Google Sheets",
+  "restextrakt": "4,3",
+  "stammwuerze": "15,6",
+  "stil": "Pale Ale",
+  "wasser": "",
+  "wuerze": "29 L",
+  "zucker": "142 g",
+  "id": "sud-005"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "16 L",
+  "bewertung": "4+",
+  "biermenge": null,
+  "datum": "2019-04-20",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": 43,
+  "hauptguss": "23 L",
+  "hefe": "MangroveJack M21 Belgian Wit",
+  "hefemenge": "1 Tütchen",
+  "hopfen": [
+   {
+    "menge": "40 g",
+    "zeit": "70 Min."
+   },
+   {
+    "menge": "Kamille",
+    "zeit": "5 Min."
+   },
+   {
+    "menge": "Koriander",
+    "zeit": "5 Min."
+   },
+   {
+    "menge": "Blutorange",
+    "zeit": "5 Min."
+   }
+  ],
+  "hopfensorten": "Styrian Golding 4,6 %",
+  "kochzeit": "",
+  "laeutern": "sehr schnell",
+  "maischplan": [
+   "30 Min. 53 °C",
+   "45 Min. 64 °C (Abw. Rezept)",
+   "15 Min. 71 °C",
+   "78 °C Läutern, Nachguss"
+  ],
+  "malz": [
+   {
+    "gramm": 2700,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 2500,
+    "sorte": "Weizenflocken"
+   },
+   {
+    "gramm": 260,
+    "sorte": "Haferflocken"
+   }
+  ],
+  "messungen": "2. Messung 11,5",
+  "nachguss": "11 L",
+  "notizen": "",
+  "nr": 6,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "13,8",
+  "stil": "Witbier",
+  "wasser": "",
+  "wuerze": "28 L",
+  "zucker": "",
+  "id": "sud-006"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "15 L",
+  "bewertung": "1",
+  "biermenge": null,
+  "datum": "2019-12-30",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": 44,
+  "hauptguss": "18 L",
+  "hefe": "Lagerhefe",
+  "hefemenge": "20 g",
+  "hopfen": [
+   {
+    "menge": "30 g",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "35 g",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Spalter Select 5,8 %",
+  "kochzeit": "",
+  "laeutern": "sehr gut",
+  "maischplan": [
+   "Einmaischen 15 Min. 50 °C",
+   "45 Min. 63 °C Beta",
+   "20 Min. 72 °C Alpha",
+   "Abmaischen 76 °C"
+  ],
+  "malz": [
+   {
+    "gramm": 4000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 500,
+    "sorte": "Münchner Cara"
+   }
+  ],
+  "messungen": "1. Messung 14–15 · 2. Messung 13",
+  "nachguss": "13,5 L",
+  "notizen": "",
+  "nr": 7,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "13",
+  "stil": "Pilsner",
+  "wasser": "",
+  "wuerze": "20 L",
+  "zucker": "90 g",
+  "id": "sud-007"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "21,5 L",
+  "bewertung": "2+",
+  "biermenge": null,
+  "datum": "2020-03-27",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": 60,
+  "hauptguss": "22,5 L",
+  "hefe": "Lagerhefe",
+  "hefemenge": "40 g?",
+  "hopfen": [
+   {
+    "menge": "45 g",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "50 g",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Spalter Select",
+  "kochzeit": "",
+  "laeutern": "sehr gut",
+  "maischplan": [
+   "50 °C Einmaischen, 15 Min. halten",
+   "63 °C Betaamylase 45 Min.",
+   "72 °C Verzuckerung Alphaamylase 20 Min.",
+   "76 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 625,
+    "sorte": "Münchner Cara"
+   }
+  ],
+  "messungen": "11,7 °P vor Kochen",
+  "nachguss": "12 L, 1,5 L nach Kochen in Whirlpool",
+  "notizen": "",
+  "nr": 8,
+  "quelle": "Google Sheets",
+  "restextrakt": "7,4 °P",
+  "stammwuerze": "13,6",
+  "stil": "Lager oder Pils",
+  "wasser": "",
+  "wuerze": "32 L",
+  "zucker": "145 g",
+  "id": "sud-008"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "21,5 L",
+  "bewertung": "3-5",
+  "biermenge": null,
+  "datum": "2020-07-03",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": 50,
+  "hauptguss": "22,5 L",
+  "hefe": "Gozdawa Lager",
+  "hefemenge": "30 g",
+  "hopfen": [
+   {
+    "menge": "65 g",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "75 g",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Spalter Select 4,7 %",
+  "kochzeit": "",
+  "laeutern": "gut",
+  "maischplan": [
+   "50 °C Einmaischen, 15 Min. halten",
+   "63 °C Betaamylase 45 Min.",
+   "72 °C Verzuckerung Alphaamylase 20 Min.",
+   "76 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 1000,
+    "sorte": "Münchner Cara"
+   }
+  ],
+  "messungen": "1. Messung 12 · Gärung 7,7 °P",
+  "nachguss": "15 L, 500 ml nachgegossen",
+  "notizen": "",
+  "nr": 9,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "13,6",
+  "stil": "",
+  "wasser": "3,32 ml Milchsäure (pro 1 °dH bei 100 L)",
+  "wuerze": "32 L",
+  "zucker": "",
+  "id": "sud-009"
+ },
+ {
+  "abgefuellt": "29.11.",
+  "alkohol": "",
+  "ausschlag": "19 L (+ 2,5 L Speise)",
+  "bewertung": "1",
+  "biermenge": null,
+  "datum": "2020-11-21",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": 60,
+  "hauptguss": "22,5 L",
+  "hefe": "Gozdawa Lager",
+  "hefemenge": "31 g",
+  "hopfen": [
+   {
+    "menge": "50 g",
+    "zeit": "nach 10 Min."
+   },
+   {
+    "menge": "50 g",
+    "zeit": "nach 70 Min."
+   }
+  ],
+  "hopfensorten": "Spalter Select 4,6 %",
+  "kochzeit": "80 Min.",
+  "laeutern": "gut, anfangs zäh",
+  "maischplan": [
+   "50 °C Einmaischen, 15 Min. halten",
+   "63 °C Betaamylase 45 Min.",
+   "72 °C Verzuckerung Alphaamylase 20 Min.",
+   "76 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 1000,
+    "sorte": "Münchner Cara"
+   }
+  ],
+  "messungen": "1. Messung 11,8 · Gärung 8,5 / 7,9",
+  "nachguss": "15 L",
+  "notizen": "Vergärung im Keller bei 16 °C",
+  "nr": 10,
+  "quelle": "Google Sheets",
+  "restextrakt": "7,8",
+  "stammwuerze": "14,1",
+  "stil": "Pils",
+  "wasser": "3,32 ml Milchsäure (pro 1 °dH bei 100 L)",
+  "wuerze": "31 L",
+  "zucker": "2,5 L Speise",
+  "id": "sud-010"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "",
+  "bewertung": "1",
+  "biermenge": null,
+  "datum": "2021-05-13",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": null,
+  "hauptguss": "22,5 L",
+  "hefe": "Fermentis Safale",
+  "hefemenge": "23 g",
+  "hopfen": [
+   {
+    "menge": "30 g Hallertauer Perle",
+    "zeit": "1. Gabe"
+   }
+  ],
+  "hopfensorten": "Hallertauer Perle 7,5 % α",
+  "kochzeit": "",
+  "laeutern": "gut, dreimal eingeschnitten",
+  "maischplan": [
+   "71 °C Einmaischen (60 Min. 65–69 °C)",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 4000,
+    "sorte": "Pilsner Premium"
+   },
+   {
+    "gramm": 635,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 600,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "1. Messung 9 · vor Kochen 10,9",
+  "nachguss": "20 L",
+  "notizen": "",
+  "nr": 11,
+  "quelle": "Google Sheets",
+  "restextrakt": "6,9",
+  "stammwuerze": "10,5",
+  "stil": "Obergärig",
+  "wasser": "",
+  "wuerze": "32 L",
+  "zucker": "2,5 L Speise",
+  "id": "sud-011"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "3,75 %",
+  "ausschlag": "22 L",
+  "bewertung": "2+",
+  "biermenge": 21,
+  "datum": "2021-10-01",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": 64,
+  "hauptguss": "22 L",
+  "hefe": "",
+  "hefemenge": "",
+  "hopfen": [
+   {
+    "menge": "30 g",
+    "zeit": "1. Gabe"
+   }
+  ],
+  "hopfensorten": "Hallertauer Perle 7,5 % α",
+  "kochzeit": "",
+  "laeutern": "",
+  "maischplan": [
+   "71 °C Einmaischen (60 Min. 65–69 °C)",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 4000,
+    "sorte": "Pilsner Premium"
+   },
+   {
+    "gramm": 635,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 600,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "",
+  "nachguss": "19 L",
+  "notizen": "",
+  "nr": 12,
+  "quelle": "Google Sheets",
+  "restextrakt": "6,3 Brix",
+  "stammwuerze": "11,1",
+  "stil": "Kölsch",
+  "wasser": "",
+  "wuerze": "31 L",
+  "zucker": "2,5 L Speise",
+  "id": "sud-012"
+ },
+ {
+  "abgefuellt": "21.04.",
+  "alkohol": "4,1 %",
+  "ausschlag": "22 L (inkl. 2 L Speise)",
+  "bewertung": "1+",
+  "biermenge": 21,
+  "datum": "2022-04-09",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": 63,
+  "hauptguss": "22,5 L",
+  "hefe": "Gozdawa Lager",
+  "hefemenge": "32 g",
+  "hopfen": [
+   {
+    "menge": "45 g",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "23 g",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Spalter Select 7,8 % α",
+  "kochzeit": "",
+  "laeutern": "sehr schnell, seitlich offener Kuchen",
+  "maischplan": [
+   "54 °C Einmaischen",
+   "63 °C 30 Min.",
+   "73 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 750,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "Gärung 9,1 Brix",
+  "nachguss": "16 L",
+  "notizen": "",
+  "nr": 13,
+  "quelle": "Google Sheets",
+  "restextrakt": "8",
+  "stammwuerze": "12,5 °P (13 Brix)",
+  "stil": "Pils",
+  "wasser": "11 ml Milchsäure",
+  "wuerze": "32 L",
+  "zucker": "2,1 L Speise, 27 g Zucker",
+  "id": "sud-013"
+ },
+ {
+  "abgefuellt": "9.11.",
+  "alkohol": "6,1 %",
+  "ausschlag": "20,5 L + 2,5 L Speise",
+  "bewertung": "2+",
+  "biermenge": null,
+  "datum": "2022-10-28",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": null,
+  "hauptguss": "22,8 L",
+  "hefe": "Gozdawa Lager",
+  "hefemenge": "25 g",
+  "hopfen": [
+   {
+    "menge": "30 g Spalter (7,5 % α)",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "58 g Spalter (4,7 % α)",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Spalter",
+  "kochzeit": "",
+  "laeutern": "sehr schnell",
+  "maischplan": [
+   "wie beim letzten Pils"
+  ],
+  "malz": [
+   {
+    "gramm": 5500,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 500,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "5. Tag 9,2 Brix · 7. Tag 8,2 Brix · 11. Tag 8,1 Brix",
+  "nachguss": "ca. 16 L",
+  "notizen": "Wir hätten noch mehr Wasser geben sollen.",
+  "nr": 14,
+  "quelle": "Google Sheets",
+  "restextrakt": "8,1 Brix",
+  "stammwuerze": "15 °P (15,5 Brix)",
+  "stil": "Pils",
+  "wasser": "13 ml Milchsäure (2 ml zu viel)",
+  "wuerze": "30–31 L",
+  "zucker": "2,3 L Speise",
+  "id": "sud-014"
+ },
+ {
+  "abgefuellt": "3.3.",
+  "alkohol": "4,9 %",
+  "ausschlag": "21 L + 3 L Speise",
+  "bewertung": "4",
+  "biermenge": null,
+  "datum": "2023-02-10",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": 70,
+  "hauptguss": "24 L",
+  "hefe": "Gozdawa Lager",
+  "hefemenge": "22 g",
+  "hopfen": [
+   {
+    "menge": "45 g Spalter (7,5 % α)",
+    "zeit": "1. Gabe"
+   },
+   {
+    "menge": "23 g Spalter (7,5 % α)",
+    "zeit": "2. Gabe"
+   }
+  ],
+  "hopfensorten": "Spalter 7,5 % α",
+  "kochzeit": "",
+  "laeutern": "schnell",
+  "maischplan": [
+   "54 °C Einmaischen",
+   "63 °C 30 Min.",
+   "73 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5500,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 1000,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "Speise 13,4 °P · 16. Tag 7,9 Brix",
+  "nachguss": "17 L",
+  "notizen": "Erster Test 27.3.: lecker, braucht aber noch 2 Wochen.",
+  "nr": 15,
+  "quelle": "Google Sheets",
+  "restextrakt": "7,4 Brix / 4,7 °P",
+  "stammwuerze": "13,6 °P (14 Brix)",
+  "stil": "Pils",
+  "wasser": "12,8 ml Milchsäure",
+  "wuerze": "",
+  "zucker": "",
+  "id": "sud-015"
+ },
+ {
+  "abgefuellt": "11.09.",
+  "alkohol": "5,2 %",
+  "ausschlag": "24 L",
+  "bewertung": "2",
+  "biermenge": 23,
+  "datum": "2023-09-03",
+  "datumGeschaetzt": true,
+  "etikett": "",
+  "flaschen": 73,
+  "hauptguss": "24 L",
+  "hefe": "Top obergärig",
+  "hefemenge": "12 g",
+  "hopfen": [
+   {
+    "menge": "50 g",
+    "zeit": "1. Gabe"
+   }
+  ],
+  "hopfensorten": "Hallertauer 5,3 % α",
+  "kochzeit": "",
+  "laeutern": "sehr schnell",
+  "maischplan": [
+   "50 °C Einmaischen",
+   "52 °C 20 Min.",
+   "63 °C 40 Min.",
+   "72 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5700,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 1000,
+    "sorte": "Münchner hell"
+   }
+  ],
+  "messungen": "Gärung 9 Brix",
+  "nachguss": "18,5 L (+10 ml Milchsäure)",
+  "notizen": "Erster Test 4.10.",
+  "nr": 16,
+  "quelle": "Google Sheets",
+  "restextrakt": "8,9 Brix / 6,4 °P",
+  "stammwuerze": "15,7 Brix",
+  "stil": "Helles",
+  "wasser": "12,8 ml Milchsäure",
+  "wuerze": "35 L",
+  "zucker": "144 g",
+  "id": "sud-016"
+ },
+ {
+  "abgefuellt": "3.2.",
+  "alkohol": "",
+  "ausschlag": "23 L",
+  "bewertung": "3",
+  "biermenge": 21.5,
+  "datum": "2024-01-20",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": 60,
+  "hauptguss": "23 L",
+  "hefe": "Gozdawa Lager",
+  "hefemenge": "40 g",
+  "hopfen": [
+   {
+    "menge": "47 g",
+    "zeit": "Vorderwürze"
+   },
+   {
+    "menge": "25 g",
+    "zeit": "nach Kochen"
+   }
+  ],
+  "hopfensorten": "Spalt 7,5 % α",
+  "kochzeit": "70 Min.",
+  "laeutern": "schwer, viele Einschnitte",
+  "maischplan": [
+   "54 °C Einmaischen",
+   "63 °C 30 Min.",
+   "73 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 1000,
+    "sorte": "Swaen Melany"
+   }
+  ],
+  "messungen": "Spindel 12,8 → 4,6 · Refraktometer 13,8 → 7,2",
+  "nachguss": "16 L",
+  "notizen": "Kurios: Spindel 12,8 zu 4,6, Refraktometer 13,8 zu 7,2",
+  "nr": 17,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "13,8 Brix",
+  "stil": "Pilsner",
+  "wasser": "13 ml Milchsäure",
+  "wuerze": "30 L",
+  "zucker": "151 g (2,34 g pro 0,33-l-Flasche)",
+  "id": "sud-017"
+ },
+ {
+  "abgefuellt": "13.5.",
+  "alkohol": "",
+  "ausschlag": "22,5 L",
+  "bewertung": "1",
+  "biermenge": 20.5,
+  "datum": "2024-05-03",
+  "datumGeschaetzt": false,
+  "etikett": "",
+  "flaschen": 59,
+  "hauptguss": "24 L",
+  "hefe": "Apres Ski",
+  "hefemenge": "2 × 11 g",
+  "hopfen": [
+   {
+    "menge": "22 g Magnum",
+    "zeit": "ab Kochstart"
+   },
+   {
+    "menge": "14 g Magnum",
+    "zeit": "40 Min. vor Ende"
+   },
+   {
+    "menge": "16 g Tettnanger",
+    "zeit": "5 Min. vor Ende"
+   }
+  ],
+  "hopfensorten": "Magnum 12 %, Tettnanger 2,7 %",
+  "kochzeit": "75 Min.",
+  "laeutern": "ohne Einschnitte, perfekt",
+  "maischplan": [
+   "66 °C Einmaischen",
+   "62 °C 25 Min.",
+   "72 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 800,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "Gärung 8 · 8",
+  "nachguss": "13,5 L + 1,7 L",
+  "notizen": "",
+  "nr": 18,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "15,3 (vorher 14,6)",
+  "stil": "",
+  "wasser": "10 ml Milchsäure",
+  "wuerze": "",
+  "zucker": "163 g (2,41 g pro Flasche, kleine Flaschen 1,5 g)",
+  "id": "sud-018"
+ },
+ {
+  "abgefuellt": "",
+  "alkohol": "",
+  "ausschlag": "",
+  "bewertung": "2-",
+  "biermenge": 22,
+  "datum": "2024-09-28",
+  "datumGeschaetzt": false,
+  "etikett": "rot",
+  "flaschen": 62,
+  "hauptguss": "24 L",
+  "hefe": "Apres Ski",
+  "hefemenge": "2 × 11 g",
+  "hopfen": [
+   {
+    "menge": "22 g Magnum",
+    "zeit": "ab Kochstart"
+   },
+   {
+    "menge": "14 g Magnum",
+    "zeit": "40 Min. vor Ende"
+   },
+   {
+    "menge": "16 g Lubelski",
+    "zeit": "5 Min. vor Ende"
+   }
+  ],
+  "hopfensorten": "Magnum 12 %, Lubelski 2,9 %",
+  "kochzeit": "75 Min.",
+  "laeutern": "viele Einschnitte",
+  "maischplan": [
+   "66 °C Einmaischen",
+   "62 °C 25 Min.",
+   "72 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 800,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "Gärung 3,8 °P",
+  "nachguss": "16 L",
+  "notizen": "",
+  "nr": 19,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "15,0 °P (16,2 Brix)",
+  "stil": "",
+  "wasser": "",
+  "wuerze": "",
+  "zucker": "",
+  "id": "sud-019"
+ },
+ {
+  "abgefuellt": "13.01.",
+  "alkohol": "",
+  "ausschlag": "",
+  "bewertung": "2+",
+  "biermenge": 25,
+  "datum": "2025-01-02",
+  "datumGeschaetzt": false,
+  "etikett": "blau",
+  "flaschen": 68,
+  "hauptguss": "26 L",
+  "hefe": "Saflager",
+  "hefemenge": "2 × 11 g",
+  "hopfen": [
+   {
+    "menge": "22 g Magnum",
+    "zeit": "ab Kochstart"
+   },
+   {
+    "menge": "14 g Magnum",
+    "zeit": "40 Min. vor Ende"
+   },
+   {
+    "menge": "16 g Tettnanger",
+    "zeit": "5 Min. vor Ende"
+   }
+  ],
+  "hopfensorten": "Magnum 12 %, Tettnanger 2,7 %",
+  "kochzeit": "75 Min.",
+  "laeutern": "ohne Einschnitte, perfekt",
+  "maischplan": [
+   "66 °C Einmaischen",
+   "62 °C 25 Min.",
+   "72 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 800,
+    "sorte": "Pilsner Hell"
+   }
+  ],
+  "messungen": "Gärung 7,1 Brix / 3,6 °P",
+  "nachguss": "16 L",
+  "notizen": "Etwas zu wenig CO₂",
+  "nr": 20,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "13,3 °P (14,1 Brix)",
+  "stil": "",
+  "wasser": "11 ml Milchsäure",
+  "wuerze": "",
+  "zucker": "2",
+  "id": "sud-020"
+ },
+ {
+  "abgefuellt": "10. Juni",
+  "alkohol": "",
+  "ausschlag": "",
+  "bewertung": "2+",
+  "biermenge": null,
+  "datum": "2025-05-24",
+  "datumGeschaetzt": false,
+  "etikett": "orange",
+  "flaschen": null,
+  "hauptguss": "26 L",
+  "hefe": "Saflager",
+  "hefemenge": "2 × 11 g",
+  "hopfen": [
+   {
+    "menge": "22 g Magnum",
+    "zeit": "ab Kochstart"
+   },
+   {
+    "menge": "20 g Northern Brewer",
+    "zeit": "40 Min. vor Ende"
+   },
+   {
+    "menge": "16 g Tettnanger",
+    "zeit": "5 Min. vor Ende"
+   },
+   {
+    "menge": "5 g",
+    "zeit": "Whirlpool"
+   }
+  ],
+  "hopfensorten": "Northern Brewer 8,6 %, Tettnanger 2,7 %",
+  "kochzeit": "75 Min.",
+  "laeutern": "",
+  "maischplan": [
+   "66 °C Einmaischen",
+   "62 °C 25 Min.",
+   "72 °C 30 Min.",
+   "78 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 5000,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 800,
+    "sorte": "Cara Hell"
+   }
+  ],
+  "messungen": "Gärung 3,8 °P",
+  "nachguss": "16 L (+10 ml Milchsäure)",
+  "notizen": "Sehr klar",
+  "nr": 21,
+  "quelle": "Google Sheets",
+  "restextrakt": "",
+  "stammwuerze": "14 °P (15 Brix)",
+  "stil": "",
+  "wasser": "11 ml Milchsäure, pH 5,8",
+  "wuerze": "",
+  "zucker": "",
+  "id": "sud-021"
+ },
+ {
+  "abgefuellt": "22. Oktober",
+  "alkohol": "",
+  "ausschlag": "",
+  "bewertung": "1",
+  "biermenge": 16,
+  "datum": "2025-10-11",
+  "datumGeschaetzt": false,
+  "etikett": "silber",
+  "flaschen": null,
+  "hauptguss": "19,8 L",
+  "hefe": "Lallemand Verdant IPA",
+  "hefemenge": "2 × 11 g",
+  "hopfen": [
+   {
+    "menge": "2 g Comet (9,5 % α)",
+    "zeit": "ab Kochstart"
+   },
+   {
+    "menge": "15 g Simcoe (13,4 % α)",
+    "zeit": "nach 60 Min."
+   },
+   {
+    "menge": "60 g Mosaic (11 % α)",
+    "zeit": "Stopfhopfen"
+   },
+   {
+    "menge": "30 g Citra (13,8 % α)",
+    "zeit": "Stopfhopfen"
+   },
+   {
+    "menge": "14 g Simcoe",
+    "zeit": "Stopfhopfen"
+   }
+  ],
+  "hopfensorten": "Comet, Simcoe, Mosaic, Citra",
+  "kochzeit": "70 Min.",
+  "laeutern": "",
+  "maischplan": [
+   "55 °C Einmaischen",
+   "66 °C 75 Min.",
+   "77 °C Abmaischen"
+  ],
+  "malz": [
+   {
+    "gramm": 4000,
+    "sorte": "Maris Otter"
+   },
+   {
+    "gramm": 1500,
+    "sorte": "Pilsner"
+   },
+   {
+    "gramm": 500,
+    "sorte": "Münchner II"
+   },
+   {
+    "gramm": 400,
+    "sorte": "Weizen"
+   },
+   {
+    "gramm": 1000,
+    "sorte": "Haferflocken"
+   }
+  ],
+  "messungen": "14 °P · 16 °P",
+  "nachguss": "15,5 L",
+  "notizen": "",
+  "nr": 22,
+  "quelle": "Google Sheets",
+  "restextrakt": "4,8 °P / 4,9 °P",
+  "stammwuerze": "17,3 °P",
+  "stil": "",
+  "wasser": "pH 5,8",
+  "wuerze": "",
+  "zucker": "2,3 g pro Flasche",
+  "id": "sud-022"
+ }
+]
