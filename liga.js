@@ -4,7 +4,7 @@
 (function () {
 "use strict";
 const {$, esc, fmtZahl, fehlertext, lsGet, lsSet} = KB;
-const MIN = 5; // ab so vielen Bewertungen zählt ein Bier für die Liga
+const MIN = 3; // ab so vielen Bewertungen zählt ein Bier für die Liga
 
 let zeilen = null;  // eine Zeile je Bier und Verkostung
 const f = { stil: "", herkunft: "alle", jahr: "", alle: false };
