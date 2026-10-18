@@ -41,3 +41,17 @@
 .overview.solo{grid-template-columns:1fr}
 .overview.solo .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:560px){.overview.solo .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Strukturierte Eingabe: Malz (Sorte, Gramm, EBC), Hopfen (Sorte, Gramm, Alpha, Minuten, Art) */
+.rowlist.m3 .r{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,.7fr) 36px}
+.rowlist.h5 .r{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,.8fr) minmax(0,1.4fr) 36px}
+.rowlist.h5 select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 6px;font-size:.9rem;min-width:0}
+@media (max-width:560px){.rowlist.h5 .r{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 36px}.rowlist.h5 .r input:first-child{grid-column:1/-1}.rowlist.h5 .r select{grid-column:1/3}}
+.hops small{color:var(--muted);font-weight:400}
+/* Neuer Sud: Auswahl */
+.wahl{display:grid;gap:12px}
+.wahl-k{display:flex;flex-direction:column;gap:8px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:16px;cursor:default}
+button.wahl-k{cursor:pointer}
+button.wahl-k:hover{border-color:var(--muted)}
+.wahl-k b{font-family:var(--font-display);font-size:1.15rem}
+.wahl-k span{color:var(--muted);font-size:.9rem}
+.wahl-k.aus{opacity:.7}

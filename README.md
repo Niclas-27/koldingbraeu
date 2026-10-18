@@ -27,8 +27,8 @@ features/
   brews/     Sude (Braubuch)
   tastings/  Verkostungen: Mitmachen per QR-Code, Verwalten, Ergebnisseiten
   league/    Liga
-  recipes/   Rezepte (geplant)
-lib/         eigene Hilfsbausteine ohne Bereichsbezug (qr.js)
+  recipes/   Rezepte: MMuM-Import, Umrechnen, Stammbaum
+lib/         eigene Hilfsbausteine ohne Bereichsbezug (qr.js, brau.js = Brau-Rechnungen und MMuM-Format)
 supabase/    bereichsübergreifende Datenbank (Profile, Rollen) und Edge Function „einladen“
 tests/       Klicktests mit Test-Attrappe statt echter Datenbank
 fonts/, vendor/   Schriften und Supabase-Bibliothek – beim Veröffentlichen geholt
@@ -80,7 +80,8 @@ Die Seite spricht dabei mit der echten Datenbank.
 ## Tests
 
 ```bash
-python3 tests/run_tests.py
+python3 tests/run_tests.py   # Klicktests
+node tests/brau_test.js      # Rechentests (Umrechnen, IBU, EBC, MMuM-Import)
 ```
 
 Klickt alle Bereiche am Computer und in Handygröße durch – gegen eine Attrappe, die echte Datenbank bleibt unberührt.

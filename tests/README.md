@@ -8,6 +8,8 @@ python3 tests/run_tests.py
 ```
 
 - `fake-supabase.js` – nachgebauter Supabase-Client mit Beispieldaten; Rolle per `localStorage.test_rolle` (`anon`, `bm`, `admin`)
+- `brau_test.js` – Rechentests für `lib/brau.js` (`node tests/brau_test.js`)
+- `data/` – Beispieldateien (MMuM-Export „Drives Me Hazy“)
 - `run_tests.py` – öffnet die Seiten am Computer und in Handygröße, klickt die Abläufe durch, prüft die Ergebnisse
 - `screenshots/` – Bildschirmfotos des letzten Laufs (nicht im Repo)
 

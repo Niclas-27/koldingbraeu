@@ -1,0 +1,96 @@
+{
+    "Rezeptquelle": "www.maischemalzundmehr.de",
+    "ExportVersion": "2.0",
+    "Name": "Drives Me Hazy",
+    "Datum": "22.02.2022",
+    "Sorte": "India Pale Ale (NEIPA)",
+    "Autor": "Kesselbrauer Stuttgart e.V.",
+    "Ausschlagwuerze": 24,
+    "Sudhausausbeute": 55,
+    "Stammwuerze": 15,
+    "Bittere": 8,
+    "Farbe": 12,
+    "Alkohol": 6,
+    "Kurzbeschreibung": "1.Platz beim Kesselbrauer Bierwettbewerb 2022 in der NEIPA Kategorie *Kesselbrauer Stuttgart e.V.*Rezept von Dieter* Ein NEIPA mit \u201eklassischen\u201c US-Hopfensorten.",
+    "Malze": [
+        {
+            "Name": "Pilsner",
+            "Menge": 4.23,
+            "Einheit": "kg"
+        },
+        {
+            "Name": "Wiener",
+            "Menge": 2.03,
+            "Einheit": "kg"
+        },
+        {
+            "Name": "Haferflocken",
+            "Menge": 810,
+            "Einheit": "g"
+        },
+        {
+            "Name": "Weizenmalz",
+            "Menge": 650,
+            "Einheit": "g"
+        },
+        {
+            "Name": "Carahell",
+            "Menge": 400,
+            "Einheit": "g"
+        }
+    ],
+    "Maischform": "infusion",
+    "Hauptguss": 22.829268292682926,
+    "Einmaischtemperatur": 70,
+    "Rasten": [
+        {
+            "Temperatur": 67,
+            "Zeit": 60
+        }
+    ],
+    "Abmaischtemperatur": 67,
+    "Nachguss": 17.5609756097561,
+    "Kochzeit_Wuerze": 70,
+    "Hopfenkochen": [
+        {
+            "Sorte": "Tomahawk",
+            "Menge": 2,
+            "Alpha": 15.8,
+            "Zeit": 70,
+            "Typ": "Vorderwuerze"
+        },
+        {
+            "Sorte": "Centennial",
+            "Menge": 88,
+            "Alpha": 10,
+            "Zeit": 0,
+            "Typ": "Whirlpool"
+        },
+        {
+            "Sorte": "Tomahak",
+            "Menge": 88,
+            "Alpha": 15.8,
+            "Zeit": 0,
+            "Typ": "Whirlpool"
+        }
+    ],
+    "Stopfhopfen": [
+        {
+            "Sorte": "Amarillo",
+            "Menge": 117
+        },
+        {
+            "Sorte": "Mosaic",
+            "Menge": 117
+        },
+        {
+            "Sorte": "Citra",
+            "Menge": 64
+        }
+    ],
+    "Hefe": "Imperial Yeast Juice",
+    "Gaertemperatur": "19",
+    "Endvergaerungsgrad": 72,
+    "Karbonisierung": 5,
+    "Anmerkung_Autor": "1. Stopfen nach 24h: 20% vom Hopfen\r\n2. Stopfen kurz vor Ende der Hauptg\u00e4rung: 80% vom Hopfen\r\nHefe wurde mit IPA-Starter hochgezogen. Daher wurde das Bier deutlich bitterer als die berechneten 8 IBU."
+}

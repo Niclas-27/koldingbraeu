@@ -19,7 +19,16 @@ const db={
               {id:"w3",probe_id:"p2",teilnehmer_id:"t1",note:9,merkmale:{},geruch:[],fehler:["Butter"],nochmal:true,kommentar:"Top",ausgeblendet:false}],
  vorschlaege:[{id:"x1",verkostung_id:"v1",teilnehmer_id:"t2",name:"Mitbringsel",brauerei:"Br",stil:"IPA",status:"offen",angelegt:"2026"}],
  biere,
+ anlagen:[{id:1,name:"Koldingbräu",sudhausausbeute:65,verdampfung:3,standard_menge:20,notiz:null}],
+ rezepte:[{id:"r1",name:"Kolding Kölsch",stil:"Kölsch",autor:"Koldingbräu",quelle:"eigenes Rezept",ausschlag:20,sudhausausbeute:65,stammwuerze:11.5,bittere:24,farbe:8,alkohol:4.8,
+   malze:[{name:"Pilsner",gramm:3500,ebc:3.5},{name:"Weizenmalz",gramm:400,ebc:4}],rasten:[{temperatur:63,zeit:40},{temperatur:72,zeit:20}],einmaischtemperatur:57,abmaischtemperatur:78,
+   hauptguss:14,nachguss:13,kochzeit:70,hopfen:[{sorte:"Magnum",gramm:10,alpha:14,zeit:70,typ:"Kochen"},{sorte:"Tettnanger",gramm:20,alpha:4,zeit:10,typ:"Kochen"}],weitere:[],
+   hefe:"K-97",gaertemperatur:"16",endvergaerungsgrad:80,karbonisierung:5,oeffentlich:true,eltern_id:null,aus_sud_id:null},
+  {id:"r2",name:"Geheimes Rezept",stil:"IPA",ausschlag:20,malze:[],hopfen:[],rasten:[],weitere:[],oeffentlich:false,eltern_id:null}],
 };
+// Zustand über Seitenwechsel hinweg (Import → Rezeptseite → Sud) im sessionStorage halten
+try{const g=JSON.parse(sessionStorage.getItem("fake_db")||"null");if(g)Object.keys(g).forEach(k=>db[k]=g[k]);}catch(_){}
+const merken=()=>{try{sessionStorage.setItem("fake_db",JSON.stringify(db));}catch(_){}};
 const embed=(t,r)=>{
  if(t==="proben"){const b=biere.find(x=>x.id===r.bier_id);return {...r,biere:{...b,bierstile:stile.find(s=>s.id===b.stil_id)}};}
  if(t==="biere")return {...r,bierstile:stile.find(s=>s.id===r.stil_id),proben:[{count:db.proben.filter(p=>p.bier_id===r.id).length}]};
@@ -29,19 +38,21 @@ function q(t){
  let rows=null, op="select", filters=[], single=false, maybe=false, payload=null;
  const api={
   select(){return api;}, order(){return api;},
-  eq(k,v){filters.push(r=>r[k]===v);return api;}, neq(k,v){filters.push(r=>r[k]!==v);return api;}, in(k,v){filters.push(r=>v.includes(r[k]));return api;},
+  eq(k,v){filters.push(r=>r[k]===v);return api;}, not(k,o,v){filters.push(r=>r[k]!=null);return api;}, limit(){return api;}, neq(k,v){filters.push(r=>r[k]!==v);return api;}, in(k,v){filters.push(r=>v.includes(r[k]));return api;},
   insert(p){op="insert";payload=p;return api;}, update(p){op="update";payload=p;return api;}, delete(){op="delete";return api;}, upsert(p){op="upsert";payload=p;return api;},
   single(){single=true;return api;}, maybeSingle(){maybe=true;return api;},
   then(res,rej){
    log.push([t,op,payload]);
-   let tab=db[t]||[];
-   if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);
+   let tab=db[t]||(db[t]=[]);
+   if(rolle==="anon"&&t==="rezepte"&&op==="select"){tab=tab.filter(r=>r.oeffentlich);}
+   else if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);
    let out;
    if(op==="select"){out=tab.filter(r=>filters.every(f=>f(r))).map(r=>embed(t,r));}
    else if(op==="insert"){const arr=(Array.isArray(payload)?payload:[payload]).map(p=>({id:t[0]+Math.random().toString(36).slice(2,7),code:"neucode234",status:"vorbereitung",...p}));tab.push(...arr);out=arr;}
    else if(op==="update"){out=tab.filter(r=>filters.every(f=>f(r)));out.forEach(r=>Object.assign(r,payload));}
    else if(op==="delete"){out=tab.filter(r=>filters.every(f=>f(r)));db[t]=tab.filter(r=>!out.includes(r));}
    else if(op==="upsert"){out=payload.map(p=>{const r=tab.find(x=>x.id===p.id);Object.assign(r,p);return r;});}
+   if(op!=="select")merken();
    const data=single||maybe?(out[0]||null):out;
    return Promise.resolve({data,error:null}).then(res,rej);
   }};
@@ -61,6 +72,7 @@ const rpcs={
  vk_laden:vkLaden,
  vk_beitreten({p_code,p_name}){const t={id:"t"+Math.random(),verkostung_id:"v1",name:p_name,token:"tok"+Math.random()};db.teilnehmer.push(t);return {data:{id:t.id,token:t.token,name:t.name},error:null};},
  vk_bewerten(a){const t=db.teilnehmer.find(x=>x.token===a.p_token);let w=db.bewertungen.find(x=>x.probe_id===a.p_probe&&x.teilnehmer_id===t.id);if(!w){w={id:"w"+Math.random(),probe_id:a.p_probe,teilnehmer_id:t.id,ausgeblendet:false};db.bewertungen.push(w);}Object.assign(w,{note:a.p_note,merkmale:a.p_merkmale,geruch:a.p_geruch,fehler:a.p_fehler,nochmal:a.p_nochmal,kommentar:a.p_kommentar});window.__letzte=a;return {data:{ok:true},error:null};},
+ rezept_sude(a){return {data:db.sude.filter(s=>s.rezept_id===a.p_rezept).map(s=>({id:s.id,nr:s.nr,datum:s.datum,oeffentlich:s.oeffentlich})),error:null};},
  vk_admin_bewerten(a){window.__admin=a;let w=db.bewertungen.find(x=>x.probe_id===a.p_probe&&x.teilnehmer_id===a.p_teilnehmer);if(!w){w={id:"w"+Math.random(),probe_id:a.p_probe,teilnehmer_id:a.p_teilnehmer,ausgeblendet:false,nachgetragen:true};db.bewertungen.push(w);}else{w.original_note=w.original_note??w.note;}Object.assign(w,{note:a.p_note,kommentar:a.p_kommentar,admin_geaendert:"2026-10-18T11:00:00Z"});return {data:{ok:true},error:null};},
  vk_admin_teilnehmer(a){const t={id:"tx"+Math.random(),verkostung_id:a.p_verkostung,name:a.p_name};db.teilnehmer.push(t);return {data:t.id,error:null};},
  vk_vorschlagen(){return {data:{ok:true},error:null};},
