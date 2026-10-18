@@ -1,0 +1,43 @@
+/* Koldingbräu – Bereich Sude (Braubuch): Kennzahlen, Notenverlauf, Liste nach Jahrgang, Schüttung, Hopfen */
+/* Kennzahlen */
+.overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px;align-items:stretch}
+@media (max-width:760px){.overview{grid-template-columns:1fr}}
+.chart{border-top:2px solid var(--ink);border-bottom:1px solid var(--line);padding:16px 0 8px;min-width:0}
+.chart-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.chart-head h2{font-size:1rem;font-weight:700}
+.chart-head small{color:var(--muted);font-size:.78rem}
+.chart svg{width:100%;height:auto;display:block;margin-top:8px}
+.chart text{font-family:var(--font-data);font-size:11px;fill:var(--muted)}
+/* Liste */
+.year{display:flex;flex-direction:column;gap:0}
+.year-head{display:flex;align-items:baseline;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.year-head h2{font-size:1.6rem;font-weight:800;font-stretch:80%}
+.year-head span{color:var(--muted);font-size:.85rem}
+.brew{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left;width:100%}
+.brew:hover{background:var(--surface)}
+.brew .date{font-family:var(--font-data);font-size:.8rem;color:var(--muted);line-height:1.25}
+.brew .date b{display:block;font-size:1.05rem;color:var(--ink);font-weight:500}
+.brew .main{min-width:0;display:flex;flex-direction:column;gap:3px}
+.brew .title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brew .title h3{font-size:1.15rem;font-weight:700}
+.brew .nr{font-family:var(--font-data);font-size:.75rem;color:var(--muted)}
+.brew .meta{color:var(--muted);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brew .facts{display:flex;align-items:center;gap:14px}
+.brew .facts .num{font-size:.82rem;color:var(--muted);text-align:right;line-height:1.3}
+@media (max-width:560px){.brew{grid-template-columns:48px minmax(0,1fr) auto;gap:10px}.brew .facts .num{display:none}}
+.cap{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.grist{display:flex;flex-direction:column;gap:6px}
+.grist-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;font-size:.92rem}
+.grist-bar{grid-column:1/-1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.grist-bar i{display:block;height:100%;background:var(--amber)}
+.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.steps li{display:flex;gap:10px;font-size:.92rem}
+.steps li b{font-family:var(--font-data);font-weight:500;color:var(--muted);min-width:20px}
+.hops{display:flex;flex-direction:column;gap:6px}
+.hops div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;font-size:.92rem;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.hops span{color:var(--muted);font-family:var(--font-data);font-size:.82rem}
+.lock{font-size:.7rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 6px;line-height:1.5}
+/* --- Gästeansicht ohne Notenverlauf --- */
+.overview.solo{grid-template-columns:1fr}
+.overview.solo .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:560px){.overview.solo .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}

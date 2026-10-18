@@ -1,0 +1,7 @@
+/* Koldingbräu – Bereich Liga: Verkostungen je Bier */
+.abende{list-style:none;margin:0;padding:0}
+.abende li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 12px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line)}
+.abende li small{color:var(--muted);font-size:.78rem}
+.abende li a{font-weight:600}
+.abende li > small:first-of-type{grid-column:1;grid-row:2}
+.rank .erg-detail .abende li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 12px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line)}

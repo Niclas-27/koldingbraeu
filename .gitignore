@@ -3,3 +3,9 @@ archiv/
 # werden beim Veröffentlichen geholt (scripts/assets.sh)
 vendor/*.js
 fonts/*.woff2
+
+# lokale Dokumente (Konzept, Pläne) – nicht veröffentlichen
+docs/
+# Bildschirmfotos der Tests
+tests/screenshots/
+__pycache__/

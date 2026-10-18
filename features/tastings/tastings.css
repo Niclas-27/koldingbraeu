@@ -1,0 +1,120 @@
+/* Koldingbräu – Bereich Verkostungen: Karten, Bewertungsbogen, Braumeister-Ansicht, Ergebnisseite */
+.codebox{flex-direction:row;align-items:flex-end;flex-wrap:wrap}
+.codebox label{flex:1 1 220px}
+.vk-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.vk-item{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.vk-item:hover{background:var(--surface)}
+.vk-item .d{color:var(--muted);font-size:.85rem}
+.vk-item .t b{display:block;font-size:1.1rem;font-family:var(--font-display)}
+.vk-item .t small{color:var(--muted)}
+@media (max-width:560px){.vk-item{grid-template-columns:minmax(0,1fr) auto}.vk-item .d{grid-column:1/-1;margin-bottom:-10px}}
+ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+/* Proben (Gäste) */
+.proben{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.probe{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px;cursor:pointer;min-height:64px}
+.probe:hover{border-color:var(--muted)}
+.probe .pn{font-size:1.4rem;color:var(--amber)}
+.probe .pt{min-width:0}
+.probe .pt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.probe .pt small{color:var(--muted);font-size:.8rem}
+.probe .pg{font-size:.85rem;color:var(--amber);font-weight:600}
+.probe.done{border-color:var(--hop);background:var(--hop-soft)}
+.probe.done .pg b{display:inline-block;min-width:36px;text-align:center;font-size:1.2rem;color:var(--hop)}
+/* Bewertungsbogen */
+.scale{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px}
+.scale button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 0;font-family:var(--font-data);font-size:1rem;cursor:pointer;min-height:44px}
+.scale button[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+@media (max-width:420px){.scale{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.yn{display:flex;gap:8px}
+.yn button{flex:1;max-width:140px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 0;font-weight:600;cursor:pointer}
+.yn button[aria-pressed="true"]{background:var(--hop-soft);border-color:var(--hop);color:var(--hop)}
+.yn button[data-yn="false"][aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+details.grp{border-top:1px solid var(--line);padding-top:10px}
+details.grp summary{cursor:pointer;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);padding:4px 0;list-style-position:inside}
+details.grp[open]{display:flex;flex-direction:column;gap:14px;padding-bottom:6px}
+.sl-top{display:flex;justify-content:space-between;font-size:.9rem}
+.sl-top output{color:var(--amber);font-weight:500}
+.sl input[type=range]{width:100%;accent-color:var(--amber);margin:6px 0 0;height:28px}
+.sl.unset input[type=range]{accent-color:var(--line);opacity:.7}
+.sl.unset .sl-top output{color:var(--muted)}
+.sl-ends{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)}
+.tagpick{display:flex;flex-wrap:wrap;gap:6px}
+.tagpick .chip{padding:7px 12px}
+/* Braumeister-Ansicht */
+.qrbox{align-items:flex-start}
+.qr{background:#fff;border-radius:8px;padding:4px;line-height:0;width:180px;max-width:100%}
+.qr svg{width:100%;height:auto;display:block}
+.qr.gross{width:min(420px,100%);margin:0 auto}
+.linktext{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere;margin:0}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.plist li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.plist .pn{color:var(--amber);font-size:1.1rem}
+.plist .pt b{display:block}
+.plist .pt small{color:var(--muted);font-size:.8rem}
+.plist .pa{display:flex;gap:4px;align-items:center}
+.plist .x{width:32px;height:32px}
+.plist .x[disabled]{opacity:.3;cursor:default}
+.vs{border-top:1px dashed var(--line);padding-top:6px}
+.vs-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;padding:6px 0}
+.vs-row small{display:block}
+.tn{display:flex;flex-wrap:wrap;gap:6px}
+.stats.mini{grid-template-columns:repeat(3,minmax(0,1fr));padding:12px 0}
+.stats.mini .stat b{font-size:1.7rem}
+.pf{display:grid;grid-template-columns:80px minmax(0,1fr) 80px;gap:4px 10px;align-items:center;font-size:.82rem;color:var(--muted);margin-bottom:8px}
+.pf-r{text-align:right}
+.pf-t{position:relative;height:8px;border-radius:4px;background:var(--line)}
+.pf-t i{position:absolute;top:-4px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--amber);border:2px solid var(--bg)}
+.pf-n{grid-column:2;text-align:center;font-size:.72rem;margin-top:-2px}
+.bw{display:flex;flex-direction:column}
+.bw-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.bw-row .note{display:block;margin-top:6px;font-size:.9rem}
+.bw-row.aus{opacity:.5}
+.bw-row.aus .bw-t b{text-decoration:line-through}
+.picklist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.pick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);padding:10px 4px;cursor:pointer}
+.pick:hover{background:var(--surface)}
+.pick small{color:var(--muted);font-size:.8rem}
+.pick.row{flex-direction:row;justify-content:space-between;align-items:center;cursor:default;flex-wrap:wrap}
+.pick.row small{display:block}
+@media (max-width:480px){.plist .pa small{display:none}}
+/* --- Ergebnisseiten, Liste der Verkostungen --- */
+.vk-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.vk-tile{display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;color:inherit;text-decoration:none;min-width:0}
+.vk-tile:hover{border-color:var(--muted)}
+.vk-tile .d{color:var(--muted);font-size:.82rem}
+.vk-tile .t{font-family:var(--font-display);font-size:1.3rem;font-weight:700;line-height:1.15}
+.vk-tile .m{color:var(--muted);font-size:.85rem}
+.vk-tile .w{display:flex;align-items:baseline;gap:8px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line);font-weight:600;min-width:0}
+.vk-tile .w span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vk-tile .w b{font-size:1.15rem;font-weight:500;color:var(--hop)}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
+.stufe{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius) var(--radius) 0 0;padding:14px 10px;min-width:0}
+.stufe.s1{padding-top:26px;padding-bottom:30px;border-color:var(--hop);background:var(--hop-soft)}
+.stufe.s2{padding-bottom:18px}
+.stufe .medaille{font-size:1.8rem;line-height:1}
+.stufe b{font-family:var(--font-display);font-size:1.1rem;overflow-wrap:anywhere}
+.stufe small{color:var(--muted);font-size:.78rem}
+.stufe .num{font-size:1.5rem;margin-top:4px}
+.stufe.s1 .num{font-size:2rem;color:var(--hop)}
+@media (max-width:560px){.podium{grid-template-columns:1fr;align-items:stretch}.podium .stufe{border-radius:var(--radius);flex-direction:row;gap:10px;padding:10px 14px;text-align:left}.podium .stufe small{display:none}.podium .stufe b{flex:1}.podium .stufe .num{margin:0;font-size:1.3rem}
+  .podium .s1{order:-1}}
+.zitate{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.zitate li{border-left:3px solid var(--amber-soft);padding:2px 0 2px 10px;font-style:italic}
+.dots{position:relative;height:46px;margin:0 8px;border-bottom:1px solid var(--line)}
+.dots .tick{position:absolute;bottom:-18px;font-size:.7rem;color:var(--muted);font-family:var(--font-data);transform:translateX(-50%)}
+.dots .tick:nth-child(1){left:0}
+.dots .tick:nth-child(2){left:10%}
+.dots .tick:nth-child(3){left:20%}
+.dots .tick:nth-child(4){left:30%}
+.dots .tick:nth-child(5){left:40%}
+.dots .tick:nth-child(6){left:50%}
+.dots .tick:nth-child(7){left:60%}
+.dots .tick:nth-child(8){left:70%}
+.dots .tick:nth-child(9){left:80%}
+.dots .tick:nth-child(10){left:90%}
+.dots .tick:nth-child(11){left:100%}
+.dots i{position:absolute;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--amber)}
+.erg-detail .dots{margin-bottom:18px}
+.rank .erg-detail .zitate li{display:block;padding:2px 0 2px 10px}
+.bw-a{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.vermerk{display:block;color:var(--amber);font-size:.78rem;margin-top:2px}

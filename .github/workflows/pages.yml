@@ -29,8 +29,11 @@ jobs:
       - name: Seite zusammenstellen
         run: |
           mkdir -p _site
-          cp *.html *.js braubuch.css .nojekyll _site/
-          cp -r fonts vendor _site/
+          cp *.html .nojekyll _site/
+          cp -r core features lib fonts vendor _site/
+          # nur ausliefern, was der Browser braucht (keine Beschreibungen, keine SQL-Dateien)
+          find _site/core _site/features -type f ! -name '*.js' ! -name '*.css' -delete
+          find _site -type d -empty -delete
           [ -f CNAME ] && cp CNAME _site/ || true
       - uses: actions/upload-pages-artifact@v3
         with:

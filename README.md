@@ -16,21 +16,27 @@ Die Domain ist in den Repo-Einstellungen unter *Pages → Custom domain* eingetr
 
 ## Aufbau
 
-| Datei / Ordner | Inhalt |
-|----------------|--------|
-| `index.html`, `sude.js` | Seite „Sude“: das Braubuch mit Liste, Details und Editor |
-| `verkostung.html`, `verkostung.js` | Seite „Verkostungen“: anlegen, QR-Einladung, Bewertungsbogen für Gäste, Live-Zwischenstand |
-| `liga.html`, `liga.js` | Seite „Liga“: öffentliche Rangliste aller verkosteten Biere, filterbar nach Bierstil |
-| `rezepte.html` | Platzhalter für das Rezeptbuch |
-| `kern.js`      | Gemeinsamer Kern aller Seiten: Anmeldung, Konto, Verwaltung, Menü |
-| `qr.js`        | Kleiner eigener QR-Code-Erzeuger (ohne fremde Dienste) |
-| `braubuch.css` | Gestaltung aller Seiten |
-| `impressum.html`, `datenschutz.html` | Rechtstexte |
-| `fonts/`       | Schriften, lokal ausgeliefert (keine Verbindung zu Google) |
-| `vendor/`      | Supabase-Bibliothek, lokal ausgeliefert |
-| `supabase/`    | Dokumentation des Backends: Datenbankschema, Rechte, Edge Function `einladen` |
-| `.nojekyll`    | Sorgt dafür, dass GitHub Pages die Dateien unverändert ausliefert |
-| `archiv/`      | Nur lokal, nicht auf GitHub: alte Offline-Fassung und frühere Exporte |
+Das Projekt ist in **Bereiche (Feature-Slices)** gegliedert. Jeder Bereich hat einen eigenen Ordner mit Code,
+Gestaltung, Datenbank und einer `README.md` (Wozu · Wer darf was · Dateien · Datenbank · Offene Punkte).
+
+```
+index.html, verkostung.html, liga.html, rezepte.html   Seiten (Adressen bleiben stabil)
+impressum.html, datenschutz.html                       Rechtstexte
+core/        gemeinsamer Kern: Anmeldung, Konto, Verwaltung, Menü, Grundgestaltung
+features/
+  brews/     Sude (Braubuch)
+  tastings/  Verkostungen: Mitmachen per QR-Code, Verwalten, Ergebnisseiten
+  league/    Liga
+  recipes/   Rezepte (geplant)
+lib/         eigene Hilfsbausteine ohne Bereichsbezug (qr.js)
+supabase/    bereichsübergreifende Datenbank (Profile, Rollen) und Edge Function „einladen“
+tests/       Klicktests mit Test-Attrappe statt echter Datenbank
+fonts/, vendor/   Schriften und Supabase-Bibliothek – beim Veröffentlichen geholt
+docs/        Konzept und Pläne – nur lokal, nicht im Repo
+```
+
+**Regeln:** Ein Bereich nutzt nur `core/` und `lib/`, nie direkt einen anderen Bereich. Rechte werden in der
+Datenbank abgesichert. Neuer Bereich = neuer Ordner nach demselben Muster + Menüpunkt in allen Seiten.
 
 ## Daten und Rechte
 
@@ -49,7 +55,7 @@ Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
 - Gäste haben keinen Tabellenzugriff; sie arbeiten nur über die Datenbankfunktionen `vk_*` mit dem Code der Verkostung und einem persönlichen Schlüssel, der auf ihrem Handy liegt.
 - Öffentlich sind abgeschlossene Verkostungen (Liste und Ergebnisseite `verkostung.html?e=…` mit Podest, Rangliste, Einzelnoten, Geschmacksprofil, Kommentaren ohne Namen und den Namen der Teilnehmer) sowie die Liga. Wer welche Note gab, sehen nur Braumeister; sie können einzelne Bewertungen ausblenden.
 - Der Admin kann Bewertungen nachträglich ändern oder fehlende nachtragen (Verkostung → Bier antippen → „Bearbeiten“ bzw. „+ Bewertung nachtragen“). Jede Änderung wird intern vermerkt, die ursprüngliche Note bleibt erhalten.
-- Datenbank: `supabase/verkostung.sql`, `supabase/verkostung_ergebnis.sql`, `supabase/verkostung_admin.sql`.
+- Einzelheiten: `features/tastings/README.md`.
 
 ## Arbeitsweise
 
@@ -70,3 +76,11 @@ Die Seite spricht dabei mit der echten Datenbank.
 `vendor/` und die Schriftdateien in `fonts/` stehen nicht im Repo. Beim Veröffentlichen holt sie GitHub Actions
 (`.github/workflows/pages.yml` → `scripts/assets.sh`) in fest eingestellten Versionen. Zum lokalen Testen einmal
 `./scripts/assets.sh` ausführen (braucht Node.js und Internet).
+
+## Tests
+
+```bash
+python3 tests/run_tests.py
+```
+
+Klickt alle Bereiche am Computer und in Handygröße durch – gegen eine Attrappe, die echte Datenbank bleibt unberührt.

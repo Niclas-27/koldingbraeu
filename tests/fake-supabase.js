@@ -1,0 +1,84 @@
+/* Koldingbräu – Test-Attrappe für supabase-js: Daten liegen im Speicher, nichts geht ins Netz.
+   Rolle über localStorage "test_rolle": anon | bm | admin. Wird von tests/run_tests.py statt vendor/supabase.js ausgeliefert. */
+// Test-Attrappe für supabase-js: Daten im Speicher, Rolle über localStorage "test_rolle" (anon|bm|admin)
+(function(){
+const rolle = localStorage.getItem("test_rolle") || "anon";
+const uid = "u1";
+const log = window.__calls = [];
+const stile=[{id:1,name:"Pils",reihenfolge:10},{id:2,name:"Helles",reihenfolge:20},{id:15,name:"IPA",reihenfolge:150}];
+const biere=[{id:"b1",name:"Kolding Kölsch",brauerei:"Koldingbräu",eigen:true,alkohol:4.9,stil_id:1,sud_id:null,notiz:null},{id:"b2",name:"Augustiner Hell",brauerei:"Augustiner",eigen:false,alkohol:5.2,stil_id:2,sud_id:null,notiz:null},{id:"b3",name:"Hazy Hops",brauerei:"Kehrwieder",eigen:false,alkohol:6.5,stil_id:15}];
+const db={
+ profile:[{id:uid,name:"Niels",email:"n@x.de",rolle:rolle==="admin"?"admin":"braumeister"}],
+ sude:[{id:"s1",nr:1,datum:"2024-03-01",stil:"Kölsch",malz:[{sorte:"Pils",gramm:4000}],hopfen:[],maischplan:[],oeffentlich:true,bewertung:"2+"},{id:"s2",nr:2,datum:"2025-05-01",stil:"IPA",malz:[],hopfen:[],maischplan:[],oeffentlich:false,bewertung:"1-"}],
+ bierstile:stile,
+ verkostungen:[{id:"v1",titel:"Herbstrunde",datum:"2026-10-17",ort:"Hamburg",blind:false,status:"laeuft",code:"abc234defg",proben:[{count:3}],teilnehmer:[{count:2}]}],
+ proben:[{id:"p1",verkostung_id:"v1",bier_id:"b1",nummer:1},{id:"p2",verkostung_id:"v1",bier_id:"b2",nummer:2},{id:"p3",verkostung_id:"v1",bier_id:"b3",nummer:3}],
+ teilnehmer:[{id:"t1",verkostung_id:"v1",name:"Anna"},{id:"t2",verkostung_id:"v1",name:"Ben"}],
+ bewertungen:[{id:"w1",probe_id:"p1",teilnehmer_id:"t1",note:8,merkmale:{bitter:4,koerper:6},geruch:["malzig"],fehler:[],nochmal:true,kommentar:"Schön rund",ausgeblendet:false},
+              {id:"w2",probe_id:"p1",teilnehmer_id:"t2",note:7,merkmale:{bitter:6},geruch:["malzig","Zitrus"],fehler:[],nochmal:false,kommentar:null,ausgeblendet:false},
+              {id:"w3",probe_id:"p2",teilnehmer_id:"t1",note:9,merkmale:{},geruch:[],fehler:["Butter"],nochmal:true,kommentar:"Top",ausgeblendet:false}],
+ vorschlaege:[{id:"x1",verkostung_id:"v1",teilnehmer_id:"t2",name:"Mitbringsel",brauerei:"Br",stil:"IPA",status:"offen",angelegt:"2026"}],
+ biere,
+};
+const embed=(t,r)=>{
+ if(t==="proben"){const b=biere.find(x=>x.id===r.bier_id);return {...r,biere:{...b,bierstile:stile.find(s=>s.id===b.stil_id)}};}
+ if(t==="biere")return {...r,bierstile:stile.find(s=>s.id===r.stil_id),proben:[{count:db.proben.filter(p=>p.bier_id===r.id).length}]};
+ return r;
+};
+function q(t){
+ let rows=null, op="select", filters=[], single=false, maybe=false, payload=null;
+ const api={
+  select(){return api;}, order(){return api;},
+  eq(k,v){filters.push(r=>r[k]===v);return api;}, neq(k,v){filters.push(r=>r[k]!==v);return api;}, in(k,v){filters.push(r=>v.includes(r[k]));return api;},
+  insert(p){op="insert";payload=p;return api;}, update(p){op="update";payload=p;return api;}, delete(){op="delete";return api;}, upsert(p){op="upsert";payload=p;return api;},
+  single(){single=true;return api;}, maybeSingle(){maybe=true;return api;},
+  then(res,rej){
+   log.push([t,op,payload]);
+   let tab=db[t]||[];
+   if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);
+   let out;
+   if(op==="select"){out=tab.filter(r=>filters.every(f=>f(r))).map(r=>embed(t,r));}
+   else if(op==="insert"){const arr=(Array.isArray(payload)?payload:[payload]).map(p=>({id:t[0]+Math.random().toString(36).slice(2,7),code:"neucode234",status:"vorbereitung",...p}));tab.push(...arr);out=arr;}
+   else if(op==="update"){out=tab.filter(r=>filters.every(f=>f(r)));out.forEach(r=>Object.assign(r,payload));}
+   else if(op==="delete"){out=tab.filter(r=>filters.every(f=>f(r)));db[t]=tab.filter(r=>!out.includes(r));}
+   else if(op==="upsert"){out=payload.map(p=>{const r=tab.find(x=>x.id===p.id);Object.assign(r,p);return r;});}
+   const data=single||maybe?(out[0]||null):out;
+   return Promise.resolve({data,error:null}).then(res,rej);
+  }};
+ return api;
+}
+const gaeste={};
+function vkLaden({p_code,p_token}){
+ const v=db.verkostungen.find(x=>x.code===p_code); if(!v)return {error:{code:"P0002",message:"Diese Verkostung gibt es nicht (mehr)."}};
+ const t=db.teilnehmer.find(x=>x.token===p_token);
+ const offen=!v.blind||v.status==="abgeschlossen";
+ const proben=db.proben.filter(p=>p.verkostung_id===v.id).sort((a,b)=>a.nummer-b.nummer).map(p=>{const b=biere.find(x=>x.id===p.bier_id);const w=db.bewertungen.filter(x=>x.probe_id===p.id&&!x.ausgeblendet);
+   return {id:p.id,nummer:p.nummer,bier:offen?{name:b.name,brauerei:b.brauerei,eigen:b.eigen,stil:stile.find(s=>s.id===b.stil_id)?.name,alkohol:b.alkohol}:null,schnitt:w.length?w.reduce((a,x)=>a+x.note,0)/w.length:null,anzahl:w.length,nochmal:w.filter(x=>x.nochmal).length};});
+ return {data:{verkostung:{titel:v.titel,datum:v.datum,ort:v.ort,blind:v.blind,status:v.status},teilnehmer:db.teilnehmer.length,proben,
+   ich:t?{name:t.name,bewertungen:db.bewertungen.filter(x=>x.teilnehmer_id===t.id),vorschlaege:[]}:null},error:null};
+}
+const rpcs={
+ vk_laden:vkLaden,
+ vk_beitreten({p_code,p_name}){const t={id:"t"+Math.random(),verkostung_id:"v1",name:p_name,token:"tok"+Math.random()};db.teilnehmer.push(t);return {data:{id:t.id,token:t.token,name:t.name},error:null};},
+ vk_bewerten(a){const t=db.teilnehmer.find(x=>x.token===a.p_token);let w=db.bewertungen.find(x=>x.probe_id===a.p_probe&&x.teilnehmer_id===t.id);if(!w){w={id:"w"+Math.random(),probe_id:a.p_probe,teilnehmer_id:t.id,ausgeblendet:false};db.bewertungen.push(w);}Object.assign(w,{note:a.p_note,merkmale:a.p_merkmale,geruch:a.p_geruch,fehler:a.p_fehler,nochmal:a.p_nochmal,kommentar:a.p_kommentar});window.__letzte=a;return {data:{ok:true},error:null};},
+ vk_admin_bewerten(a){window.__admin=a;let w=db.bewertungen.find(x=>x.probe_id===a.p_probe&&x.teilnehmer_id===a.p_teilnehmer);if(!w){w={id:"w"+Math.random(),probe_id:a.p_probe,teilnehmer_id:a.p_teilnehmer,ausgeblendet:false,nachgetragen:true};db.bewertungen.push(w);}else{w.original_note=w.original_note??w.note;}Object.assign(w,{note:a.p_note,kommentar:a.p_kommentar,admin_geaendert:"2026-10-18T11:00:00Z"});return {data:{ok:true},error:null};},
+ vk_admin_teilnehmer(a){const t={id:"tx"+Math.random(),verkostung_id:a.p_verkostung,name:a.p_name};db.teilnehmer.push(t);return {data:t.id,error:null};},
+ vk_vorschlagen(){return {data:{ok:true},error:null};},
+ vk_archiv(){return {data:[{id:"v0",titel:"Frühjahrsrunde",datum:"2026-04-01",ort:"Hamburg",teilnehmer:7,namen:["Niels","Carsten","Jan"],proben:[{nummer:2,name:"Augustiner Hell",brauerei:"Augustiner",stil:"Helles",alkohol:5.2,schnitt:8.14,anzahl:7,nochmal:6},{nummer:1,name:"Kolding Kölsch",brauerei:"Koldingbräu",stil:"Pils",schnitt:7.5,anzahl:6,nochmal:3}]},{id:"v9",titel:"Pils & Lager",datum:"2026-10-18",ort:null,teilnehmer:3,namen:["Niels","Carsten","Jan"],proben:[{nummer:2,name:"Einbecker",schnitt:9,anzahl:3,nochmal:3}]}],error:null};},
+ vk_ergebnis(){const P=(nr,n,s,no,nm,ext)=>Object.assign({nummer:nr,bier_id:"b"+nr,name:n,brauerei:n.split(" ")[0],eigen:false,stil:s,alkohol:null,schnitt:no,anzahl:3,nochmal:nm,noten:[no,no,no],merkmale:{},geruch:{},fehler:{},kommentare:[]},ext||{});
+   return {data:{verkostung:{id:"v9",titel:"Pils & Lager",datum:"2026-10-18",ort:"Röntbarg",blind:false},teilnehmer:["Niels","Carsten","Jan"],proben:[
+    P(1,"Tyskie","Lager",6,3,{merkmale:{suesse:{wert:3,n:1},koerper:{wert:3,n:1}},kommentare:["Wenig Charakter."]}),
+    P(2,"Einbecker","Pils",9,3,{noten:[10,9,8],merkmale:{bitter:{wert:7,n:1},kohlensaeure:{wert:7,n:1}},geruch:{blumig:1},kommentare:["Geheimtipp! Prickelbitterness.","Geheimtipp – der Hopfen ist gut da."]}),
+    P(3,"Störtebeker","Pils",4,0),P(4,"Budweiser","Lager",5,0,{fehler:{Butter:2}}),P(5,"Flensburger","Pils",2,0),
+    P(6,"Pilsner Urquell","Pils",8,3,{geruch:{brotig:1,"röstig":1}}),P(7,"Staropramen","Lager",7,3)]},error:null};},
+ liga_daten(){const r=[];const add=(id,n,br,e,s,d,sum,an,no)=>r.push({bier_id:id,name:n,brauerei:br,eigen:e,stil:s,verkostung_id:"v"+d,titel:"Runde "+d,datum:d,summe:sum,anzahl:an,nochmal:no});
+   add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2026-04-01",45,6,4);add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2025-10-01",30,4,2);
+   add("b2","Augustiner Hell","Augustiner",false,"Helles","2026-04-01",57,7,6);add("00000000-0000-0000-0000-0000000000b3","Hazy Hops","Kehrwieder",false,"IPA","2026-04-01",20,3,1);return {data:r,error:null};},
+};
+window.supabase={createClient(){return {
+ from:q,
+ rpc(n,a){log.push(["rpc",n,a]);return Promise.resolve(rpcs[n](a||{}));},
+ auth:{getSession:()=>Promise.resolve({data:{session:rolle==="anon"?null:{user:{id:uid,email:"n@x.de"}}}}),onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}};},signInWithPassword:()=>Promise.resolve({error:null}),signOut:()=>Promise.resolve({})},
+ functions:{invoke:()=>Promise.resolve({data:{ok:true}})},
+};}};
+})();
