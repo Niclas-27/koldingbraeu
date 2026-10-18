@@ -18,6 +18,16 @@ SHOTS = ROOT / "tests" / "screenshots"; SHOTS.mkdir(exist_ok=True)
 PORT = 8765; BASE = f"http://localhost:{PORT}/"
 fehler = []
 
+FOTO = str(ROOT / "tests" / "data" / "foto.jpg"); FOTO_BYTES = Path(FOTO).read_bytes()
+
+async def bild_waehlen(pg, ausloeser, zuschneiden=False):
+    """Öffnet den Bild-Dialog, wählt tests/data/foto.jpg und übernimmt (bei rund/hoch nach dem Zuschneiden)."""
+    await pg.click(ausloeser); await pg.wait_for_selector(".bilddialog")
+    await pg.set_input_files(".bilddialog input[type=file] >> nth=1", FOTO)
+    if zuschneiden:
+        await pg.wait_for_selector(".bilddialog [data-a=ok]:not([hidden])"); await pg.click(".bilddialog [data-a=ok]")
+    await pg.wait_for_selector(".bilddialog", state="detached", timeout=5000); await pg.wait_for_timeout(200)
+
 def pruefe(name, bedingung):
     print(("  ok    " if bedingung else "  FEHLT ") + name)
     if not bedingung: fehler.append(name)
@@ -29,6 +39,7 @@ async def main():
             ctx = await br.new_context(viewport={"width": w, "height": h})
             await ctx.route("**/vendor/supabase.js", lambda r: r.fulfill(body=FAKE, content_type="text/javascript"))
             await ctx.route("**/fonts/*.woff2", lambda r: r.fulfill(status=204, body=""))
+            await ctx.route("**/storage/v1/object/public/**", lambda r: r.fulfill(body=FOTO_BYTES, content_type="image/jpeg"))
             pg = await ctx.new_page()
             pg.on("pageerror", lambda e: fehler.append(f"{name}: JS-Fehler {e}"))
             await pg.goto(BASE + "rezepte.html"); await pg.evaluate(f"localStorage.setItem('test_rolle','{rolle}')")
@@ -47,6 +58,12 @@ async def main():
         async def ergebnis(pg):
             await pg.click(".rank.erg li >> nth=0 >> summary"); await pg.wait_for_timeout(200)
         t = await seite("anon", "verkostung.html?e=v9", "vk_ergebnis", ergebnis); pruefe("Ergebnisseite mit Kommentar und Namen", "Geheimtipp" in t and "Mit Niels" in t)
+        async def ergebnis_bilder(pg):
+            pruefe("Ergebnis zeigt Titelbild und Galerie", await pg.locator("#titelbild").count() == 1 and await pg.locator(".galerie .g-item").count() == 2)
+            pruefe("Platzhalter für Biere ohne Bild", await pg.locator(".podium .bb svg").count() >= 1)
+            await pg.click(".galerie .g-zeig >> nth=1"); await pg.wait_for_timeout(200)
+            pruefe("Galerie öffnet Großansicht", "2 / 2" in await pg.inner_text(".lightbox"))
+        await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_bilder", ergebnis_bilder)
         await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_handy", ergebnis, 390, 844)
         async def gast(pg):
             await pg.fill("#j_name", "Clara"); await pg.click("#joinBtn"); await pg.wait_for_timeout(400)
@@ -54,6 +71,10 @@ async def main():
             pruefe("Bogen verlangt Gesamtnote", "Gesamtnote" in await pg.inner_text("#bErr"))
             await pg.click(".scale button[data-n='7']"); await pg.fill("#b_kom", "fruchtig"); await pg.click("#bSave"); await pg.wait_for_timeout(400)
             pruefe("Bewertung gesendet", '"p_note":7' in await pg.evaluate("JSON.stringify(window.__letzte)"))
+            pruefe("Gast sieht Galerie und Foto-Knopf (0 von 3)", await pg.locator(".galerie .g-item").count() == 1 and "0 von 3" in await pg.inner_text("#fotoBtn"))
+            await bild_waehlen(pg, "#fotoBtn"); await pg.wait_for_timeout(500)
+            pruefe("Gast-Foto geht an die Edge Function", await pg.evaluate("window.__invoke") == "galerie-hochladen")
+            pruefe("Zähler steht auf 1 von 3", "1 von 3" in await pg.inner_text("#fotoBtn"))
         t = await seite("anon", "verkostung.html?v=abc234defg", "vk_gast", gast, 390, 844); pruefe("Gast ist beigetreten", "Clara" in t)
         t = await seite("anon", "verkostung.html?v=falsch", "vk_falscher_code"); pruefe("Falscher Code wird gemeldet", "gibt es nicht" in t)
         async def verwalten(pg):
@@ -64,6 +85,19 @@ async def main():
             await pg.click("#nachtragen"); await pg.select_option("#nt_wer", "neu"); await pg.fill("#nt_name", "Manu")
             await pg.click(".scale button[data-n='6']"); await pg.click("#bSave"); await pg.wait_for_timeout(500)
             pruefe("Admin trägt Bewertung nach", "vom Admin nachgetragen" in await pg.inner_text("#sheetBody"))
+            await pg.click("#bAbbr") if await pg.locator("#bAbbr").count() else None
+            await pg.goto(BASE + "verkostung.html?id=v1"); await pg.wait_for_timeout(600)
+            pruefe("Bierliste zeigt Kronkorken-Foto", await pg.locator(".plist img.bb-kronkorken").count() == 1 and await pg.locator(".plist .bb svg").count() == 2)
+            await bild_waehlen(pg, "#titelFeld [data-bf=neu]"); await pg.wait_for_timeout(300)
+            upd = await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='verkostungen'&&c[1]==='update'))")
+            pruefe("Titelbild hochgeladen und gespeichert", "verkostungen/v1/titel-" in upd)
+            await pg.click(".galerie .g-weg"); await pg.click("#bJa"); await pg.wait_for_timeout(400)
+            pruefe("Galerie-Foto gelöscht (Datei und Vorschau)", "verkostungen/v1/galerie/a_t.jpg" in await pg.evaluate("JSON.stringify(window.__removed)"))
+            await pg.click("#addBier"); await pg.click("#neuesBier"); await pg.wait_for_selector("#bi_kk")
+            await bild_waehlen(pg, "#bi_kk [data-bf=neu]", True)
+            await pg.fill("#bi_name", "Testbier"); await pg.click("#biSave"); await pg.wait_for_timeout(500)
+            ins = await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='biere'&&c[1]==='insert'))")
+            pruefe("Neues Bier mit Kronkorken-Bild", "/kronkorken-" in ins)
         await seite("admin", "verkostung.html?id=v1", "vk_verwalten_admin", verwalten)
         async def bm(pg):
             await pg.click(".rank li[data-id] >> nth=1"); await pg.wait_for_timeout(300)
@@ -73,6 +107,8 @@ async def main():
 
         print("Liga")
         t = await seite("anon", "liga.html", "liga"); pruefe("Liga zeigt Biere", "Augustiner Hell" in t)
+        async def liga_bilder(pg): pruefe("Liga zeigt Platzhalter-Kronkorken", await pg.locator(".rank .bb svg").count() >= 3)
+        await seite("anon", "liga.html", "liga_bilder", liga_bilder)
         t = await seite("anon", "liga.html#bier=00000000-0000-0000-0000-0000000000b3", "liga_sprung"); pruefe("Sprung klappt Bier mit Verkostungen auf", "Hazy" in t and "Runde 2026-04-01" in t)
         await seite("anon", "liga.html", "liga_handy", None, 390, 844)
 
@@ -100,7 +136,10 @@ async def main():
             await pg.screenshot(path=str(SHOTS / "rz_editor.png"))
             await pg.click("#berechnen"); await pg.wait_for_timeout(100)
             pruefe("Kennwerte berechnen trägt Stammwürze ein", (await pg.input_value("#r_stammwuerze")) != "")
-            await pg.click("#rzAbbr"); await pg.click("#rzKlon"); await pg.wait_for_timeout(900)
+            await bild_waehlen(pg, "#rf_etikett [data-bf=neu]")
+            await pg.click("#rzSave"); await pg.wait_for_timeout(700)
+            pruefe("Rezept mit Etikett gespeichert und gezeigt", await pg.locator("#rzEtikett img").count() == 1)
+            await pg.click("#rzKlon"); await pg.wait_for_timeout(900)
             pruefe("Klon zeigt „Abgeleitet von“", "Abgeleitet von" in await pg.inner_text("#rz"))
         await seite("bm", "rezepte.html?id=r1", "rz_detail_bm", bearbeiten)
         await seite("anon", "rezepte.html?id=r1", "rz_detail_handy", None, 390, 844)
@@ -116,6 +155,15 @@ async def main():
             await pg.click("#rzBtn"); await pg.wait_for_timeout(900)
             pruefe("Rückweg: Sud → Rezept", "Entstanden aus" in await pg.inner_text("#rz"))
         await seite("bm", "index.html?sud=s1", "sud_rueckweg", rueckweg)
+        async def sud_foto(pg):
+            pruefe("Sud-Liste zeigt Platzhalter-Flaschen", await pg.locator(".brew .sud-bild svg").count() == 2)
+            await pg.click("#editBtn"); await pg.wait_for_selector("#bf_foto")
+            await bild_waehlen(pg, "#bf_foto [data-bf=neu]")
+            await pg.click("[data-add=malz]")
+            pruefe("Foto bleibt beim Neuzeichnen des Formulars", await pg.locator("#bf_foto img").count() == 1)
+            await pg.click("#saveBtn"); await pg.wait_for_timeout(500)
+            pruefe("Sud mit Foto gespeichert und oben gezeigt", await pg.locator("#sudFoto").count() == 1)
+        await seite("bm", "index.html?sud=s1", "sud_foto", sud_foto)
         await br.close()
 
 srv = subprocess.Popen([sys.executable, "-m", "http.server", str(PORT)], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

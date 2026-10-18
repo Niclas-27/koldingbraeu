@@ -44,7 +44,7 @@ function rangTabelle(zeilen, opts){
     const w = z.schnitt==null ? 0 : Math.round(z.schnitt/max*100);
     return `<li class="${z.schnitt!=null&&platz<=3?"top p"+platz:""}"${opts&&opts.klick?` data-id="${esc(z.id)}" tabindex="0" role="button"`:""}>
       <span class="pl num">${z.schnitt==null?"–":platz+"."}</span>
-      <span class="nm"><b>${esc(z.titel)}</b>${z.unter?`<small>${esc(z.unter)}</small>`:""}</span>
+      <span class="nm${z.bild?" mit-bild":""}">${z.bild||""}<span><b>${esc(z.titel)}</b>${z.unter?`<small>${esc(z.unter)}</small>`:""}</span></span>
       <span class="sc"><b class="num">${note(z.schnitt)}</b></span>
       <small class="mt">${z.anzahl||0} Bew.${z.anzahl?` · ${Math.round((z.nochmal||0)/z.anzahl*100)} % nochmal`:""}</small>
       <span class="bar"><i style="width:${w}%"></i></span>

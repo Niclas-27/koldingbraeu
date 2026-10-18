@@ -5,9 +5,9 @@
 const {$, esc, state, isBM, isAdmin, fmtDate, fmtDateTime, personName, todayIso, toast, sheet, openSheet, closeSheet, kv, sec, fehlertext} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});  // Client entsteht erst beim Start
 // Spalten, die Gäste lesen dürfen (ohne notizen, bewertung)
-const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,maischplan,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,abgefuellt,oeffentlich,rezept_id";
+const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,maischplan,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett";
 // Spalten, die beim Speichern geschrieben werden
-const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","maischplan","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","abgefuellt","notizen","oeffentlich","rezept_id"];
+const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","maischplan","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_etikett"];
 const CAPS = {rot:"#c23b2b",blau:"#2f5fa8",orange:"#e5862b",silber:"#b9bec4",gruen:"#3f8a3a",gold:"#c9a227",schwarz:"#1c1c1c",weiss:"#f4f4f0",gelb:"#e8c82e"};
 const CAP_LABEL = {rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"Grün",gold:"Gold",schwarz:"Schwarz",weiss:"Weiß",gelb:"Gelb"};
 Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
@@ -21,6 +21,11 @@ function ageText(iso){if(!iso)return"";const days=Math.floor((Date.now()-new Dat
 function title(b){return b.stil||`Sud ${b.nr}`;}
 function malzSum(b){return(b.malz||[]).reduce((a,m)=>a+(+m.gramm||0),0);}
 function fmtKg(g){return(g/1000).toLocaleString("de-DE",{maximumFractionDigits:2})+" kg";}
+/* Bild-Vorschau eines Suds: Etikett, sonst Foto, sonst gezeichnete Flasche in Bierfarbe */
+function sudFarbe(b){const v=Bz.zahl(String(b.ausschlag||b.wuerze||b.biermenge||"").match(/\d+(?:[.,]\d+)?/)?.[0]);return Bz.ebc({ausschlag:v,malze:(b.malz||[]).map(m=>({name:m.sorte,gramm:m.gramm,ebc:m.ebc}))});}
+function sudBild(b){const p=b.bild_etikett||b.bild_foto;
+  if(p)return`<img class="sud-bild" src="${esc(Bilder.url(p,true))}" alt="" loading="lazy">`;
+  return`<span class="sud-bild ph">${Bilder.platzhalter("flasche",{name:title(b),stil:b.stil,ebc:sudFarbe(b)})}</span>`;}
 function haystack(b){return JSON.stringify(b).toLowerCase();}
 const Bz=window.Brau;
 const TYP=Bz.HOPFEN_TYPEN;
@@ -113,7 +118,7 @@ function rowHTML(b){
   const lock=bm&&!b.oeffentlich?`<span class="lock" title="Nur für angemeldete Braumeister sichtbar">intern</span>`:"";
   const sub=[malz,b.hopfensorten,b.hefe].filter(Boolean).join(" · ");
   return `<button class="brew" data-id="${esc(b.id)}">
-    <div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
+    ${sudBild(b)}<div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
     <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span>${lock}</div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
     <div class="facts"><div class="num">${b.stammwuerze?esc(b.stammwuerze)+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(gv)}" title="Bewertung">${esc(b.bewertung||"–")}</span>`:""}</div>
   </button>`;
@@ -137,7 +142,10 @@ function openDetail(id){
       ${bm?(b.oeffentlich?`<span class="tag pub">öffentlich</span>`:`<span class="tag intern">intern</span>`):""}
     </div>${b.rezept_id?`<p class="meta-line" id="rezeptVerweis">Nach Rezept …</p>`:""}`;
   const changed=bm&&b.geaendert?`<p class="meta-line">Zuletzt geändert ${esc(fmtDateTime(b.geaendert))}${personName(b.geaendert_von)?" von "+esc(personName(b.geaendert_von)):""}</p>`:"";
-  const body=head
+  const bilder=(b.bild_foto?`<img class="titelbild" id="sudFoto" src="${esc(Bilder.url(b.bild_foto))}" alt="Foto: ${esc(title(b))}">`:"");
+  const etikett=b.bild_etikett?`<button type="button" class="etikett-zeig" id="sudEtikett"><img src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`:"";
+  const body=bilder+head
+    +(etikett?sec("Etikett",etikett):"")
     +sec("Schüttung",grist)
     +sec("Wasser & Maische",kv([["Hauptguss",b.hauptguss],["Nachguss",b.nachguss],["Wasserbehandlung",b.wasser]])+(steps?`<div style="margin-top:12px">${steps}</div>`:""))
     +sec("Läutern & Kochen",kv([["Läutern",b.laeutern],["Kochzeit",b.kochzeit],["Würzemenge",b.wuerze],["Stammwürze",b.stammwuerze]]))
@@ -151,6 +159,9 @@ function openDetail(id){
   sheet(title(b),body,foot);
   if(bm){$("#editBtn").onclick=()=>openEditor(b,false);$("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);}
   else $("#closeBtn2").onclick=closeSheet;
+  const bp=[b.bild_foto,b.bild_etikett].filter(Boolean);
+  if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
+  if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
   if(b.rezept_id)sb.from("rezepte").select("id,name").eq("id",b.rezept_id).maybeSingle().then(({data})=>{const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
 }
 function confirmDelete(b){
@@ -159,6 +170,7 @@ function confirmDelete(b){
   $("#yesDel").onclick=async()=>{$("#yesDel").disabled=true;
     const {data,error}=await sb.from("sude").delete().eq("id",b.id).select("id");
     if(error||!data||!data.length){toast(error?fehlertext(error):"Löschen ist nur dem Admin erlaubt.");openDetail(b.id);return;}
+    Bilder.loeschen(b.bild_foto);Bilder.loeschen(b.bild_etikett);
     state.brews=state.brews.filter(x=>x.id!==b.id);closeSheet();renderAll();toast("Sud gelöscht");};
 }
 /* --- Editor --- */
@@ -180,16 +192,17 @@ function rowsHTML(kind,items){
   if(kind==="hopfen")return items.map((h,i)=>`<div class="r"><input id="hop_s_${i}" placeholder="Sorte" value="${esc(h.sorte)}" aria-label="Hopfensorte"><input id="hop_g_${i}" type="number" step="any" inputmode="decimal" placeholder="Gramm" value="${esc(h.gramm??"")}" aria-label="Menge in Gramm"><input id="hop_a_${i}" type="number" step="any" inputmode="decimal" placeholder="% α" value="${esc(h.alpha??"")}" aria-label="Alphasäure in Prozent"><input id="hop_z_${i}" type="number" step="any" inputmode="numeric" placeholder="min" value="${esc(h.zeit??"")}" aria-label="Kochzeit der Gabe in Minuten"><select id="hop_t_${i}" aria-label="Art der Hopfengabe">${Object.entries(TYP).map(([k,l])=>`<option value="${k}"${h.typ===k?" selected":""}>${l}</option>`).join("")}</select><button type="button" class="x" data-del="hopfen" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>${h.alt?`<small class="hint">vorher: ${esc(h.alt)}</small>`:""}`).join("");
   return items.map((s,i)=>`<div class="r one"><input id="rast_${i}" placeholder="z. B. 63 °C 30 Min." value="${esc(s)}" aria-label="Rast ${i+1}"><button type="button" class="x" data-del="maischplan" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
 }
-let draft=null,editingId=null;
+let draft=null,editingId=null,bildBasis="";
 function openEditor(src,asCopy){
   if(!isBM())return;
   const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
   if(src&&src.ausRezept){draft=Object.assign({nr:nextNr,datum:todayIso(),oeffentlich:false},src.draft);editingId=null;}
   else if(!src){draft={nr:nextNr,datum:todayIso(),oeffentlich:false,malz:[{sorte:"",gramm:"",ebc:null}],maischplan:[""],hopfen:[hopfenNeu(null)]};editingId=null;}
-  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:"",ausschlag:"",biermenge:null,flaschen:null,alkohol:"",abgefuellt:"",notizen:"",datum_geschaetzt:false,oeffentlich:false});editingId=null;}
+  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:"",ausschlag:"",biermenge:null,flaschen:null,alkohol:"",abgefuellt:"",notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null});editingId=null;}
   else{draft=JSON.parse(JSON.stringify(src));editingId=src.id;}
   ["malz","maischplan","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
   draft.hopfen=draft.hopfen.map(hopfenNeu);
+  bildBasis=`sude/${editingId||"neu-"+crypto.randomUUID()}`;
   $("#sheetTitle").textContent=editingId?`Sud ${draft.nr} bearbeiten`:asCopy?`Neuer Sud nach Vorlage`:src&&src.ausRezept?`Neuer Sud nach „${src.name}“`:"Neuer Sud";
   drawForm();
   $("#sheetFoot").innerHTML=`<span class="err" id="formErr"></span><span class="spacer"></span><button class="btn" id="cancelEdit">Abbrechen</button><button class="btn primary" id="saveBtn">${editingId?"Änderungen speichern":"Sud anlegen"}</button>`;
@@ -202,6 +215,7 @@ function drawForm(){
   $("#sheetBody").innerHTML=`<form id="form" novalidate>
     ${fs("Grunddaten",`<div class="grid2">${FIELDS[0][1].map(f=>field(f,d[f[0]])).join("")}</div>
       <label class="check"><input type="checkbox" id="f_oeffentlich" name="oeffentlich"${d.oeffentlich?" checked":""}><span><b>Öffentlich zeigen</b><br><span class="hint">Gäste sehen dann Werte, Schüttung, Hopfen und Hefe – Notizen und Bewertung bleiben intern.</span></span></label>`)}
+    ${fs("Bilder",`<div class="grid2">${Bilder.feldHtml("bf_foto",d.bild_foto,{art:"frei",beschriftung:"Foto vom Sud"})}${Bilder.feldHtml("bf_etikett",d.bild_etikett,{art:"frei",beschriftung:"Etikett"})}</div><p class="hint">Beides freiwillig. Das Foto erscheint oben in der Ansicht, das Etikett als Vorschaubild in der Liste.</p>`)}
     ${fs("Schüttung",`<div class="rowlist m3" id="rl_malz">${rowsHTML("malz",d.malz)}</div><button type="button" class="add" data-add="malz">+ Malz</button>`)}
     ${fs("Wasser & Maischplan",`<div class="grid2">${FIELDS[1][1].map(f=>field(f,d[f[0]])).join("")}</div><div class="rowlist" id="rl_maischplan">${rowsHTML("maischplan",d.maischplan)}</div><button type="button" class="add" data-add="maischplan">+ Rast</button>`)}
     ${fs("Läutern & Kochen",`<div class="grid2">${FIELDS[2][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
@@ -211,6 +225,8 @@ function drawForm(){
     ${fs("Notizen (intern)",`<label class="f" for="f_notizen">Was ist aufgefallen?<textarea id="f_notizen" name="notizen">${esc(d.notizen??"")}</textarea></label>`)}
   </form>`;
   $("#form").onsubmit=e=>{e.preventDefault();save();};
+  Bilder.feldVerdrahten("bf_foto",{art:"frei",basis:bildBasis+"/foto",titel:"Foto vom Sud",geaendert:p=>{draft.bild_foto=p;}});
+  Bilder.feldVerdrahten("bf_etikett",{art:"frei",basis:bildBasis+"/etikett",titel:"Etikett",geaendert:p=>{draft.bild_etikett=p;}});
   $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:"",ebc:null}:k==="hopfen"?hopfenNeu(null):"");const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
   $("#form").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{collect();draft[b.dataset.del].splice(+b.dataset.i,1);const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
 }
@@ -239,6 +255,8 @@ async function save(){
   const q=editingId?sb.from("sude").update(out).eq("id",editingId):sb.from("sude").insert(out);
   const {data,error}=await q.select().single();
   if(error){btn.disabled=false;err.textContent=fehlertext(error);return;}
+  const alt=editingId&&state.brews.find(b=>b.id===editingId);
+  if(alt)["bild_foto","bild_etikett"].forEach(k=>{if(alt[k]&&alt[k]!==data[k])Bilder.loeschen(alt[k]);});
   state.brews=state.brews.filter(b=>b.id!==data.id).concat([data]);
   renderAll();toast(editingId?"Gespeichert":`Sud ${data.nr} angelegt`);openDetail(data.id);
 }

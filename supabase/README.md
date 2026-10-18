@@ -9,6 +9,8 @@ Hier liegt nur, was alle Bereiche gemeinsam nutzen. Die Tabellen und Funktionen 
 - `core.sql` – Profile, Rollen, Hilfsfunktionen `private.rolle()`, `private.ist_braumeister()`, `private.ist_admin()`,
   Trigger für neue Konten und Rollenschutz.
 - `functions/einladen/` – Edge Function, mit der der Admin Braumeister per E-Mail einlädt.
+- `functions/galerie-hochladen/` – Edge Function, über die Gäste einer laufenden Verkostung bis zu drei Fotos in die Galerie laden (prüft Code, Schlüssel und Limit, nimmt nur JPEG).
+- Storage-Bucket `bilder` – öffentlich lesbar; hochladen, ersetzen und löschen dürfen nur Braumeister (Policies in `features/tastings/schema/04_images.sql`).
 
 ## Rollen
 

@@ -39,7 +39,9 @@ function detailZeigen(){
   const zeile = (l, r, cls) => `<div class="rz-row${cls ? " " + cls : ""}"><span>${l}</span><span class="num">${r}</span></div>`;
   let h = `<p class="noprint"><a class="back" href="rezepte.html">← Alle Rezepte</a></p>
   <article class="rz-blatt">
+    ${R.bild_foto ? `<img class="titelbild rz-foto" id="rzFoto" src="${esc(Bilder.url(R.bild_foto))}" alt="Foto: ${esc(R.name)}">` : ""}
     <header class="rz-kopf">
+      ${R.bild_etikett ? `<button type="button" class="rz-etikett" id="rzEtikett" aria-label="Etikett groß zeigen">${rezeptBild({...R, bild_foto: null}, k, true)}</button>` : R.bild_foto ? "" : rezeptBild(R, k, true)}
       <p class="kicker">${esc(R.stil || "Rezept")}</p>
       <h2>${esc(R.name)}</h2>
       <p class="hint">${esc([R.autor && "Autor: " + R.autor, R.quelle].filter(Boolean).join(" · "))}${isBM() ? (R.oeffentlich ? ` <span class="tag pub">öffentlich</span>` : ` <span class="tag intern">intern</span>`) : ""}</p>
@@ -106,6 +108,9 @@ function detailZeigen(){
     detailZeigen();
   });
   $("#rzDruck").onclick = () => window.print();
+  const bp = [R.bild_foto, R.bild_etikett].filter(Boolean);
+  if($("#rzFoto")) $("#rzFoto").onclick = () => Bilder.zeigen(bp, 0);
+  if($("#rzEtikett")) $("#rzEtikett").onclick = () => Bilder.zeigen(bp, bp.length - 1);
   if(!isBM()) return;
   $("#sudAnlegen").onclick = () => sudAusRezept(aktuell());
   $("#rzEdit").onclick = () => rezeptForm(R);
@@ -150,7 +155,7 @@ function umbenennen(){
 }
 async function klonen(){
   const kopie = {...R}; ["id", "angelegt", "angelegt_von", "geaendert", "geaendert_von", "original", "aus_sud_id"].forEach(k => delete kopie[k]);
-  Object.assign(kopie, {name: R.name + " (Variante)", eltern_id: R.id, oeffentlich: false});
+  Object.assign(kopie, {name: R.name + " (Variante)", eltern_id: R.id, oeffentlich: false, bild_foto: null, bild_etikett: null});
   const {data, error} = await sb.from("rezepte").insert(kopie).select("id").single();
   if(error){ toast(fehlertext(error)); return; }
   toast("Variante angelegt"); location.href = "rezepte.html?id=" + data.id;
@@ -163,6 +168,7 @@ function loeschen(){
   $("#dJa").onclick = async () => { $("#dJa").disabled = true;
     const {data, error} = await sb.from("rezepte").delete().eq("id", R.id).select("id");
     if(error || !data?.length){ toast(error ? fehlertext(error) : "Löschen ist nur dem Admin erlaubt."); closeSheet(); return; }
+    await Promise.all([Bilder.loeschen(R.bild_foto), Bilder.loeschen(R.bild_etikett)]);
     location.href = "rezepte.html";
   };
 }

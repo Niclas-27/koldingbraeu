@@ -10,7 +10,7 @@ async function ergebnisLaden(){
   let platz = 0, vorher = null;
   proben.forEach((p,i) => { const k = p.schnitt==null ? null : `${p.schnitt}|${p.nochmal}`; if(k!==vorher){ platz = i+1; vorher = k; } p.platz = p.schnitt==null ? null : platz; });
   const podium = proben.filter(p => p.platz && p.platz <= 3).slice(0,3);
-  const stufe = p => `<div class="stufe s${p.platz}"><span class="medaille" aria-hidden="true">${["🥇","🥈","🥉"][p.platz-1]}</span>
+  const stufe = p => `<div class="stufe s${p.platz}"><span class="medaille" aria-hidden="true">${["🥇","🥈","🥉"][p.platz-1]}</span>${Bilder.bier(p,"flasche","gross")}
       <b>${esc(p.name)}</b><small>${esc([p.brauerei, p.stil].filter(Boolean).join(" · "))}</small><span class="num">${note(p.schnitt)}</span></div>`;
   const ordnung = podium.length === 3 ? [podium[1], podium[0], podium[2]] : podium;
 
@@ -25,13 +25,14 @@ async function ergebnisLaden(){
       <p class="hint">${esc([fmtDateLong(v.datum), v.ort, proben.length+" Biere", v.blind?"blind verkostet":""].filter(Boolean).join(" · "))}</p>
       ${data.teilnehmer.length?`<p class="hint">Mit ${esc(data.teilnehmer.join(", "))}</p>`:""}</div>
       ${isBM()?`<a class="btn" href="verkostung.html?id=${esc(v.id)}">Verwalten</a>`:""}</div>
+    ${v.bild_titel?`<img class="titelbild" id="titelbild" src="${esc(Bilder.url(v.bild_titel))}" alt="Titelbild der Verkostung">`:""}
     ${podium.length?`<div class="podium">${ordnung.map(stufe).join("")}</div>`:""}
     <section class="sec"><h3>Rangliste</h3><ol class="rank erg">${proben.map(p => {
       const offen = p.kommentare.length || Object.keys(p.merkmale).length || Object.keys(p.geruch).length || Object.keys(p.fehler).length || p.noten.length;
       return `<li class="${p.platz&&p.platz<=3?"top p"+p.platz:""}">
       <details${offen?"":" class=\"leer\""}><summary>
         <span class="pl num">${p.platz?p.platz+".":"–"}</span>
-        <span class="nm"><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span>
+        <span class="nm mit-bild">${Bilder.bier(p,"kronkorken")}<span><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span></span>
         <span class="sc"><b class="num">${note(p.schnitt)}</b></span>
         <small class="mt">${p.anzahl} Bew.${p.anzahl?` · ${Math.round(p.nochmal/p.anzahl*100)} % nochmal`:""}</small>
         <span class="bar"><i style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
@@ -45,6 +46,9 @@ async function ergebnisLaden(){
         <p><a href="liga.html#bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>
       </div></details></li>`;}).join("")}</ol>
       <p class="hint">Antippen zeigt Einzelnoten, Kommentare und Geschmacksprofil.</p></section>`;
+  if(data.galerie.length) h += sec(`Fotos vom Abend (${data.galerie.length})`, Bilder.galerieHtml(data.galerie));
   main().innerHTML = h;
+  Bilder.galerieVerdrahten(main(), data.galerie);
+  const tb = $("#titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
 }
 

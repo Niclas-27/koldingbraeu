@@ -27,16 +27,17 @@ let D = null; // {v, proben, teilnehmer, bewertungen, vorschlaege}
 
 async function detailLaden(){
   if(!isBM()){ stopTimer(); main().innerHTML = `<p class="empty">Diese Ansicht ist nur für angemeldete Braumeister.</p><p class="empty"><a href="verkostung.html">Zur Übersicht</a></p>`; return; }
-  const [v, pr, tn, vs] = await Promise.all([
+  const [v, pr, tn, vs, gb] = await Promise.all([
     sb.from("verkostungen").select("*").eq("id", detailId).maybeSingle(),
-    sb.from("proben").select("id,nummer,bier_id,biere(id,name,brauerei,eigen,alkohol,stil_id,sud_id,bierstile(name))").eq("verkostung_id", detailId).order("nummer"),
+    sb.from("proben").select("id,nummer,bier_id,biere(id,name,brauerei,eigen,alkohol,stil_id,sud_id,bild_kronkorken,bild_flasche,bierstile(name))").eq("verkostung_id", detailId).order("nummer"),
     sb.from("teilnehmer").select("id,name,angelegt").eq("verkostung_id", detailId).order("angelegt"),
     sb.from("vorschlaege").select("*").eq("verkostung_id", detailId).order("angelegt"),
+    sb.from("verkostung_bilder").select("id,pfad,teilnehmer_id,angelegt").eq("verkostung_id", detailId).order("angelegt"),
   ]);
   if(v.error || !v.data){ stopTimer(); main().innerHTML = `<p class="empty">${v.error?esc(fehlertext(v.error)):"Diese Verkostung gibt es nicht (mehr)."}</p><p class="empty"><a href="verkostung.html">Zur Übersicht</a></p>`; return; }
   const ids = (pr.data||[]).map(p=>p.id);
   const bw = ids.length ? await sb.from("bewertungen").select("*").in("probe_id", ids) : {data: []};
-  D = {v: v.data, proben: (pr.data||[]).map(p=>({...p, bier: {...p.biere, stil: p.biere?.bierstile?.name}})), teilnehmer: tn.data||[], bewertungen: bw.data||[], vorschlaege: vs.data||[]};
+  D = {v: v.data, proben: (pr.data||[]).map(p=>({...p, bier: {...p.biere, stil: p.biere?.bierstile?.name}})), teilnehmer: tn.data||[], bewertungen: bw.data||[], vorschlaege: vs.data||[], galerie: gb.data||[]};
   detailZeigen();
   if(D.v.status === "laeuft") { if(!timer) startTimer(detailLaden); } else stopTimer();
 }
@@ -70,7 +71,7 @@ function detailZeigen(){
       </section>
       <section class="vk-card"><h3>Biere (${proben.length})</h3>
         ${proben.length?`<ol class="plist">${proben.map((p,i)=>{const n=bewertungen.filter(b=>b.probe_id===p.id).length;return `<li>
-          <span class="pn num">${p.nummer}</span>
+          <span class="pn num">${p.nummer}</span>${Bilder.bier(p.bier,"kronkorken")}
           <span class="pt"><b>${esc(p.bier.name)}</b><small>${esc(bierZeile(p.bier))}${p.bier.eigen&&!/kolding/i.test(p.bier.brauerei||"")?" · selbst gebraut":""}</small></span>
           <span class="pa">${n?`<small class="hint">${n} Bew.</small>`:""}
             <button class="x" data-up="${i}" aria-label="Nach oben"${i===0?" disabled":""}>↑</button><button class="x" data-down="${i}" aria-label="Nach unten"${i===proben.length-1?" disabled":""}>↓</button><button class="x" data-raus="${esc(p.id)}" aria-label="Aus der Verkostung nehmen">✕</button></span>
@@ -81,8 +82,12 @@ function detailZeigen(){
       </section>
     </div>`;
 
-  const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:`${p.nummer}. ${p.bier.name}`, unter:bierZeile(p.bier), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
+  const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:`${p.nummer}. ${p.bier.name}`, unter:bierZeile(p.bier), bild:Bilder.bier(p.bier,"kronkorken"), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
   h += sec(v.status==="abgeschlossen" ? "Ergebnis" : v.status==="laeuft" ? "Zwischenstand (live)" : "Auswertung", (bewertungen.length ? rangTabelle(zeilen,{klick:true}) + `<p class="hint">Antippen zeigt alle Bewertungen und das Geschmacksprofil.${v.status==="laeuft"?" Aktualisiert sich alle 15 Sekunden.":""}</p>` : `<p class="hint">Noch keine Bewertungen.</p>`));
+  h += sec("Fotos", `<div class="fotos-admin">${Bilder.feldHtml("titelFeld", v.bild_titel, {art:"frei", beschriftung:"Titelbild"})}</div>
+    <h4 class="sub">Galerie (${D.galerie.length})</h4>
+    ${D.galerie.length ? Bilder.galerieHtml(D.galerie.map(g=>g.pfad), {loeschbar:true}) : `<p class="hint">Noch keine Fotos. Gäste können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.</p>`}
+    <button type="button" class="add" id="fotoAdd">+ Foto hinzufügen</button>`);
   if(teilnehmer.length) h += sec("Teilnehmer", `<div class="tn">${teilnehmer.map(t=>{const n=bewertungen.filter(b=>b.teilnehmer_id===t.id).length;return `<span class="tag">${esc(t.name)} · ${n}/${proben.length}</span>`;}).join("")}</div>`);
   main().innerHTML = h;
 
@@ -94,6 +99,7 @@ function detailZeigen(){
   $("#vkDel") && ($("#vkDel").onclick = () => bestaetigen("Verkostung löschen?", `„${v.titel}“ mit allen ${bewertungen.length} Bewertungen wird endgültig gelöscht. Die Biere selbst bleiben erhalten.`, "Endgültig löschen", async () => {
     const {data, error} = await sb.from("verkostungen").delete().eq("id", v.id).select("id");
     if(error || !data?.length){ toast(error ? fehlertext(error) : "Löschen ist nur dem Admin erlaubt."); return; }
+    await Promise.all([v.bild_titel, ...D.galerie.map(g=>g.pfad)].filter(Boolean).map(p => Bilder.loeschen(p)));
     location.href = "verkostung.html";
   }, true));
   $("#qrGross").onclick = () => {
@@ -102,6 +108,30 @@ function detailZeigen(){
   };
   $("#copyLink").onclick = async () => { try{ await navigator.clipboard.writeText(link); toast("Link kopiert"); }catch(_){ toast("Kopieren ging nicht – bitte den Link markieren"); } };
   $("#addBier").onclick = () => bierWaehlen();
+  Bilder.feldVerdrahten("titelFeld", {art:"frei", basis:`verkostungen/${v.id}/titel`, titel:"Titelbild", geaendert: async p => {
+    const {error} = await sb.from("verkostungen").update({bild_titel: p}).eq("id", v.id);
+    if(error){ toast(fehlertext(error)); return; }
+    if(v.bild_titel && v.bild_titel !== p) Bilder.loeschen(v.bild_titel);
+    v.bild_titel = p; toast(p ? "Titelbild gespeichert" : "Titelbild entfernt");
+  }});
+  const gal = main().querySelector(".galerie");
+  if(gal) Bilder.galerieVerdrahten(gal, D.galerie.map(g=>g.pfad), i => {
+    const g = D.galerie[i];
+    bestaetigen("Foto löschen?", "Das Foto wird endgültig gelöscht.", "Löschen", async () => {
+      const {error} = await sb.from("verkostung_bilder").delete().eq("id", g.id);
+      if(error){ toast(fehlertext(error)); return; }
+      await Bilder.loeschen(g.pfad); toast("Foto gelöscht"); detailLaden();
+    }, true);
+  });
+  $("#fotoAdd").onclick = async () => {
+    const erg = await Bilder.waehlen({form:"frei", titel:"Foto hinzufügen"}); if(!erg) return;
+    try{
+      const pfad = await Bilder.hochladen(`verkostungen/${v.id}/galerie/${crypto.randomUUID()}`, erg);
+      const {error} = await sb.from("verkostung_bilder").insert({verkostung_id: v.id, pfad});
+      if(error) throw error;
+      toast("Foto hinzugefügt"); detailLaden();
+    }catch(e){ toast("Hochladen fehlgeschlagen: " + fehlertext(e)); }
+  };
   main().querySelectorAll("[data-up],[data-down]").forEach(b => b.onclick = () => { const i = +(b.dataset.up ?? b.dataset.down); tauschen(i, b.dataset.up != null ? i-1 : i+1); });
   main().querySelectorAll("[data-raus]").forEach(b => b.onclick = () => {
     const p = proben.find(x=>x.id===b.dataset.raus), n = bewertungen.filter(x=>x.probe_id===p.id).length;
@@ -220,11 +250,11 @@ function adminBogen(probeId, teilnehmerId){
 
 /* Bier zur Verkostung hinzufügen: aus der Bierliste wählen oder neu anlegen */
 async function bierWaehlen(){
-  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,bierstile(name)").order("name");
+  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,bild_kronkorken,bild_flasche,bierstile(name)").order("name");
   if(error){ toast(fehlertext(error)); return; }
   const schon = new Set(D.proben.map(p=>p.bier_id));
   const liste = (data||[]).filter(b=>!schon.has(b.id));
-  const zeile = b => `<button class="pick" data-b="${esc(b.id)}" data-s="${esc((b.name+" "+(b.brauerei||"")+" "+(b.bierstile?.name||"")).toLowerCase())}"><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))}</small></button>`;
+  const zeile = b => `<button class="pick" data-b="${esc(b.id)}" data-s="${esc((b.name+" "+(b.brauerei||"")+" "+(b.bierstile?.name||"")).toLowerCase())}">${Bilder.bier({...b, stil:b.bierstile?.name},"kronkorken")}<span><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))}</small></span></button>`;
   sheet("Bier hinzufügen", `<button class="btn primary" id="neuesBier" style="align-self:flex-start">+ Neues Bier anlegen</button>
     ${liste.length?`<input class="search" id="bSuche" type="search" placeholder="In der Bierliste suchen …" aria-label="Bierliste durchsuchen"><div class="picklist" id="pickList">${liste.map(zeile).join("")}</div>`:`<p class="hint">Die Bierliste ist noch leer – leg das erste Bier an.</p>`}`,
     `<span class="spacer"></span><button class="btn" id="bwZu">Abbrechen</button>`);
@@ -243,7 +273,9 @@ async function probeAnlegen(bierId){
 async function bierForm(bier, vorgabe, nachher){
   await ladeStile();
   const {data: sude} = await sb.from("sude").select("id,nr,stil,datum").order("datum", {ascending:false});
-  const b = bier || {name: vorgabe.name||"", brauerei: vorgabe.brauerei||"", eigen: false, stil_id: (stile.find(s=>s.name.toLowerCase()===(vorgabe.stilName||"").toLowerCase())||{}).id ?? null, alkohol: null, sud_id: null, notiz: ""};
+  const b = bier || {name: vorgabe.name||"", brauerei: vorgabe.brauerei||"", eigen: false, stil_id: (stile.find(s=>s.name.toLowerCase()===(vorgabe.stilName||"").toLowerCase())||{}).id ?? null, alkohol: null, sud_id: null, notiz: "", bild_kronkorken: null, bild_flasche: null};
+  const bildBasis = `biere/${bier?.id || "neu-" + crypto.randomUUID()}`;
+  const bierVorschau = {name: b.name, stil: (stile.find(s=>s.id===b.stil_id)||{}).name};
   sheet(bier ? "Bier bearbeiten" : "Neues Bier", `<form id="bierForm" class="stack" novalidate>
       <label class="f" for="bi_name">Name *<input id="bi_name" maxlength="80" value="${esc(b.name)}" required></label>
       <label class="check"><input type="checkbox" id="bi_eigen"${b.eigen?" checked":""}><span><b>Selbst gebraut (Koldingbräu)</b></span></label>
@@ -254,17 +286,25 @@ async function bierForm(bier, vorgabe, nachher){
         <label class="f" for="bi_sud" id="sudWrap"${b.eigen?"":" hidden"}>Zugehöriger Sud<select id="bi_sud"><option value="">–</option>${(sude||[]).map(s=>`<option value="${s.id}"${s.id===b.sud_id?" selected":""}>Nr. ${esc(s.nr)} · ${esc(s.stil||"")} · ${esc(fmtDateLong(s.datum))}</option>`).join("")}</select></label>
       </div>
       <label class="f" for="bi_neustil" id="neuStilWrap" hidden>Name des neuen Stils<input id="bi_neustil" maxlength="60"></label>
+      <div class="grid2 bildfelder">
+        ${Bilder.feldHtml("bi_kk", b.bild_kronkorken, {art:"rund", bier:bierVorschau, beschriftung:"Kronkorken"})}
+        ${Bilder.feldHtml("bi_fl", b.bild_flasche, {art:"hoch", bier:bierVorschau, beschriftung:"Flasche"})}
+      </div>
+      <p class="hint">Beide Bilder sind freiwillig. Gibt es nur eins, wird es überall gezeigt.</p>
       <label class="f" for="bi_notiz">Notiz (intern)<textarea id="bi_notiz" maxlength="1000">${esc(b.notiz||"")}</textarea></label>
       <span class="err" id="biErr"></span>
     </form>`,
     `<span class="spacer"></span><button class="btn" id="biAbbr">Abbrechen</button><button class="btn primary" id="biSave" form="bierForm" type="submit">${bier?"Speichern":D&&!nachher?"Anlegen und hinzufügen":"Anlegen"}</button>`);
+  const fKK = Bilder.feldVerdrahten("bi_kk", {art:"rund", basis:bildBasis+"/kronkorken", titel:"Kronkorken", bier:bierVorschau});
+  const fFL = Bilder.feldVerdrahten("bi_fl", {art:"hoch", basis:bildBasis+"/flasche", titel:"Flasche", bier:bierVorschau});
   $("#biAbbr").onclick = closeSheet;
   $("#bi_eigen").onchange = () => { $("#sudWrap").hidden = !$("#bi_eigen").checked; if($("#bi_eigen").checked && !$("#bi_br").value.trim()) $("#bi_br").value = "Koldingbräu"; };
   $("#bi_stil").onchange = () => { $("#neuStilWrap").hidden = $("#bi_stil").value !== "neu"; };
   $("#bierForm").onsubmit = async e => { e.preventDefault();
     const err = $("#biErr"), alk = $("#bi_alk").value;
     const out = {name: $("#bi_name").value.trim(), brauerei: $("#bi_br").value.trim() || null, eigen: $("#bi_eigen").checked,
-      alkohol: alk === "" ? null : +alk, sud_id: $("#bi_eigen").checked ? ($("#bi_sud").value || null) : null, notiz: $("#bi_notiz").value.trim() || null};
+      alkohol: alk === "" ? null : +alk, sud_id: $("#bi_eigen").checked ? ($("#bi_sud").value || null) : null, notiz: $("#bi_notiz").value.trim() || null,
+      bild_kronkorken: fKK.wert(), bild_flasche: fFL.wert()};
     if(!out.name){ err.textContent = "Bitte einen Namen eingeben."; return; }
     if(out.alkohol != null && (isNaN(out.alkohol) || out.alkohol < 0 || out.alkohol > 30)){ err.textContent = "Alkohol bitte zwischen 0 und 30 % angeben."; return; }
     $("#biSave").disabled = true; err.textContent = "";
@@ -280,6 +320,7 @@ async function bierForm(bier, vorgabe, nachher){
     const q = bier ? sb.from("biere").update(out).eq("id", bier.id) : sb.from("biere").insert(out);
     const {data, error} = await q.select("id").single();
     if(error){ $("#biSave").disabled = false; err.textContent = fehlertext(error); return; }
+    if(bier) for(const k of ["bild_kronkorken","bild_flasche"]) if(bier[k] && bier[k] !== out[k]) Bilder.loeschen(bier[k]);
     if(!bier && D && !nachher){
       await probeAnlegen(data.id);
       if(vorgabe.vorschlag) await sb.from("vorschlaege").update({status: "uebernommen"}).eq("id", vorgabe.vorschlag);
@@ -292,10 +333,10 @@ async function bierForm(bier, vorgabe, nachher){
 
 /* Bierliste (alle Biere bearbeiten) */
 async function bierKatalog(){
-  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,stil_id,sud_id,notiz,bierstile(name),proben(count)").order("name");
+  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,stil_id,sud_id,notiz,bild_kronkorken,bild_flasche,bierstile(name),proben(count)").order("name");
   if(error){ toast(fehlertext(error)); return; }
   sheet("Biere", `<p class="hint">Jedes Bier gibt es nur einmal – so zählen seine Bewertungen aus allen Verkostungen zusammen in der Liga.</p>
-    ${data.length ? `<div class="picklist">${data.map(b=>`<div class="pick row"><span><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))} · ${b.proben[0]?.count||0} Verkostungen</small></span>
+    ${data.length ? `<div class="picklist">${data.map(b=>`<div class="pick row">${Bilder.bier({...b, stil:b.bierstile?.name},"kronkorken")}<span class="pt"><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))} · ${b.proben[0]?.count||0} Verkostungen</small></span>
       <span><button class="btn ghost" data-ed="${esc(b.id)}">Bearbeiten</button>${isAdmin()?`<button class="btn ghost danger" data-del="${esc(b.id)}">Löschen</button>`:""}</span></div>`).join("")}</div>` : `<p class="hint">Noch keine Biere. Biere legst du direkt in einer Verkostung an.</p>`}`,
     `<span class="spacer"></span><button class="btn" id="kZu">Schließen</button>`);
   $("#kZu").onclick = closeSheet;

@@ -28,6 +28,10 @@
 - **Als Rezept speichern** im Sud macht daraus ein Rezept (Rückweg, mit errechneter Sudhausausbeute).
 - Direktlink auf einen Sud: `index.html?sud=<uuid>`
 
+## Bilder
+
+Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder“, beides freiwillig). Das Foto steht oben in der Ansicht, das Etikett erscheint als Vorschaubild in der Liste; ohne Bild zeichnet `lib/bilder.js` eine Flasche in der aus der Schüttung berechneten Bierfarbe. „Als Vorlage nutzen“ übernimmt keine Bilder. Ein ersetztes oder entferntes Bild wird beim Speichern aus dem Speicher gelöscht. Pfade: `sude/<id>/foto-…jpg`, `sude/<id>/etikett-…jpg`.
+
 ## Offene Punkte
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)

@@ -21,11 +21,12 @@ async function listeLaden(){
   else if(!archiv.data.length) h += `<p class="empty">${isBM()?"Noch keine abgeschlossene Verkostung. Leg mit „+ Neue Verkostung“ eine an.":"Noch keine abgeschlossenen Verkostungen."}</p>`;
   else h += sec("Bisherige Verkostungen", `<div class="vk-cards">${archiv.data.map(v => {
       const sieger = v.proben.find(p => p.schnitt != null);
-      return `<a class="vk-tile" href="verkostung.html?e=${esc(v.id)}">
+      return `<a class="vk-tile${v.bild_titel?" mit-titel":""}" href="verkostung.html?e=${esc(v.id)}">
+        ${v.bild_titel?`<img class="vt-bild" src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy">`:""}
         <span class="d">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</span>
         <b class="t">${esc(v.titel)}</b>
         <span class="m">${v.proben.length} ${v.proben.length===1?"Bier":"Biere"}${(v.namen||[]).length ? " · mit "+esc(v.namen.join(", ")) : ""}</span>
-        ${sieger?`<span class="w"><span class="pokal" aria-hidden="true">🏆</span><span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}
+        ${sieger?`<span class="w">${Bilder.bier(sieger,"kronkorken")}<span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}
       </a>`;}).join("")}</div>`);
   main().innerHTML = h;
   $("#codeForm").onsubmit = e => { e.preventDefault(); const c = $("#c_code").value.trim().toLowerCase().replace(/.*[?&]v=/, "").replace(/[^a-z0-9]/g, ""); if(c) location.href = "verkostung.html?v="+encodeURIComponent(c); };

@@ -21,7 +21,7 @@ function gastZeigen(){
       <div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
       <p class="hint">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}${v.blind?" · blind":""} · ${d.teilnehmer} Teilnehmer</p></div>
       ${statusTag(v.status)}
-    </div>`;
+    </div>${v.bild_titel?`<img class="titelbild" src="${esc(Bilder.url(v.bild_titel))}" alt="Titelbild der Verkostung">`:""}`;
 
   if(!ich && v.status !== "abgeschlossen"){
     h += `<form id="joinForm" class="vk-card stack" novalidate>
@@ -59,7 +59,7 @@ function gastZeigen(){
     h += sec(`Deine Bewertungen · ${fertig} von ${d.proben.length}`, `<div class="proben">${d.proben.map(p=>{
       const m = meine.get(p.id);
       return `<button class="probe${m?" done":""}" data-p="${esc(p.id)}">
-        <span class="pn num">${p.nummer}</span>
+        ${offen?Bilder.bier(p.bier,"kronkorken"):`<span class="pn num">${p.nummer}</span>`}
         <span class="pt"><b>${offen?esc(p.bier.name):"Probe "+p.nummer}</b><small>${offen?esc(bierZeile(p.bier)):"blind"}</small></span>
         <span class="pg">${m?`<b class="num">${m.note}</b>`:"bewerten"}</span>
       </button>`;}).join("")}</div>`);
@@ -67,11 +67,15 @@ function gastZeigen(){
 
   if(v.status !== "vorbereitung" && d.proben.length){
     const zeilen = d.proben.map(p=>({id:p.id, nummer:p.nummer, titel: offen ? p.bier.name : "Probe "+p.nummer,
-      unter: offen ? bierZeile(p.bier) : "", schnitt:p.schnitt, anzahl:p.anzahl, nochmal:p.nochmal}));
+      unter: offen ? bierZeile(p.bier) : "", schnitt:p.schnitt, anzahl:p.anzahl, nochmal:p.nochmal, bild: offen ? Bilder.bier(p.bier,"kronkorken") : ""}));
     h += sec(v.status==="abgeschlossen" ? "Ergebnis" : "Zwischenstand (live)", rangTabelle(zeilen)
       + (v.status==="laeuft" ? `<p class="hint">Aktualisiert sich alle 15 Sekunden.${v.blind?" Die Namen werden am Ende aufgedeckt.":""}</p>` : ""));
   }
   if(v.status === "abgeschlossen" && !ich) h += `<p class="hint">Diese Verkostung ist abgeschlossen.</p>`;
+  const gal = (d.galerie||[]).map(g=>g.pfad), darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < 3;
+  if(gal.length || darf) h += sec(`Fotos vom Abend${gal.length?` (${gal.length})`:""}`, (gal.length ? Bilder.galerieHtml(gal) : "")
+    + (darf ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von 3)</button><span class="err" id="fotoErr"></span>` : (ich && v.status !== "abgeschlossen" ? `<p class="hint">Du hast deine drei Fotos hochgeladen.</p>` : ""))
+    + (darf ? `<p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sie erscheinen später öffentlich auf der Ergebnisseite.</p>` : ""));
   main().innerHTML = h;
 
   const jf = $("#joinForm");
@@ -100,6 +104,9 @@ function gastZeigen(){
     toast("Danke, ist vorgeschlagen"); gastLaden();
   };
   main().querySelectorAll(".probe[data-p]").forEach(b => b.onclick = () => bogen(b.dataset.p));
+  Bilder.galerieVerdrahten(main(), gal);
+  const tb = main().querySelector(".titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
+  const fb = $("#fotoBtn"); if(fb) fb.onclick = gastFoto;
 }
 
 function bogen(probeId){
@@ -117,4 +124,21 @@ function bogen(probeId){
 async function bmHinweis(){
   const {data} = await sb.from("verkostungen").select("id").eq("code", code).maybeSingle();
   if(data){ const n = $("#notice"); n.hidden = false; n.innerHTML = `Du bist als Braumeister angemeldet. <a href="verkostung.html?id=${esc(data.id)}">Zur Verwaltung dieser Verkostung</a>`; }
+}
+
+/* Gast lädt ein Foto für die Galerie hoch – über die Edge Function „galerie-hochladen“ (prüft Code, Schlüssel, max. 3) */
+async function gastFoto(){
+  const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend"});
+  if(!erg) return;
+  const btn = $("#fotoBtn"), err = $("#fotoErr");
+  btn.disabled = true; btn.textContent = "Wird hochgeladen …"; err.textContent = "";
+  const fd = new FormData();
+  fd.append("code", code); fd.append("token", gast().token);
+  fd.append("gross", erg.gross, "foto.jpg"); fd.append("klein", erg.klein, "foto_t.jpg");
+  const {error} = await sb.functions.invoke("galerie-hochladen", {body: fd});
+  if(error){
+    let msg = "Hochladen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}
+    btn.disabled = false; btn.textContent = "+ Foto hinzufügen"; err.textContent = msg; return;
+  }
+  toast("Foto hochgeladen"); gastLaden();
 }

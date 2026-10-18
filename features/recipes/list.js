@@ -3,7 +3,7 @@
 let rListe = [], rSuche = "";
 
 async function listeZeigen(){
-  const {data, error} = await sb.from("rezepte").select("id,name,stil,autor,quelle,ausschlag,sudhausausbeute,stammwuerze,bittere,farbe,alkohol,malze,hopfen,kochzeit,endvergaerungsgrad,oeffentlich,eltern_id,geaendert").order("name");
+  const {data, error} = await sb.from("rezepte").select("id,name,stil,autor,quelle,ausschlag,sudhausausbeute,stammwuerze,bittere,farbe,alkohol,malze,hopfen,kochzeit,endvergaerungsgrad,oeffentlich,eltern_id,geaendert,bild_foto,bild_etikett").order("name");
   if(error){ rMain().innerHTML = `<p class="empty">${esc(fehlertext(error))}</p>`; return; }
   rListe = data || [];
   let gebraut = new Map();
@@ -34,6 +34,7 @@ function karten(gebraut){
     ? `<p class="empty">${isBM() ? "Noch keine Rezepte. Zieh eine JSON-Datei von maischemalzundmehr.de hierher oder leg eins neu an." : "Noch keine öffentlichen Rezepte."}</p>`
     : !liste.length ? `<p class="empty">Kein Rezept passt zu dieser Suche.</p>`
     : liste.map(r => { const k = B.kennwerte(r); const n = gebraut.get(r.id) || 0; return `<a class="rz-card" href="rezepte.html?id=${esc(r.id)}">
+        ${rezeptBild(r, k)}
         <span class="st">${esc(r.stil || "Ohne Stil")}</span>
         <b class="nm">${esc(r.name)}</b>
         <span class="mini num">${esc([zf(r.stammwuerze ?? k.stammwuerze) + " °P", zf(r.bittere ?? k.bittere, 0) + " IBU", zf(r.farbe ?? k.farbe, 0) + " EBC", zf(r.alkohol ?? k.alkohol) + " %"].join(" · "))}</span>

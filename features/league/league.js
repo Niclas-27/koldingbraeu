@@ -20,7 +20,7 @@ function zusammenfassen(){
     if(f.herkunft === "eigen" && !z.eigen) return;
     if(f.herkunft === "fremd" && z.eigen) return;
     if(f.jahr && String(z.datum).slice(0,4) !== f.jahr) return;
-    const b = m.get(z.bier_id) || {id: z.bier_id, name: z.name, brauerei: z.brauerei, eigen: z.eigen, stil: z.stil, summe: 0, anzahl: 0, nochmal: 0, verkostungen: 0, abende: []};
+    const b = m.get(z.bier_id) || {id: z.bier_id, name: z.name, brauerei: z.brauerei, eigen: z.eigen, stil: z.stil, bild_kronkorken: z.bild_kronkorken, bild_flasche: z.bild_flasche, summe: 0, anzahl: 0, nochmal: 0, verkostungen: 0, abende: []};
     b.summe += +z.summe; b.anzahl += +z.anzahl; b.nochmal += +z.nochmal; b.verkostungen++;
     b.abende.push(z);
     m.set(z.bier_id, b);
@@ -42,7 +42,7 @@ function zeigen(){
   const zeile = (b, platz) => `<li id="bier-${esc(b.id)}" class="${platz && platz <= 3 ? "top p"+platz : ""}${platz ? "" : " wenig"}">
       <details data-b="${esc(b.id)}"${offen.has(b.id)?" open":""}><summary>
       <span class="pl num">${platz ? platz+"." : "–"}</span>
-      <span class="nm"><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span>
+      <span class="nm mit-bild">${Bilder.bier(b,"kronkorken")}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
       <span class="sc"><b class="num">${fmtZahl(b.schnitt, 2)}</b></span>
       <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"} · ${Math.round(b.nochmal / b.anzahl * 100)} % nochmal</small>
       <span class="bar"><i style="width:${Math.round(b.schnitt * 10)}%"></i></span>

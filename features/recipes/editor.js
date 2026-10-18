@@ -1,7 +1,7 @@
 /* Koldingbräu – Rezepte: Rezept anlegen und bearbeiten
    Zutaten sind Freitext mit Werten; Vorschläge kommen aus allen bisherigen Rezepten und Suden. */
 "use strict";
-let rDraft = null, rEditId = null, vorschlaege = null;
+let rDraft = null, rEditId = null, rAlt = null, rBildBasis = "", vorschlaege = null;
 
 async function ladeVorschlaege(){
   if(vorschlaege) return vorschlaege;
@@ -26,6 +26,8 @@ async function rezeptForm(r){
   const v = await ladeVorschlaege();
   rDraft = JSON.parse(JSON.stringify(r || leer()));
   rEditId = r ? r.id : null;
+  rAlt = r ? {bild_foto: r.bild_foto || null, bild_etikett: r.bild_etikett || null} : null;
+  rBildBasis = `rezepte/${rEditId || "neu-" + crypto.randomUUID()}`;
   ["malze", "rasten", "hopfen", "weitere"].forEach(k => { if(!Array.isArray(rDraft[k])) rDraft[k] = []; });
   $("#sheetTitle").textContent = r ? "Rezept bearbeiten" : "Neues Rezept";
   rFormZeichnen(v);
@@ -50,6 +52,7 @@ function rFormZeichnen(v){
     ${fs("Grunddaten", `<div class="grid2">${inp("name", "Name *")}${inp("stil", "Bierstil", "", ' list="dl_stil"')}${inp("autor", "Autor")}${inp("quelle", "Quelle")}</div>
       <label class="f" for="r_beschreibung">Kurzbeschreibung<textarea id="r_beschreibung" data-k="beschreibung" maxlength="4000">${esc(d.beschreibung || "")}</textarea></label>
       <label class="check"><input type="checkbox" id="r_oeffentlich"${d.oeffentlich ? " checked" : ""}><span><b>Öffentlich zeigen</b><br><span class="hint">Dann sehen auch Gäste dieses Rezept.</span></span></label>`)}
+    ${fs("Bilder", `<div class="grid2">${Bilder.feldHtml("rf_foto", d.bild_foto, {art: "frei", beschriftung: "Foto"})}${Bilder.feldHtml("rf_etikett", d.bild_etikett, {art: "frei", beschriftung: "Etikett"})}</div><p class="hint">Beides freiwillig. Das Etikett erscheint als Vorschaubild in der Rezeptliste.</p>`)}
     ${fs("Bezug und Kennwerte", `<div class="grid2">${inp("ausschlag", "Für Liter Ausschlagwürze *", "number")}${inp("sudhausausbeute", "Sudhausausbeute (%)", "number")}
       ${inp("stammwuerze", "Stammwürze (°P)", "number")}${inp("bittere", "Bittere (IBU)", "number")}${inp("farbe", "Farbe (EBC)", "number")}${inp("alkohol", "Alkohol (% Vol.)", "number")}</div>
       <button type="button" class="add" id="berechnen">Kennwerte aus den Zutaten berechnen</button><span class="hint" id="berechnetInfo"></span>`)}
@@ -69,6 +72,8 @@ function rFormZeichnen(v){
   </form>`;
   const f = $("#rzForm");
   f.onsubmit = e => { e.preventDefault(); rSpeichern(); };
+  Bilder.feldVerdrahten("rf_foto", {art: "frei", basis: rBildBasis + "/foto", titel: "Foto", geaendert: p => { rDraft.bild_foto = p; }});
+  Bilder.feldVerdrahten("rf_etikett", {art: "frei", basis: rBildBasis + "/etikett", titel: "Etikett", geaendert: p => { rDraft.bild_etikett = p; }});
   const neu = { malze: () => ({name: "", gramm: null, ebc: null}), rasten: () => ({temperatur: null, zeit: null}), hopfen: () => ({sorte: "", gramm: null, alpha: null, zeit: null, typ: "Kochen"}), weitere: () => ({name: "", menge: null, einheit: "g", zeitpunkt: ""}) };
   const neuZeichnen = () => { const top = $("#sheetBody").scrollTop; rFormZeichnen(); $("#sheetBody").scrollTop = top; };
   f.querySelectorAll("[data-neu]").forEach(b => b.onclick = () => { rSammeln(); rDraft[b.dataset.neu].push(neu[b.dataset.neu]()); neuZeichnen(); });
@@ -116,6 +121,7 @@ async function rSpeichern(){
   const {data, error} = await q.select("id").single();
   if(error){ btn.disabled = false; err.textContent = fehlertext(error); return; }
   vorschlaege = null;
+  if(rAlt) ["bild_foto", "bild_etikett"].forEach(k => { if(rAlt[k] && rAlt[k] !== (out[k] || null)) Bilder.loeschen(rAlt[k]); });
   closeSheet(); toast(rEditId ? "Gespeichert" : "Rezept angelegt");
   if(rEditId && rezeptId === rEditId){ sicht.alpha = {}; await detailLaden(); }
   else location.href = "rezepte.html?id=" + data.id;

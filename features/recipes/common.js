@@ -14,6 +14,12 @@ let anlage = null;      // Anlagenprofil Koldingbräu (nur für Braumeister lesb
 const TYP_LABEL = B.HOPFEN_TYPEN;
 const zf = (v, st = 1) => B.fmtZahl(v, st);
 const kopf = (label, wert, einheit) => `<div class="kw"><span>${esc(label)}</span><b class="num">${wert == null ? "–" : esc(zf(wert))}</b><small>${esc(einheit)}</small></div>`;
+/* Vorschaubild eines Rezepts: Etikett, sonst Foto, sonst gezeichnete Flasche in der Rezeptfarbe */
+function rezeptBild(r, k, gross){
+  const p = r.bild_etikett || r.bild_foto;
+  if(p) return `<img class="rz-bild${gross ? " gross" : ""}" src="${esc(Bilder.url(p, !gross))}" alt="" loading="lazy">`;
+  return `<span class="rz-bild ph${gross ? " gross" : ""}">${Bilder.platzhalter("flasche", {name: r.name, stil: r.stil, ebc: r.farbe ?? k?.farbe})}</span>`;
+}
 function kopfwerte(r, k){
   // Werte laut Rezept, wenn vorhanden – sonst berechnet
   return `<div class="kws">${kopf("Stammwürze", r.stammwuerze ?? k?.stammwuerze, "°P")}${kopf("Bittere", r.bittere ?? k?.bittere, "IBU")}${kopf("Farbe", r.farbe ?? k?.farbe, "EBC")}${kopf("Alkohol", r.alkohol ?? k?.alkohol, "% Vol.")}</div>`;

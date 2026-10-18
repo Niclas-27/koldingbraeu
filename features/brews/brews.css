@@ -55,3 +55,14 @@ button.wahl-k:hover{border-color:var(--muted)}
 .wahl-k b{font-family:var(--font-display);font-size:1.15rem}
 .wahl-k span{color:var(--muted);font-size:.9rem}
 .wahl-k.aus{opacity:.7}
+
+/* Bilder */
+.brew{grid-template-columns:44px 56px minmax(0,1fr) auto;gap:12px}
+.sud-bild{width:44px;height:44px;border-radius:8px;object-fit:cover;display:flex;align-items:center;justify-content:center;background:var(--surface);overflow:hidden}
+.sud-bild.ph{background:transparent}
+.sud-bild.ph svg{height:100%;width:auto}
+.etikett-zeig{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);cursor:zoom-in;display:block;width:160px;height:160px}
+.etikett-zeig img{width:100%;height:100%;object-fit:cover;display:block}
+#sheetBody .titelbild{display:block;width:100%;max-height:340px;object-fit:cover;border-radius:var(--radius);margin:0 0 14px;cursor:zoom-in;background:var(--line)}
+@media (max-width:560px){.brew{grid-template-columns:40px 48px minmax(0,1fr) auto;gap:10px}.sud-bild{width:40px;height:40px}}
+@media (max-width:380px){.brew{grid-template-columns:36px 44px minmax(0,1fr) auto;gap:8px}.sud-bild{width:36px;height:36px}}

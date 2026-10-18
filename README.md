@@ -28,8 +28,9 @@ features/
   tastings/  Verkostungen: Mitmachen per QR-Code, Verwalten, Ergebnisseiten
   league/    Liga
   recipes/   Rezepte: MMuM-Import, Umrechnen, Stammbaum
-lib/         eigene Hilfsbausteine ohne Bereichsbezug (qr.js, brau.js = Brau-Rechnungen und MMuM-Format)
-supabase/    bereichsübergreifende Datenbank (Profile, Rollen) und Edge Function „einladen“
+lib/         eigene Hilfsbausteine ohne Bereichsbezug (qr.js, brau.js = Brau-Rechnungen und MMuM-Format,
+             bilder.js = Fotos wählen, zuschneiden, verkleinern, hochladen, Großansicht, gezeichnete Platzhalter)
+supabase/    bereichsübergreifende Datenbank (Profile, Rollen) und Edge Functions „einladen“, „galerie-hochladen“
 tests/       Klicktests mit Test-Attrappe statt echter Datenbank
 fonts/, vendor/   Schriften und Supabase-Bibliothek – beim Veröffentlichen geholt
 docs/        Konzept und Pläne – nur lokal, nicht im Repo
@@ -55,6 +56,7 @@ Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
 - Gäste haben keinen Tabellenzugriff; sie arbeiten nur über die Datenbankfunktionen `vk_*` mit dem Code der Verkostung und einem persönlichen Schlüssel, der auf ihrem Handy liegt.
 - Öffentlich sind abgeschlossene Verkostungen (Liste und Ergebnisseite `verkostung.html?e=…` mit Podest, Rangliste, Einzelnoten, Geschmacksprofil, Kommentaren ohne Namen und den Namen der Teilnehmer) sowie die Liga. Wer welche Note gab, sehen nur Braumeister; sie können einzelne Bewertungen ausblenden.
 - Der Admin kann Bewertungen nachträglich ändern oder fehlende nachtragen (Verkostung → Bier antippen → „Bearbeiten“ bzw. „+ Bewertung nachtragen“). Jede Änderung wird intern vermerkt, die ursprüngliche Note bleibt erhalten.
+- Fotos: Titelbild und Galerie je Verkostung (Gäste bis zu drei Fotos), Kronkorken- und Flaschenbild je Bier, Foto und Etikett je Sud und Rezept. Ohne Foto gibt es einen gezeichneten Platzhalter. Löschen dürfen nur Braumeister.
 - Einzelheiten: `features/tastings/README.md`.
 
 ## Arbeitsweise
