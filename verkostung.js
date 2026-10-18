@@ -168,11 +168,21 @@ function gastZeigen(){
   main().querySelectorAll(".probe[data-p]").forEach(b => b.onclick = () => bogen(b.dataset.p));
 }
 
-/* Bewertungsbogen */
+/* Bewertungsbogen (Gäste; der Admin nutzt denselben Bogen zum Ändern und Nachtragen) */
 function bogen(probeId){
   const d = gData, p = d.proben.find(x=>x.id===probeId); if(!p) return;
   const offen = !d.verkostung.blind || d.verkostung.status === "abgeschlossen";
-  const alt = (d.ich.bewertungen||[]).find(b=>b.probe_id===probeId) || {};
+  bogenZeigen({
+    titel: offen ? `${p.nummer}. ${p.bier.name}` : `Probe ${p.nummer}`,
+    hint: offen ? bierZeile(p.bier) : "",
+    alt: (d.ich.bewertungen||[]).find(b=>b.probe_id===probeId) || {},
+    speichern: f => sb.rpc("vk_bewerten", {p_code: code, p_token: gast().token, p_probe: probeId, ...f}),
+    fertig: () => gastLaden(),
+  });
+}
+/* opts: {titel, hint, oben (zusätzliches HTML), alt, speichern(werte) → Promise<{error}>, fertig()} */
+function bogenZeigen(opts){
+  const alt = opts.alt || {};
   const f = { note: alt.note ?? null, merkmale: {...(alt.merkmale||{})}, geruch: new Set(alt.geruch||[]), fehler: new Set(alt.fehler||[]), nochmal: alt.nochmal ?? null };
   const regler = ([k,label,l,r]) => {
     const has = f.merkmale[k] != null;
@@ -184,7 +194,8 @@ function bogen(probeId){
   };
   const chips = (liste, set, art) => `<div class="tagpick">${liste.map(t=>`<button type="button" class="chip" data-art="${art}" data-t="${esc(t)}" aria-pressed="${set.has(t)}">${esc(t)}</button>`).join("")}</div>`;
   const body = `<form id="bogen" novalidate>
-    ${offen?`<p class="hint">${esc(bierZeile(p.bier))}</p>`:""}
+    ${opts.hint?`<p class="hint">${esc(opts.hint)}</p>`:""}
+    ${opts.oben||""}
     <fieldset><legend>Gesamtnote *</legend>
       <div class="scale" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${Array.from({length:11},(_,i)=>`<button type="button" role="radio" aria-checked="${f.note===i}" data-n="${i}">${i}</button>`).join("")}</div>
       <div class="sl-ends"><span>0 = gar nicht</span><span>10 = großartig</span></div>
@@ -200,7 +211,7 @@ function bogen(probeId){
     </details>`).join("")}
     <details class="grp"${f.fehler.size?" open":""}><summary>Fehlaromen</summary>${chips(FEHLER,f.fehler,"fehler")}</details>
   </form>`;
-  sheet(offen ? `${p.nummer}. ${p.bier.name}` : `Probe ${p.nummer}`, body,
+  sheet(opts.titel, body,
     `<span class="err" id="bErr"></span><span class="spacer"></span><button class="btn" id="bAbbr">Abbrechen</button><button class="btn primary" id="bSave">Speichern</button>`);
   const form = $("#bogen");
   form.querySelectorAll(".scale button").forEach(b => b.onclick = () => { f.note = +b.dataset.n; $("#bErr").textContent = ""; form.querySelectorAll(".scale button").forEach(x=>x.setAttribute("aria-checked", String(x===b))); });
@@ -211,10 +222,9 @@ function bogen(probeId){
   $("#bSave").onclick = async () => {
     if(f.note == null){ $("#bErr").textContent = "Bitte eine Gesamtnote wählen."; form.querySelector(".scale button")?.focus(); return; }
     $("#bSave").disabled = true; $("#bErr").textContent = "";
-    const {error} = await sb.rpc("vk_bewerten", {p_code: code, p_token: gast().token, p_probe: probeId, p_note: f.note, p_merkmale: f.merkmale,
-      p_geruch: [...f.geruch], p_fehler: [...f.fehler], p_nochmal: f.nochmal, p_kommentar: $("#b_kom").value.trim() || null});
+    const {error} = await opts.speichern({p_note: f.note, p_merkmale: f.merkmale, p_geruch: [...f.geruch], p_fehler: [...f.fehler], p_nochmal: f.nochmal, p_kommentar: $("#b_kom").value.trim() || null});
     if(error){ $("#bSave").disabled = false; $("#bErr").textContent = fehlertext(error); return; }
-    closeSheet(); toast("Gespeichert"); gastLaden();
+    closeSheet(); toast("Gespeichert"); opts.fertig && opts.fertig();
   };
 }
 
@@ -461,11 +471,14 @@ function probeDetail(probeId){
     ${sec("Fehlaromen", zaehle("fehler"))}
     ${sec("Einzelne Bewertungen", alle.length ? `<div class="bw">${alle.map(b=>`<div class="bw-row${b.ausgeblendet?" aus":""}">
       <span class="grade">${b.note}</span>
-      <span class="bw-t"><b>${esc(tn(b.teilnehmer_id))}</b>${b.nochmal===true?" · nochmal: ja":b.nochmal===false?" · nochmal: nein":""}${b.kommentar?`<span class="note">${esc(b.kommentar)}</span>`:""}</span>
-      <button class="btn ghost" data-aus="${esc(b.id)}">${b.ausgeblendet?"Einblenden":"Ausblenden"}</button></div>`).join("")}</div>
-      <p class="hint">Ausgeblendete Bewertungen zählen nicht fürs Ranking und die Liga.</p>` : "")}`;
+      <span class="bw-t"><b>${esc(tn(b.teilnehmer_id))}</b>${b.nochmal===true?" · nochmal: ja":b.nochmal===false?" · nochmal: nein":""}${vermerk(b)}${b.kommentar?`<span class="note">${esc(b.kommentar)}</span>`:""}</span>
+      <span class="bw-a">${isAdmin()?`<button class="btn ghost" data-ed="${esc(b.teilnehmer_id)}">Bearbeiten</button>`:""}<button class="btn ghost" data-aus="${esc(b.id)}">${b.ausgeblendet?"Einblenden":"Ausblenden"}</button></span></div>`).join("")}</div>
+      <p class="hint">Ausgeblendete Bewertungen zählen nicht fürs Ranking und die Liga.</p>` : "")}
+    ${isAdmin()?`<button type="button" class="add" id="nachtragen">+ Bewertung nachtragen</button>`:""}`;
   sheet(`${p.nummer}. ${p.bier.name}`, body, `<span class="spacer"></span><button class="btn" id="pdZu">Schließen</button>`);
   $("#pdZu").onclick = closeSheet;
+  $("#sheetBody").querySelectorAll("[data-ed]").forEach(btn => btn.onclick = () => adminBogen(probeId, btn.dataset.ed));
+  const nt = $("#nachtragen"); if(nt) nt.onclick = () => adminBogen(probeId, null);
   $("#sheetBody").querySelectorAll("[data-aus]").forEach(btn => btn.onclick = async () => {
     const b = D.bewertungen.find(x=>x.id===btn.dataset.aus);
     btn.disabled = true;
@@ -473,6 +486,52 @@ function probeDetail(probeId){
     if(error){ btn.disabled = false; toast(fehlertext(error)); return; }
     b.ausgeblendet = !b.ausgeblendet; probeDetail(probeId); detailZeigen();
   });
+}
+
+function vermerk(b){
+  if(!b.admin_geaendert) return "";
+  const wann = new Date(b.admin_geaendert).toLocaleDateString("de-DE");
+  if(b.nachgetragen) return `<small class="vermerk">vom Admin nachgetragen am ${esc(wann)}</small>`;
+  return `<small class="vermerk">vom Admin geändert am ${esc(wann)}${b.original_note!=null&&b.original_note!==b.note?` · ursprünglich ${b.original_note}`:""}</small>`;
+}
+
+/* Admin: Bewertung ändern (teilnehmerId gesetzt) oder nachtragen (null) */
+function adminBogen(probeId, teilnehmerId){
+  if(!isAdmin()) return;
+  const p = D.proben.find(x=>x.id===probeId); if(!p) return;
+  const zurueck = () => { detailLaden().then(() => probeDetail(probeId)); };
+  if(teilnehmerId){
+    const t = D.teilnehmer.find(x=>x.id===teilnehmerId);
+    bogenZeigen({
+      titel: `${p.nummer}. ${p.bier.name}`,
+      hint: `Bewertung von ${t?.name||"Gast"} ändern. Die ursprüngliche Note bleibt intern vermerkt.`,
+      alt: D.bewertungen.find(b=>b.probe_id===probeId && b.teilnehmer_id===teilnehmerId) || {},
+      speichern: f => sb.rpc("vk_admin_bewerten", {p_probe: probeId, p_teilnehmer: teilnehmerId, ...f}),
+      fertig: zurueck,
+    });
+    return;
+  }
+  const ohne = D.teilnehmer.filter(t => !D.bewertungen.some(b=>b.probe_id===probeId && b.teilnehmer_id===t.id));
+  bogenZeigen({
+    titel: `${p.nummer}. ${p.bier.name}`,
+    hint: "Bewertung nachtragen. Sie wird intern als nachgetragen vermerkt.",
+    oben: `<div class="grid2"><label class="f" for="nt_wer">Für wen?<select id="nt_wer">${ohne.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join("")}<option value="neu">+ Neuer Teilnehmer …</option></select></label>
+      <label class="f" for="nt_name" id="nt_nameWrap"${ohne.length?" hidden":""}>Name<input id="nt_name" maxlength="40"></label></div>`,
+    alt: {},
+    speichern: async f => {
+      let wer = $("#nt_wer").value;
+      if(wer === "neu"){
+        const n = $("#nt_name").value.trim();
+        if(!n) return {error: {code: "P0001", message: "Bitte den Namen des neuen Teilnehmers eingeben."}};
+        const r = await sb.rpc("vk_admin_teilnehmer", {p_verkostung: D.v.id, p_name: n});
+        if(r.error) return r;
+        wer = r.data; $("#nt_wer").insertAdjacentHTML("afterbegin", `<option value="${esc(wer)}" selected>${esc(n)}</option>`); $("#nt_nameWrap").hidden = true;
+      }
+      return sb.rpc("vk_admin_bewerten", {p_probe: probeId, p_teilnehmer: wer, ...f});
+    },
+    fertig: zurueck,
+  });
+  $("#nt_wer").onchange = () => { $("#nt_nameWrap").hidden = $("#nt_wer").value !== "neu"; };
 }
 
 /* Bier zur Verkostung hinzufügen: aus der Bierliste wählen oder neu anlegen */

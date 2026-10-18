@@ -48,7 +48,8 @@ Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
 - Ablauf: *In Vorbereitung* (Gäste können mitgebrachte Biere vorschlagen) → *Läuft* (bewerten, Live-Zwischenstand) → *Abgeschlossen* (Ergebnis aufgedeckt, zählt für die Liga).
 - Gäste haben keinen Tabellenzugriff; sie arbeiten nur über die Datenbankfunktionen `vk_*` mit dem Code der Verkostung und einem persönlichen Schlüssel, der auf ihrem Handy liegt.
 - Öffentlich sind abgeschlossene Verkostungen (Liste und Ergebnisseite `verkostung.html?e=…` mit Podest, Rangliste, Einzelnoten, Geschmacksprofil, Kommentaren ohne Namen und den Namen der Teilnehmer) sowie die Liga. Wer welche Note gab, sehen nur Braumeister; sie können einzelne Bewertungen ausblenden.
-- Datenbank: `supabase/verkostung.sql` und `supabase/verkostung_ergebnis.sql`.
+- Der Admin kann Bewertungen nachträglich ändern oder fehlende nachtragen (Verkostung → Bier antippen → „Bearbeiten“ bzw. „+ Bewertung nachtragen“). Jede Änderung wird intern vermerkt, die ursprüngliche Note bleibt erhalten.
+- Datenbank: `supabase/verkostung.sql`, `supabase/verkostung_ergebnis.sql`, `supabase/verkostung_admin.sql`.
 
 ## Arbeitsweise
 
