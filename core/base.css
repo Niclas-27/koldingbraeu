@@ -200,11 +200,10 @@ a.btn{color:var(--ink);text-decoration:none}
 .bb{display:inline-flex;flex:none;align-items:center;justify-content:center;overflow:hidden;background:transparent}
 .bb svg{width:100%;height:100%;display:block}
 img.bb{object-fit:cover;background:var(--surface)}
-.bb-kronkorken.bb-klein{width:40px;height:40px;border-radius:50%}
-.bb-flasche.bb-klein{width:30px;height:40px;border-radius:6px}
-.bb-kronkorken.bb-gross{width:120px;height:120px;border-radius:50%}
-.bb-flasche.bb-gross{width:96px;height:128px;border-radius:10px}
-img.bb-kronkorken{border:1px solid var(--line)}
+.bb-kronkorken.bb-klein{width:40px;height:40px}
+.bb-kronkorken.bb-gross{width:120px;height:120px}
+/* Kronkorken-Form (gezackter Kreis) als CSS-Clip für hochgeladene Fotos; Clip-Path kommt aus lib/bilder.js */
+.kb-zack{clip-path:url(#kb-zack-clip)}
 .bildfeld{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--radius);padding:10px;background:var(--surface);min-width:0}
 .bf-bild{flex:none;width:64px;height:64px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:8px;background:var(--bg)}
 .bf-rund .bf-bild{border-radius:50%}

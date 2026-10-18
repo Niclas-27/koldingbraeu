@@ -40,7 +40,7 @@ umrechenbar auf jede Menge und auf die eigene Anlage. Aus einem Rezept wird ein 
 
 ## Bilder
 
-Rezepte haben wie Sude optional **Foto** und **Etikett** (Editor → „Bilder“). Das Foto steht über dem Rezeptblatt, das Etikett im Kopf und als Vorschaubild auf der Karte; ohne Bild gibt es eine gezeichnete Flasche in der Rezeptfarbe (EBC). Varianten (Klonen) übernehmen keine Bilder. Pfade: `rezepte/<id>/foto-…jpg`, `rezepte/<id>/etikett-…jpg`.
+Rezepte haben wie Sude optional **Foto** und **Etikett** (Editor → „Bilder“). Das Foto steht über dem Rezeptblatt, das Etikett im Kopf und als Vorschaubild auf der Karte – in Kronkorken-Form zugeschnitten (gezackter Kreis); ohne Bild gibt es einen gezeichneten Kronkorken in der Rezeptfarbe (EBC). Varianten (Klonen) übernehmen keine Bilder. Pfade: `rezepte/<id>/foto-…jpg`, `rezepte/<id>/etikett-…jpg`.
 
 ## Offene Punkte
 

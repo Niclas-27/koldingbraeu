@@ -26,7 +26,7 @@ async function listeLaden(){
         <span class="d">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</span>
         <b class="t">${esc(v.titel)}</b>
         <span class="m">${v.proben.length} ${v.proben.length===1?"Bier":"Biere"}${(v.namen||[]).length ? " · mit "+esc(v.namen.join(", ")) : ""}</span>
-        ${sieger?`<span class="w">${Bilder.bier(sieger,"kronkorken")}<span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}
+        ${sieger?`<span class="w">${Bilder.bier(sieger)}<span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}
       </a>`;}).join("")}</div>`);
   main().innerHTML = h;
   $("#codeForm").onsubmit = e => { e.preventDefault(); const c = $("#c_code").value.trim().toLowerCase().replace(/.*[?&]v=/, "").replace(/[^a-z0-9]/g, ""); if(c) location.href = "verkostung.html?v="+encodeURIComponent(c); };

@@ -59,7 +59,7 @@ function gastZeigen(){
     h += sec(`Deine Bewertungen · ${fertig} von ${d.proben.length}`, `<div class="proben">${d.proben.map(p=>{
       const m = meine.get(p.id);
       return `<button class="probe${m?" done":""}" data-p="${esc(p.id)}">
-        ${offen?Bilder.bier(p.bier,"kronkorken"):`<span class="pn num">${p.nummer}</span>`}
+        ${offen?Bilder.bier(p.bier):`<span class="pn num">${p.nummer}</span>`}
         <span class="pt"><b>${offen?esc(p.bier.name):"Probe "+p.nummer}</b><small>${offen?esc(bierZeile(p.bier)):"blind"}</small></span>
         <span class="pg">${m?`<b class="num">${m.note}</b>`:"bewerten"}</span>
       </button>`;}).join("")}</div>`);
@@ -67,7 +67,7 @@ function gastZeigen(){
 
   if(v.status !== "vorbereitung" && d.proben.length){
     const zeilen = d.proben.map(p=>({id:p.id, nummer:p.nummer, titel: offen ? p.bier.name : "Probe "+p.nummer,
-      unter: offen ? bierZeile(p.bier) : "", schnitt:p.schnitt, anzahl:p.anzahl, nochmal:p.nochmal, bild: offen ? Bilder.bier(p.bier,"kronkorken") : ""}));
+      unter: offen ? bierZeile(p.bier) : "", schnitt:p.schnitt, anzahl:p.anzahl, nochmal:p.nochmal, bild: offen ? Bilder.bier(p.bier) : ""}));
     h += sec(v.status==="abgeschlossen" ? "Ergebnis" : "Zwischenstand (live)", rangTabelle(zeilen)
       + (v.status==="laeuft" ? `<p class="hint">Aktualisiert sich alle 15 Sekunden.${v.blind?" Die Namen werden am Ende aufgedeckt.":""}</p>` : ""));
   }

@@ -21,11 +21,11 @@ function ageText(iso){if(!iso)return"";const days=Math.floor((Date.now()-new Dat
 function title(b){return b.stil||`Sud ${b.nr}`;}
 function malzSum(b){return(b.malz||[]).reduce((a,m)=>a+(+m.gramm||0),0);}
 function fmtKg(g){return(g/1000).toLocaleString("de-DE",{maximumFractionDigits:2})+" kg";}
-/* Bild-Vorschau eines Suds: Etikett, sonst Foto, sonst gezeichnete Flasche in Bierfarbe */
+/* Bild-Vorschau eines Suds: Etikett, sonst Foto, sonst gezeichneter Kronkorken in der gewählten Kronkorken-Farbe (sonst Bierfarbe) */
 function sudFarbe(b){const v=Bz.zahl(String(b.ausschlag||b.wuerze||b.biermenge||"").match(/\d+(?:[.,]\d+)?/)?.[0]);return Bz.ebc({ausschlag:v,malze:(b.malz||[]).map(m=>({name:m.sorte,gramm:m.gramm,ebc:m.ebc}))});}
 function sudBild(b){const p=b.bild_etikett||b.bild_foto;
-  if(p)return`<img class="sud-bild" src="${esc(Bilder.url(p,true))}" alt="" loading="lazy">`;
-  return`<span class="sud-bild ph">${Bilder.platzhalter("flasche",{name:title(b),stil:b.stil,ebc:sudFarbe(b)})}</span>`;}
+  if(p)return`<img class="sud-bild kb-zack" src="${esc(Bilder.url(p,true))}" alt="" loading="lazy">`;
+  return`<span class="sud-bild ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;}
 function haystack(b){return JSON.stringify(b).toLowerCase();}
 const Bz=window.Brau;
 const TYP=Bz.HOPFEN_TYPEN;
@@ -143,7 +143,7 @@ function openDetail(id){
     </div>${b.rezept_id?`<p class="meta-line" id="rezeptVerweis">Nach Rezept …</p>`:""}`;
   const changed=bm&&b.geaendert?`<p class="meta-line">Zuletzt geändert ${esc(fmtDateTime(b.geaendert))}${personName(b.geaendert_von)?" von "+esc(personName(b.geaendert_von)):""}</p>`:"";
   const bilder=(b.bild_foto?`<img class="titelbild" id="sudFoto" src="${esc(Bilder.url(b.bild_foto))}" alt="Foto: ${esc(title(b))}">`:"");
-  const etikett=b.bild_etikett?`<button type="button" class="etikett-zeig" id="sudEtikett"><img src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`:"";
+  const etikett=b.bild_etikett?`<button type="button" class="etikett-zeig" id="sudEtikett"><img class="kb-zack" src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`:"";
   const body=bilder+head
     +(etikett?sec("Etikett",etikett):"")
     +sec("Schüttung",grist)

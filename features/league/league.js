@@ -42,7 +42,7 @@ function zeigen(){
   const zeile = (b, platz) => `<li id="bier-${esc(b.id)}" class="${platz && platz <= 3 ? "top p"+platz : ""}${platz ? "" : " wenig"}">
       <details data-b="${esc(b.id)}"${offen.has(b.id)?" open":""}><summary>
       <span class="pl num">${platz ? platz+"." : "–"}</span>
-      <span class="nm mit-bild">${Bilder.bier(b,"kronkorken")}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
+      <span class="nm mit-bild">${Bilder.bier(b)}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
       <span class="sc"><b class="num">${fmtZahl(b.schnitt, 2)}</b></span>
       <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"} · ${Math.round(b.nochmal / b.anzahl * 100)} % nochmal</small>
       <span class="bar"><i style="width:${Math.round(b.schnitt * 10)}%"></i></span>

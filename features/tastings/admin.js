@@ -71,7 +71,7 @@ function detailZeigen(){
       </section>
       <section class="vk-card"><h3>Biere (${proben.length})</h3>
         ${proben.length?`<ol class="plist">${proben.map((p,i)=>{const n=bewertungen.filter(b=>b.probe_id===p.id).length;return `<li>
-          <span class="pn num">${p.nummer}</span>${Bilder.bier(p.bier,"kronkorken")}
+          <span class="pn num">${p.nummer}</span>${Bilder.bier(p.bier)}
           <span class="pt"><b>${esc(p.bier.name)}</b><small>${esc(bierZeile(p.bier))}${p.bier.eigen&&!/kolding/i.test(p.bier.brauerei||"")?" · selbst gebraut":""}</small></span>
           <span class="pa">${n?`<small class="hint">${n} Bew.</small>`:""}
             <button class="x" data-up="${i}" aria-label="Nach oben"${i===0?" disabled":""}>↑</button><button class="x" data-down="${i}" aria-label="Nach unten"${i===proben.length-1?" disabled":""}>↓</button><button class="x" data-raus="${esc(p.id)}" aria-label="Aus der Verkostung nehmen">✕</button></span>
@@ -82,7 +82,7 @@ function detailZeigen(){
       </section>
     </div>`;
 
-  const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:`${p.nummer}. ${p.bier.name}`, unter:bierZeile(p.bier), bild:Bilder.bier(p.bier,"kronkorken"), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
+  const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:`${p.nummer}. ${p.bier.name}`, unter:bierZeile(p.bier), bild:Bilder.bier(p.bier), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
   h += sec(v.status==="abgeschlossen" ? "Ergebnis" : v.status==="laeuft" ? "Zwischenstand (live)" : "Auswertung", (bewertungen.length ? rangTabelle(zeilen,{klick:true}) + `<p class="hint">Antippen zeigt alle Bewertungen und das Geschmacksprofil.${v.status==="laeuft"?" Aktualisiert sich alle 15 Sekunden.":""}</p>` : `<p class="hint">Noch keine Bewertungen.</p>`));
   h += sec("Fotos", `<div class="fotos-admin">${Bilder.feldHtml("titelFeld", v.bild_titel, {art:"frei", beschriftung:"Titelbild"})}</div>
     <h4 class="sub">Galerie (${D.galerie.length})</h4>
@@ -254,7 +254,7 @@ async function bierWaehlen(){
   if(error){ toast(fehlertext(error)); return; }
   const schon = new Set(D.proben.map(p=>p.bier_id));
   const liste = (data||[]).filter(b=>!schon.has(b.id));
-  const zeile = b => `<button class="pick" data-b="${esc(b.id)}" data-s="${esc((b.name+" "+(b.brauerei||"")+" "+(b.bierstile?.name||"")).toLowerCase())}">${Bilder.bier({...b, stil:b.bierstile?.name},"kronkorken")}<span><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))}</small></span></button>`;
+  const zeile = b => `<button class="pick" data-b="${esc(b.id)}" data-s="${esc((b.name+" "+(b.brauerei||"")+" "+(b.bierstile?.name||"")).toLowerCase())}">${Bilder.bier({...b, stil:b.bierstile?.name})}<span><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))}</small></span></button>`;
   sheet("Bier hinzufügen", `<button class="btn primary" id="neuesBier" style="align-self:flex-start">+ Neues Bier anlegen</button>
     ${liste.length?`<input class="search" id="bSuche" type="search" placeholder="In der Bierliste suchen …" aria-label="Bierliste durchsuchen"><div class="picklist" id="pickList">${liste.map(zeile).join("")}</div>`:`<p class="hint">Die Bierliste ist noch leer – leg das erste Bier an.</p>`}`,
     `<span class="spacer"></span><button class="btn" id="bwZu">Abbrechen</button>`);
@@ -336,7 +336,7 @@ async function bierKatalog(){
   const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,stil_id,sud_id,notiz,bild_kronkorken,bild_flasche,bierstile(name),proben(count)").order("name");
   if(error){ toast(fehlertext(error)); return; }
   sheet("Biere", `<p class="hint">Jedes Bier gibt es nur einmal – so zählen seine Bewertungen aus allen Verkostungen zusammen in der Liga.</p>
-    ${data.length ? `<div class="picklist">${data.map(b=>`<div class="pick row">${Bilder.bier({...b, stil:b.bierstile?.name},"kronkorken")}<span class="pt"><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))} · ${b.proben[0]?.count||0} Verkostungen</small></span>
+    ${data.length ? `<div class="picklist">${data.map(b=>`<div class="pick row">${Bilder.bier({...b, stil:b.bierstile?.name})}<span class="pt"><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))} · ${b.proben[0]?.count||0} Verkostungen</small></span>
       <span><button class="btn ghost" data-ed="${esc(b.id)}">Bearbeiten</button>${isAdmin()?`<button class="btn ghost danger" data-del="${esc(b.id)}">Löschen</button>`:""}</span></div>`).join("")}</div>` : `<p class="hint">Noch keine Biere. Biere legst du direkt in einer Verkostung an.</p>`}`,
     `<span class="spacer"></span><button class="btn" id="kZu">Schließen</button>`);
   $("#kZu").onclick = closeSheet;

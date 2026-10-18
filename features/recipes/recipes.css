@@ -66,7 +66,7 @@
 .rz-bild.ph{background:transparent;height:64px}
 .rz-bild.ph svg{height:100%;width:auto}
 .rz-bild.gross{width:120px;height:120px;border-radius:10px}
-.rz-bild.gross.ph{width:60px;height:140px}
+.rz-bild.gross.ph{width:120px;height:120px}
 .rz-etikett{padding:0;border:0;background:transparent;cursor:zoom-in;border-radius:10px}
 .rz-foto{display:block;width:100%;max-height:380px;object-fit:cover;border-radius:var(--radius);margin:0 0 18px;cursor:zoom-in;background:var(--line)}
 @media print{.rz-foto{max-height:220px}}

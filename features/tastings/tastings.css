@@ -129,10 +129,9 @@ details.grp[open]{display:flex;flex-direction:column;gap:14px;padding-bottom:6px
 .vk-tile.mit-titel{padding-top:0;overflow:hidden}
 .vk-tile .vt-bild{display:block;width:calc(100% + 36px);margin:0 -18px 10px;aspect-ratio:16/9;object-fit:cover;background:var(--line)}
 .vk-tile .w .bb{align-self:center;width:28px;height:28px}
-.vk-tile .w .bb-flasche{width:21px}
 .stufe .bb{margin:6px 0}
 .stufe.s2 .bb-gross,.stufe.s3 .bb-gross{transform:scale(.8);margin:0}
-@media (max-width:560px){.podium .stufe .bb-kronkorken.bb-gross{width:48px;height:48px;transform:none}.podium .stufe .bb-flasche.bb-gross{width:36px;height:48px;transform:none}}
+@media (max-width:560px){.podium .stufe .bb-kronkorken.bb-gross{width:48px;height:48px;transform:none}}
 .titelbild{display:block;width:100%;max-height:420px;object-fit:cover;border-radius:var(--radius);margin:4px 0 16px;cursor:zoom-in;background:var(--line)}
 .fotos-admin{max-width:420px}
 h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:16px 0 8px;font-family:var(--font-body)}

@@ -46,7 +46,7 @@ QR-Codes erzeugt `lib/qr.js` im Browser – ohne fremden Dienst.
 
 - **Titelbild** (optional) lädt ein Braumeister in der Verwaltung hoch (Abschnitt „Fotos“). Es erscheint auf der Karte in der Übersicht, beim Mitmachen und auf der Ergebnisseite.
 - **Galerie**: Gäste laden während der Verkostung bis zu drei Fotos hoch (Knopf „+ Foto hinzufügen“). Das läuft über die Edge Function `galerie-hochladen`, die Code, persönlichen Schlüssel, Status und das Limit prüft – Gäste haben keinen direkten Speicherzugriff. Braumeister können ebenfalls Fotos ergänzen.
-- **Bierbilder**: je Bier optional *Kronkorken* (rund zugeschnitten) und *Flasche* (hochkant). Gibt es nur eins, wird es überall gezeigt; gibt es keins, zeichnet `lib/bilder.js` einen Platzhalter in der typischen Farbe des Bierstils. Kronkorken in Listen und der Liga, Flasche auf dem Podest.
+- **Bierbilder**: je Bier optional *Kronkorken* (rund zugeschnitten) und *Flasche* (hochkant). Überall – Listen, Liga, Podest – wird nur die Kronkorken-Form gezeigt: ein vorhandenes Kronkorken-Bild, sonst ersatzweise das Flaschenbild, in Kronkorken-Form zugeschnitten (gezackter Kreis); gibt es keins, zeichnet `lib/bilder.js` einen Platzhalter-Kronkorken in der typischen Farbe des Bierstils.
 - **Löschen** dürfen nur Braumeister (Bildfeld „Entfernen“, ✕ in der Galerie). Beim Löschen einer Verkostung gehen Titelbild und Galerie mit.
 - Speicher: Bucket `bilder` (öffentlich lesbar), Pfade `verkostungen/<id>/titel-…jpg`, `verkostungen/<id>/galerie/<uuid>-…jpg`, `biere/<id>/kronkorken-…jpg`; zu jedem Bild gibt es `…_t.jpg` als Vorschau. Schema: `schema/04_images.sql`.
 

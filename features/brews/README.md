@@ -30,7 +30,7 @@
 
 ## Bilder
 
-Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder“, beides freiwillig). Das Foto steht oben in der Ansicht, das Etikett erscheint als Vorschaubild in der Liste; ohne Bild zeichnet `lib/bilder.js` eine Flasche in der aus der Schüttung berechneten Bierfarbe. „Als Vorlage nutzen“ übernimmt keine Bilder. Ein ersetztes oder entferntes Bild wird beim Speichern aus dem Speicher gelöscht. Pfade: `sude/<id>/foto-…jpg`, `sude/<id>/etikett-…jpg`.
+Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder“, beides freiwillig). Das Foto steht oben in der Ansicht, das Etikett erscheint als Vorschaubild in der Liste – in Kronkorken-Form zugeschnitten (gezackter Kreis); ohne Bild zeichnet `lib/bilder.js` einen Kronkorken in der gewählten Kronkorken-Farbe (Feld „Kronkorken“), sonst in der aus der Schüttung berechneten Bierfarbe. „Als Vorlage nutzen“ übernimmt keine Bilder. Ein ersetztes oder entferntes Bild wird beim Speichern aus dem Speicher gelöscht. Pfade: `sude/<id>/foto-…jpg`, `sude/<id>/etikett-…jpg`.
 
 ## Offene Punkte
 
