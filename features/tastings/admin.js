@@ -100,7 +100,12 @@ function detailZeigen(){
   $("#zfBtn") && ($("#zfBtn").onclick = async () => {
     const btn = $("#zfBtn"); btn.disabled = true; btn.textContent = "Wird erstellt …";
     const { data, error } = await sb.functions.invoke("verkostung-zusammenfassen", { body: { verkostung_id: v.id } });
-    if (error || data?.fehler) { toast((error ? fehlertext(error) : data.fehler) || "Zusammenfassung fehlgeschlagen."); btn.disabled = false; btn.textContent = "Zusammenfassungen erstellen"; return; }
+    if (error || data?.fehler) {
+      let txt = data?.fehler;
+      if (!txt && error?.context?.json) { try { txt = (await error.context.json())?.fehler; } catch (_) {} }
+      toast(txt || fehlertext(error) || "Zusammenfassung fehlgeschlagen.");
+      btn.disabled = false; btn.textContent = "Zusammenfassungen erstellen"; return;
+    }
     toast(data?.anzahl ? `${data.anzahl} Zusammenfassung${data.anzahl===1?"":"en"} erstellt` : (data?.hinweis || "Keine Kommentare zum Zusammenfassen."));
     detailLaden();
   });

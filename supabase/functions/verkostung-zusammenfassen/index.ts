@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
   });
   if (!r.ok) {
     const txt = await r.text().catch(() => "");
+    console.error(`Anthropic-Aufruf fehlgeschlagen: Status ${r.status} – ${txt.slice(0, 500)}`);
     return antwort(502, { fehler: `KI-Aufruf fehlgeschlagen (${r.status}). ${txt.slice(0, 200)}` });
   }
   // deno-lint-ignore no-explicit-any
