@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 4000, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 4000, thinking: { type: "disabled" }, messages: [{ role: "user", content: prompt }] }),
   });
   if (!r.ok) {
     const txt = await r.text().catch(() => "");
@@ -95,7 +95,9 @@ Deno.serve(async (req) => {
   }
   // deno-lint-ignore no-explicit-any
   const kiAntwort: any = await r.json();
-  const text = String(kiAntwort?.content?.[0]?.text ?? "");
+  // deno-lint-ignore no-explicit-any
+  const textBlock = (kiAntwort?.content ?? []).find((c: any) => c?.type === "text");
+  const text = String(textBlock?.text ?? "");
   let ergebnisse: { id: string; text: string }[];
   try {
     const match = text.match(/\[[\s\S]*\]/);
