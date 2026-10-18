@@ -47,8 +47,8 @@ Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
 - Ein Braumeister legt eine Verkostung an, fügt Biere hinzu und zeigt den QR-Code. Gäste scannen ihn, geben nur ihren Namen ein und bewerten am Handy (Gesamtnote 0–10 Pflicht, alles andere freiwillig).
 - Ablauf: *In Vorbereitung* (Gäste können mitgebrachte Biere vorschlagen) → *Läuft* (bewerten, Live-Zwischenstand) → *Abgeschlossen* (Ergebnis aufgedeckt, zählt für die Liga).
 - Gäste haben keinen Tabellenzugriff; sie arbeiten nur über die Datenbankfunktionen `vk_*` mit dem Code der Verkostung und einem persönlichen Schlüssel, der auf ihrem Handy liegt.
-- Öffentlich sind nur abgeschlossene Ergebnisse und die Liga – ohne Gästenamen und Kommentare. Braumeister können einzelne Bewertungen ausblenden.
-- Datenbank: `supabase/verkostung.sql`.
+- Öffentlich sind abgeschlossene Verkostungen (Liste und Ergebnisseite `verkostung.html?e=…` mit Podest, Rangliste, Einzelnoten, Geschmacksprofil, Kommentaren ohne Namen und den Namen der Teilnehmer) sowie die Liga. Wer welche Note gab, sehen nur Braumeister; sie können einzelne Bewertungen ausblenden.
+- Datenbank: `supabase/verkostung.sql` und `supabase/verkostung_ergebnis.sql`.
 
 ## Arbeitsweise
 

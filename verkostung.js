@@ -2,7 +2,8 @@
    Drei Ansichten:
    - ?v=<code>  Gäste (und Braumeister, die mitbewerten): beitreten, Biere bewerten, Live-Zwischenstand
    - ?id=<uuid> Braumeister: Verkostung vorbereiten, QR-Code, Biere, Status, Live-Auswertung, Bewertungen ausblenden
-   - ohne       Übersicht: Braumeister sehen alle Verkostungen, Gäste die abgeschlossenen Ergebnisse
+   - ?e=<uuid>  Ergebnisseite einer abgeschlossenen Verkostung (öffentlich: Vornamen, Kommentare ohne Namen)
+   - ohne       Übersicht: bisherige Verkostungen als Karten; Braumeister zusätzlich laufende und geplante
    Gäste haben keinen Tabellenzugriff, sondern nutzen nur die vk_*-Funktionen der Datenbank. */
 (function () {
 "use strict";
@@ -23,7 +24,8 @@ const MIN_LIVE = 15000; // Abstand der Aktualisierung während einer laufenden V
 const params = new URLSearchParams(location.search);
 const code = (params.get("v") || "").trim().toLowerCase();
 const detailId = params.get("id") || "";
-const ansicht = code ? "gast" : detailId ? "detail" : "liste";
+const ergebnisId = params.get("e") || "";
+const ansicht = code ? "gast" : detailId ? "detail" : ergebnisId ? "ergebnis" : "liste";
 const main = () => $("#vk");
 let stile = [];            // Bierstile (für Formulare)
 let timer = null;
@@ -90,7 +92,7 @@ function gastZeigen(){
   if(!ich && v.status !== "abgeschlossen"){
     h += `<form id="joinForm" class="vk-card stack" novalidate>
         <h3>Mitmachen</h3>
-        <p class="hint">Gib deinen Namen ein. Er ist nur für die Braumeister sichtbar und gilt nur für diesen Abend.</p>
+        <p class="hint">Gib deinen Vornamen oder Spitznamen ein. Er gilt nur für diesen Abend und erscheint nach dem Abschluss in der Teilnehmerliste der Ergebnisseite; deine Kommentare werden dort ohne Namen gezeigt.</p>
         <label class="f" for="j_name">Dein Name<input id="j_name" maxlength="40" autocomplete="given-name" required></label>
         <span class="err" id="joinErr"></span>
         <button class="btn primary" type="submit" id="joinBtn" style="align-self:flex-start">Los geht’s</button>
@@ -221,6 +223,7 @@ function bogen(probeId){
    ========================================================================= */
 async function listeLaden(){
   stopTimer();
+  const archiv = await sb.rpc("vk_archiv");
   let h = `<div class="vk-head"><div><h2>Verkostungen</h2><p class="hint">Biere nebeneinander probieren, bewerten und am Ende das Ranking aufdecken.</p></div>
     ${isBM()?`<div class="top-actions"><button class="btn" id="bierBtn">Biere</button><button class="btn primary" id="neuBtn">+ Neue Verkostung</button></div>`:""}</div>
     <form id="codeForm" class="vk-card codebox" novalidate>
@@ -228,24 +231,77 @@ async function listeLaden(){
       <button class="btn" type="submit">Mitmachen</button>
     </form>`;
   if(isBM()){
-    const {data, error} = await sb.from("verkostungen").select("id,titel,datum,ort,blind,status,proben(count),teilnehmer(count)").order("datum",{ascending:false}).order("angelegt",{ascending:false});
+    const {data, error} = await sb.from("verkostungen").select("id,titel,datum,ort,blind,status,proben(count),teilnehmer(count)").neq("status","abgeschlossen").order("datum",{ascending:false}).order("angelegt",{ascending:false});
     if(error) h += `<p class="empty">${esc(fehlertext(error))}</p>`;
-    else if(!data.length) h += `<p class="empty">Noch keine Verkostung angelegt. Leg mit „+ Neue Verkostung“ die erste an.</p>`;
-    else h += `<div class="vk-list">${data.map(v=>`<a class="vk-item" href="verkostung.html?id=${esc(v.id)}">
+    else if(data.length) h += sec("In Vorbereitung und laufend", `<div class="vk-list">${data.map(v=>`<a class="vk-item" href="verkostung.html?id=${esc(v.id)}">
         <span class="d num">${esc(fmtDateLong(v.datum))}</span>
         <span class="t"><b>${esc(v.titel)}</b><small>${esc([v.ort, (v.proben[0]?.count||0)+" Biere", (v.teilnehmer[0]?.count||0)+" Teilnehmer", v.blind?"blind":""].filter(Boolean).join(" · "))}</small></span>
-        ${statusTag(v.status)}</a>`).join("")}</div>`;
-  } else {
-    const {data, error} = await sb.rpc("vk_archiv");
-    if(error) h += `<p class="empty">${esc(fehlertext(error))}</p>`;
-    else if(!data.length) h += `<p class="empty">Noch keine abgeschlossenen Verkostungen.</p>`;
-    else h += data.map(v => `<section class="vk-card"><div class="vk-head small"><div><h3>${esc(v.titel)}</h3>
-        <p class="hint">${esc([fmtDateLong(v.datum), v.ort, v.teilnehmer+" Teilnehmer"].filter(Boolean).join(" · "))}</p></div></div>
-        ${rangTabelle(v.proben.map(p=>({nummer:p.nummer, titel:p.name, unter:bierZeile(p), schnitt:p.schnitt, anzahl:p.anzahl, nochmal:p.nochmal})))}</section>`).join("");
+        ${statusTag(v.status)}</a>`).join("")}</div>`);
   }
+  if(archiv.error) h += `<p class="empty">${esc(fehlertext(archiv.error))}</p>`;
+  else if(!archiv.data.length) h += `<p class="empty">${isBM()?"Noch keine abgeschlossene Verkostung. Leg mit „+ Neue Verkostung“ eine an.":"Noch keine abgeschlossenen Verkostungen."}</p>`;
+  else h += sec("Bisherige Verkostungen", `<div class="vk-cards">${archiv.data.map(v => {
+      const sieger = v.proben.find(p => p.schnitt != null);
+      return `<a class="vk-tile" href="verkostung.html?e=${esc(v.id)}">
+        <span class="d">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</span>
+        <b class="t">${esc(v.titel)}</b>
+        <span class="m">${v.proben.length} ${v.proben.length===1?"Bier":"Biere"}${(v.namen||[]).length ? " · mit "+esc(v.namen.join(", ")) : ""}</span>
+        ${sieger?`<span class="w"><span class="pokal" aria-hidden="true">🏆</span><span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}
+      </a>`;}).join("")}</div>`);
   main().innerHTML = h;
   $("#codeForm").onsubmit = e => { e.preventDefault(); const c = $("#c_code").value.trim().toLowerCase().replace(/.*[?&]v=/, "").replace(/[^a-z0-9]/g, ""); if(c) location.href = "verkostung.html?v="+encodeURIComponent(c); };
   if(isBM()){ $("#neuBtn").onclick = () => vkForm(null); $("#bierBtn").onclick = bierKatalog; }
+}
+
+/* =========================================================================
+   Ergebnisseite einer abgeschlossenen Verkostung (?e=<uuid>) – öffentlich
+   ========================================================================= */
+async function ergebnisLaden(){
+  stopTimer();
+  const {data, error} = await sb.rpc("vk_ergebnis", {p_id: ergebnisId});
+  if(error){ main().innerHTML = `<p><a class="back" href="verkostung.html">← Alle Verkostungen</a></p><p class="empty">${esc(fehlertext(error))}</p>`; return; }
+  const v = data.verkostung, proben = rangfolge(data.proben);
+  document.title = v.titel + " · Koldingbräu";
+  // Plätze vergeben (gleicher Schnitt und gleiche Nochmal-Zahl = gleicher Platz)
+  let platz = 0, vorher = null;
+  proben.forEach((p,i) => { const k = p.schnitt==null ? null : `${p.schnitt}|${p.nochmal}`; if(k!==vorher){ platz = i+1; vorher = k; } p.platz = p.schnitt==null ? null : platz; });
+  const podium = proben.filter(p => p.platz && p.platz <= 3).slice(0,3);
+  const stufe = p => `<div class="stufe s${p.platz}"><span class="medaille" aria-hidden="true">${["🥇","🥈","🥉"][p.platz-1]}</span>
+      <b>${esc(p.name)}</b><small>${esc([p.brauerei, p.stil].filter(Boolean).join(" · "))}</small><span class="num">${note(p.schnitt)}</span></div>`;
+  const ordnung = podium.length === 3 ? [podium[1], podium[0], podium[2]] : podium;
+
+  const noten = p => `<div class="dots" aria-label="Einzelnoten: ${esc(p.noten.join(", "))}">${Array.from({length:11},(_,i)=>`<span class="tick${i%5===0?" lab":""}">${i%5===0?i:""}</span>`).join("")}
+      ${(() => { const c = new Map(); return p.noten.map(n => { const k = c.get(n) || 0; c.set(n, k+1); return `<i style="left:${n*10}%;bottom:${10+k*12}px" title="Note ${n}"></i>`; }).join(""); })()}</div>`;
+  const profil = p => MERKMALE.flatMap(([,l])=>l).filter(([k]) => p.merkmale[k]).map(([k,label,l,r]) =>
+      `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${p.merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
+  const tags = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(t)}${n>1?` ${n}×`:""}</span>`).join(" ");
+
+  let h = `<p><a class="back" href="verkostung.html">← Alle Verkostungen</a></p>
+    <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
+      <p class="hint">${esc([fmtDateLong(v.datum), v.ort, proben.length+" Biere", v.blind?"blind verkostet":""].filter(Boolean).join(" · "))}</p>
+      ${data.teilnehmer.length?`<p class="hint">Mit ${esc(data.teilnehmer.join(", "))}</p>`:""}</div>
+      ${isBM()?`<a class="btn" href="verkostung.html?id=${esc(v.id)}">Verwalten</a>`:""}</div>
+    ${podium.length?`<div class="podium">${ordnung.map(stufe).join("")}</div>`:""}
+    <section class="sec"><h3>Rangliste</h3><ol class="rank erg">${proben.map(p => {
+      const offen = p.kommentare.length || Object.keys(p.merkmale).length || Object.keys(p.geruch).length || Object.keys(p.fehler).length || p.noten.length;
+      return `<li class="${p.platz&&p.platz<=3?"top p"+p.platz:""}">
+      <details${offen?"":" class=\"leer\""}><summary>
+        <span class="pl num">${p.platz?p.platz+".":"–"}</span>
+        <span class="nm"><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span>
+        <span class="sc"><b class="num">${note(p.schnitt)}</b></span>
+        <small class="mt">${p.anzahl} Bew.${p.anzahl?` · ${Math.round(p.nochmal/p.anzahl*100)} % nochmal`:""}</small>
+        <span class="bar"><i style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
+      </summary>
+      <div class="erg-detail">
+        ${p.noten.length?`<div><h4>Einzelnoten</h4>${noten(p)}</div>`:""}
+        ${p.kommentare.length?`<div><h4>Gesagt wurde</h4><ul class="zitate">${p.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul></div>`:""}
+        ${profil(p)?`<div><h4>Geschmacksprofil</h4>${profil(p)}</div>`:""}
+        ${Object.keys(p.geruch).length?`<div><h4>Geruch</h4><p>${tags(p.geruch)}</p></div>`:""}
+        ${Object.keys(p.fehler).length?`<div><h4>Fehlaromen</h4><p>${tags(p.fehler)}</p></div>`:""}
+        <p><a href="liga.html#bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>
+      </div></details></li>`;}).join("")}</ol>
+      <p class="hint">Antippen zeigt Einzelnoten, Kommentare und Geschmacksprofil.</p></section>`;
+  main().innerHTML = h;
 }
 
 function vkForm(v){
@@ -310,7 +366,7 @@ function detailZeigen(){
     <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
       <p class="hint">${esc([fmtDateLong(v.datum), v.ort, v.blind?"blind":"offen", teilnehmer.length+" Teilnehmer"].filter(Boolean).join(" · "))}</p></div>
       ${statusTag(v.status)}</div>
-    <div class="top-actions">${aktion}<button class="btn" id="vkEdit">Bearbeiten</button>${isAdmin()?`<button class="btn danger" id="vkDel">Löschen</button>`:""}</div>
+    <div class="top-actions">${aktion}${v.status==="abgeschlossen"?`<a class="btn" href="verkostung.html?e=${esc(v.id)}">Ergebnisseite</a>`:""}<button class="btn" id="vkEdit">Bearbeiten</button>${isAdmin()?`<button class="btn danger" id="vkDel">Löschen</button>`:""}</div>
     <div class="vk-grid">
       <section class="vk-card qrbox"><h3>Einladung</h3>
         <div class="qr" id="qrKlein">${QR.svg(link)}</div>
@@ -520,6 +576,7 @@ KB.seite = {
   async laden(){
     if(ansicht === "gast"){ await ladeStile(); await gastLaden(); if(isBM()) bmHinweis(); }
     else if(ansicht === "detail") await detailLaden();
+    else if(ansicht === "ergebnis") await ergebnisLaden();
     else await listeLaden();
   },
 };
