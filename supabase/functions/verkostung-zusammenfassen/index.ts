@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 2000, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 4000, messages: [{ role: "user", content: prompt }] }),
   });
   if (!r.ok) {
     const txt = await r.text().catch(() => "");
@@ -100,7 +100,8 @@ Deno.serve(async (req) => {
   try {
     const match = text.match(/\[[\s\S]*\]/);
     ergebnisse = JSON.parse(match ? match[0] : text);
-  } catch (_) {
+  } catch (fehler) {
+    console.error(`KI-Antwort konnte nicht geparst werden: stop_reason=${kiAntwort?.stop_reason} fehler=${fehler}\nText (erste 1000 Zeichen): ${text.slice(0, 1000)}`);
     return antwort(502, { fehler: "Die Antwort der KI konnte nicht gelesen werden." });
   }
 
