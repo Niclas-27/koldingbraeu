@@ -88,7 +88,8 @@ function detailZeigen(){
     <h4 class="sub">Galerie (${D.galerie.length})</h4>
     ${D.galerie.length ? Bilder.galerieHtml(D.galerie.map(g=>g.pfad), {loeschbar:true}) : `<p class="hint">Noch keine Fotos. Gäste können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.</p>`}
     <button type="button" class="add" id="fotoAdd">+ Foto hinzufügen</button>`);
-  if(teilnehmer.length) h += sec("Teilnehmer", `<div class="tn">${teilnehmer.map(t=>{const n=bewertungen.filter(b=>b.teilnehmer_id===t.id).length;return `<span class="tag">${esc(t.name)} · ${n}/${proben.length}</span>`;}).join("")}</div>`);
+  if(teilnehmer.length) h += sec("Teilnehmer", `<div class="tn">${teilnehmer.map(t=>{const n=bewertungen.filter(b=>b.teilnehmer_id===t.id).length;
+    return `<span class="tag tn-tag">${esc(t.name)} · ${n}/${proben.length}${isAdmin()?`<button type="button" class="tn-x" data-tn-del="${esc(t.id)}" aria-label="${esc(t.name)} entfernen">✕</button>`:""}</span>`;}).join("")}</div>`);
   main().innerHTML = h;
 
   const setStatus = async s => { const {error} = await sb.from("verkostungen").update({status: s}).eq("id", v.id); if(error){ toast(fehlertext(error)); return; } toast({laeuft:"Verkostung läuft",abgeschlossen:"Abgeschlossen – Ergebnis ist aufgedeckt",vorbereitung:"Zurück in Vorbereitung"}[s]); detailLaden(); };
@@ -142,6 +143,14 @@ function detailZeigen(){
       await neuNummerieren(rest); toast("Herausgenommen"); detailLaden();
     }, true);
   });
+  main().querySelectorAll("[data-tn-del]").forEach(b => b.onclick = () => {
+    const t = teilnehmer.find(x=>x.id===b.dataset.tnDel), n = bewertungen.filter(x=>x.teilnehmer_id===t.id).length;
+    bestaetigen(`„${t.name}“ entfernen?`, n ? `Dabei gehen ${n} Bewertungen von ${t.name} verloren.` : `${t.name} hat noch nicht bewertet.`, "Entfernen", async () => {
+      const {error} = await sb.rpc("vk_admin_teilnehmer_loeschen", {p_teilnehmer: t.id});
+      if(error){ toast(fehlertext(error)); return; }
+      toast("Teilnehmer entfernt"); detailLaden();
+    }, true);
+  });
   main().querySelectorAll("[data-vs-ok]").forEach(b => b.onclick = () => { const x = vorschlaege.find(y=>y.id===b.dataset.vsOk); bierForm(null, {name:x.name, brauerei:x.brauerei, stilName:x.stil, vorschlag:x.id}); });
   main().querySelectorAll("[data-vs-no]").forEach(b => b.onclick = async () => { const {error} = await sb.from("vorschlaege").update({status:"abgelehnt"}).eq("id", b.dataset.vsNo); if(error) toast(fehlertext(error)); detailLaden(); });
   main().querySelectorAll(".rank li[data-id]").forEach(li => { const f = () => probeDetail(li.dataset.id); li.onclick = f; li.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); f(); } }; });
@@ -179,6 +188,7 @@ function probeDetail(probeId){
   const zaehle = feld => { const c = new Map(); sichtbar.forEach(b=>(b[feld]||[]).forEach(t=>c.set(t,(c.get(t)||0)+1))); return [...c].sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(t)} ${n}×</span>`).join(" "); };
   const a = auswertung(probeId);
   const body = `<p class="hint">${esc(bierZeile(p.bier))}</p>
+    ${Bilder.bierFotos(p.bier)}
     <div class="stats mini"><div class="stat"><b class="num">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div><div class="stat"><b class="num">${a.anzahl?Math.round(a.nochmal/a.anzahl*100):0} %</b><span>würden nochmal</span></div></div>
     ${sec("Geschmacksprofil", profil)}
     ${sec("Geruch", zaehle("geruch"))}
@@ -191,6 +201,7 @@ function probeDetail(probeId){
     ${isAdmin()?`<button type="button" class="add" id="nachtragen">+ Bewertung nachtragen</button>`:""}`;
   sheet(`${p.nummer}. ${p.bier.name}`, body, `<span class="spacer"></span><button class="btn" id="pdZu">Schließen</button>`);
   $("#pdZu").onclick = closeSheet;
+  Bilder.bierFotosVerdrahten($("#sheetBody"));
   $("#sheetBody").querySelectorAll("[data-ed]").forEach(btn => btn.onclick = () => adminBogen(probeId, btn.dataset.ed));
   const nt = $("#nachtragen"); if(nt) nt.onclick = () => adminBogen(probeId, null);
   $("#sheetBody").querySelectorAll("[data-aus]").forEach(btn => btn.onclick = async () => {
@@ -341,13 +352,15 @@ async function bierKatalog(){
     `<span class="spacer"></span><button class="btn" id="kZu">Schließen</button>`);
   $("#kZu").onclick = closeSheet;
   $("#sheetBody").querySelectorAll("[data-ed]").forEach(btn => btn.onclick = () => bierForm(data.find(b=>b.id===btn.dataset.ed), {}, bierKatalog));
-  $("#sheetBody").querySelectorAll("[data-del]").forEach(btn => btn.onclick = async () => {
+  $("#sheetBody").querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => {
     const b = data.find(x=>x.id===btn.dataset.del);
     if(b.proben[0]?.count){ toast("Das Bier ist in einer Verkostung – erst dort herausnehmen."); return; }
-    btn.disabled = true;
-    const r = await sb.from("biere").delete().eq("id", b.id).select("id");
-    if(r.error || !r.data?.length){ toast(r.error ? fehlertext(r.error) : "Löschen ist nur dem Admin erlaubt."); btn.disabled = false; return; }
-    toast("Bier gelöscht"); bierKatalog();
+    bestaetigen(`„${b.name}“ löschen?`, "Das Bier wird endgültig aus dem Katalog und der Liga entfernt.", "Endgültig löschen", async () => {
+      const r = await sb.from("biere").delete().eq("id", b.id).select("id");
+      if(r.error || !r.data?.length){ toast(r.error ? fehlertext(r.error) : "Löschen ist nur dem Admin erlaubt."); return; }
+      await Promise.all(["bild_kronkorken","bild_flasche"].map(k => b[k] && Bilder.loeschen(b[k])));
+      toast("Bier gelöscht"); bierKatalog();
+    }, true);
   });
 }
 

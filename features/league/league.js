@@ -47,7 +47,7 @@ function zeigen(){
       <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"} · ${Math.round(b.nochmal / b.anzahl * 100)} % nochmal</small>
       <span class="bar"><i style="width:${Math.round(b.schnitt * 10)}%"></i></span>
       </summary>
-      <div class="erg-detail"><h4>Verkostet bei</h4><ul class="abende">${b.abende.slice().sort((x,y)=>String(y.datum).localeCompare(String(x.datum))).map(z => `<li>
+      <div class="erg-detail">${Bilder.bierFotos(b)}<h4>Verkostet bei</h4><ul class="abende">${b.abende.slice().sort((x,y)=>String(y.datum).localeCompare(String(x.datum))).map(z => `<li>
         <a href="verkostung.html?e=${esc(z.verkostung_id)}">${esc(z.titel)}</a><small>${esc(KB.fmtDateLong(String(z.datum)))}</small>
         <span class="num">${fmtZahl(z.summe / z.anzahl, 1)}</span><small>${z.anzahl} Bew.</small></li>`).join("")}</ul></div>
       </details>
@@ -75,6 +75,7 @@ function zeigen(){
   $("#lgStile").querySelectorAll(".chip").forEach(c => c.onclick = () => { f.stil = c.dataset.s; zeigen(); });
   const a = $("#lgAlle"); if(a) a.onchange = () => { f.alle = a.checked; zeigen(); };
   $("#liga").querySelectorAll("details[data-b]").forEach(d => d.addEventListener("toggle", () => { d.open ? offen.add(d.dataset.b) : offen.delete(d.dataset.b); }));
+  Bilder.bierFotosVerdrahten($("#liga"));
   if(springen){ const el = document.getElementById("bier-"+springen); springen = null; if(el) setTimeout(() => el.scrollIntoView({block:"center", behavior:"smooth"}), 50); }
 }
 

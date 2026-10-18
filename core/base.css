@@ -204,6 +204,12 @@ img.bb{object-fit:cover;background:var(--surface)}
 .bb-kronkorken.bb-gross{width:120px;height:120px}
 /* Kronkorken-Form (gezackter Kreis) als CSS-Clip für hochgeladene Fotos; Clip-Path kommt aus lib/bilder.js */
 .kb-zack{clip-path:url(#kb-zack-clip)}
+/* Beide Bierfotos (Kronkorken + Flasche) größer, für Detailansichten (Bilder.bierFotos) */
+.bb-fotos{display:flex;gap:12px;margin:10px 0}
+.bb-foto-zeig{padding:0;border:0;background:transparent;cursor:zoom-in;display:block}
+.bb-foto{display:block;object-fit:cover;background:var(--surface)}
+.bb-foto.kb-zack{width:88px;height:88px}
+.bb-foto:not(.kb-zack){width:66px;height:88px;border-radius:8px}
 .bildfeld{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--radius);padding:10px;background:var(--surface);min-width:0}
 .bf-bild{flex:none;width:64px;height:64px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:8px;background:var(--bg)}
 .bf-rund .bf-bild{border-radius:50%}
