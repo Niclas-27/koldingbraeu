@@ -28,7 +28,7 @@ async function ergebnisLaden(){
     ${v.bild_titel?`<img class="titelbild" id="titelbild" src="${esc(Bilder.url(v.bild_titel))}" alt="Titelbild der Verkostung">`:""}
     ${podium.length?`<div class="podium">${ordnung.map(stufe).join("")}</div>`:""}
     <section class="sec"><h3>Rangliste</h3><ol class="rank erg">${proben.map(p => {
-      const offen = p.kommentare.length || Object.keys(p.merkmale).length || Object.keys(p.geruch).length || Object.keys(p.fehler).length || p.noten.length || p.bild_kronkorken || p.bild_flasche;
+      const offen = p.kommentare.length || Object.keys(p.merkmale).length || Object.keys(p.geruch).length || Object.keys(p.fehler).length || p.noten.length || p.bild_kronkorken || p.bild_flasche || p.zusammenfassung;
       return `<li class="${p.platz&&p.platz<=3?"top p"+p.platz:""}">
       <details${offen?"":" class=\"leer\""}><summary>
         <span class="pl num">${p.platz?p.platz+".":"–"}</span>
@@ -39,8 +39,9 @@ async function ergebnisLaden(){
       </summary>
       <div class="erg-detail">
         ${Bilder.bierFotos(p)}
+        ${p.zusammenfassung?`<div><h4>Launisch zusammengefasst</h4><p class="zusammenfassung">${esc(p.zusammenfassung)}</p></div>`:""}
         ${p.noten.length?`<div><h4>Einzelnoten</h4>${noten(p)}</div>`:""}
-        ${p.kommentare.length?`<div><h4>Gesagt wurde</h4><ul class="zitate">${p.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul></div>`:""}
+        ${p.kommentare.length?`<div><h4>Gesagt wurde</h4><ul class="zitate">${p.kommentare.map(k=>`<li><b>${esc(k.name)}:</b> ${esc(k.text)}</li>`).join("")}</ul></div>`:""}
         ${profil(p)?`<div><h4>Geschmacksprofil</h4>${profil(p)}</div>`:""}
         ${Object.keys(p.geruch).length?`<div><h4>Geruch</h4><p>${tags(p.geruch)}</p></div>`:""}
         ${Object.keys(p.fehler).length?`<div><h4>Fehlaromen</h4><p>${tags(p.fehler)}</p></div>`:""}

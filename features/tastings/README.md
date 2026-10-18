@@ -20,9 +20,9 @@ Ablauf: *In Vorbereitung* → *Läuft* → *Abgeschlossen*.
 |-------|------|
 | Gast | per Code beitreten (nur Name), bewerten solange „Läuft“, eigene Bewertung ändern, vor Beginn Biere vorschlagen; Ergebnisse lesen |
 | Braumeister | Verkostungen und Biere anlegen/bearbeiten, Status setzen, Vorschläge übernehmen, Bewertungen ausblenden; alle Namen und Kommentare sehen |
-| Admin | zusätzlich löschen, Bewertungen ändern und nachtragen (mit Vermerk und ursprünglicher Note), Bierstile ergänzen |
+| Admin | zusätzlich löschen (auch einzelne Teilnehmer samt ihrer Bewertungen), Bewertungen ändern und nachtragen (mit Vermerk und ursprünglicher Note), Bierstile ergänzen, Zusammenfassungen erstellen |
 
-Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **ohne** Zuordnung. Wer welche Note gab, sehen nur Braumeister.
+Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **mit** Namen, wer welchen Kommentar geschrieben hat (seit 18.10.2026 – vorher anonym).
 
 ## Dateien
 
@@ -46,7 +46,7 @@ QR-Codes erzeugt `lib/qr.js` im Browser – ohne fremden Dienst.
 
 - **Titelbild** (optional) lädt ein Braumeister in der Verwaltung hoch (Abschnitt „Fotos“). Es erscheint auf der Karte in der Übersicht, beim Mitmachen und auf der Ergebnisseite.
 - **Galerie**: Gäste laden während der Verkostung bis zu drei Fotos hoch (Knopf „+ Foto hinzufügen“). Das läuft über die Edge Function `galerie-hochladen`, die Code, persönlichen Schlüssel, Status und das Limit prüft – Gäste haben keinen direkten Speicherzugriff. Braumeister können ebenfalls Fotos ergänzen.
-- **Bierbilder**: je Bier optional *Kronkorken* (rund zugeschnitten) und *Flasche* (hochkant). Überall – Listen, Liga, Podest – wird nur die Kronkorken-Form gezeigt: ein vorhandenes Kronkorken-Bild, sonst ersatzweise das Flaschenbild, in Kronkorken-Form zugeschnitten (gezackter Kreis); gibt es keins, zeichnet `lib/bilder.js` einen Platzhalter-Kronkorken in der typischen Farbe des Bierstils.
+- **Bierbilder**: je Bier optional *Kronkorken* (rund zugeschnitten) und *Flasche* (hochkant). In Listen, Liga und Podest wird nur die Kronkorken-Form gezeigt: ein vorhandenes Kronkorken-Bild, sonst ersatzweise das Flaschenbild, in Kronkorken-Form zugeschnitten (gezackter Kreis); gibt es keins, zeichnet `lib/bilder.js` einen Platzhalter-Kronkorken in der typischen Farbe des Bierstils. In den aufgeklappten Bierdetails (Ergebnisseite, Liga, Admin-Probendetail) zeigt `Bilder.bierFotos` zusätzlich beide hochgeladenen Fotos größer nebeneinander, wenn vorhanden.
 - **Löschen** dürfen nur Braumeister (Bildfeld „Entfernen“, ✕ in der Galerie). Beim Löschen einer Verkostung gehen Titelbild und Galerie mit.
 - Speicher: Bucket `bilder` (öffentlich lesbar), Pfade `verkostungen/<id>/titel-…jpg`, `verkostungen/<id>/galerie/<uuid>-…jpg`, `biere/<id>/kronkorken-…jpg`; zu jedem Bild gibt es `…_t.jpg` als Vorschau. Schema: `schema/04_images.sql`.
 
@@ -55,7 +55,16 @@ QR-Codes erzeugt `lib/qr.js` im Browser – ohne fremden Dienst.
 Tabellen `verkostungen`, `proben`, `biere`, `bierstile`, `teilnehmer`, `bewertungen`, `vorschlaege`.
 Gäste haben **keinen** Tabellenzugriff, sondern nur die Funktionen `vk_beitreten`, `vk_laden`, `vk_bewerten`,
 `vk_vorschlagen` (mit Code + persönlichem Schlüssel). Öffentlich: `vk_archiv`, `vk_ergebnis`, `liga_daten`.
-Nur Admin: `vk_admin_bewerten`, `vk_admin_teilnehmer`.
+Nur Admin: `vk_admin_bewerten`, `vk_admin_teilnehmer`, `vk_admin_teilnehmer_loeschen`.
+
+## Zusammenfassung
+
+Nach Abschluss kann der Admin per Knopf „Zusammenfassungen erstellen" (in der Verwaltung) für jedes Bier mit
+Kommentaren eine kurze, launige KI-Zusammenfassung erzeugen lassen – mit Namen, wo ein Kommentar klar
+zuordenbar ist. Das übernimmt die Edge Function `verkostung-zusammenfassen`: sie liest Kommentare, Noten und
+Namen, schickt sie an die Anthropic-API (Modell `claude-haiku-5-5`) und speichert das Ergebnis je Probe in
+`proben.zusammenfassung`. Erscheint dann auf Ergebnisseite, Liga und im Admin-Detail. Braucht das Secret
+`ANTHROPIC_API_KEY` (Supabase Dashboard → Edge Functions → Secrets). Läuft nur manuell, nie automatisch.
 
 ## Offene Punkte
 
