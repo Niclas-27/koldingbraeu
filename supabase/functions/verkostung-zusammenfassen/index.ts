@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     const match = text.match(/\[[\s\S]*\]/);
     ergebnisse = JSON.parse(match ? match[0] : text);
   } catch (fehler) {
-    console.error(`KI-Antwort konnte nicht geparst werden: stop_reason=${kiAntwort?.stop_reason} fehler=${fehler}\nText (erste 1000 Zeichen): ${text.slice(0, 1000)}`);
+    console.error(`KI-Antwort konnte nicht geparst werden: fehler=${fehler}\nRohe Antwort (erste 1500 Zeichen): ${JSON.stringify(kiAntwort).slice(0, 1500)}`);
     return antwort(502, { fehler: "Die Antwort der KI konnte nicht gelesen werden." });
   }
 
