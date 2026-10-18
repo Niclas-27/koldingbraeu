@@ -29,7 +29,7 @@ async function detailLaden(){
   if(!isBM()){ stopTimer(); main().innerHTML = `<p class="empty">Diese Ansicht ist nur für angemeldete Braumeister.</p><p class="empty"><a href="verkostung.html">Zur Übersicht</a></p>`; return; }
   const [v, pr, tn, vs, gb] = await Promise.all([
     sb.from("verkostungen").select("*").eq("id", detailId).maybeSingle(),
-    sb.from("proben").select("id,nummer,bier_id,zusammenfassung,biere(id,name,brauerei,eigen,alkohol,stil_id,sud_id,bild_kronkorken,bild_flasche,bierstile(name))").eq("verkostung_id", detailId).order("nummer"),
+    sb.from("proben").select("id,nummer,bier_id,biere(id,name,brauerei,eigen,alkohol,stil_id,sud_id,bild_kronkorken,bild_flasche,bierstile(name))").eq("verkostung_id", detailId).order("nummer"),
     sb.from("teilnehmer").select("id,name,angelegt").eq("verkostung_id", detailId).order("angelegt"),
     sb.from("vorschlaege").select("*").eq("verkostung_id", detailId).order("angelegt"),
     sb.from("verkostung_bilder").select("id,pfad,teilnehmer_id,angelegt").eq("verkostung_id", detailId).order("angelegt"),
@@ -61,7 +61,7 @@ function detailZeigen(){
     <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
       <p class="hint">${esc([fmtDateLong(v.datum), v.ort, v.blind?"blind":"offen", teilnehmer.length+" Teilnehmer"].filter(Boolean).join(" · "))}</p></div>
       ${statusTag(v.status)}</div>
-    <div class="top-actions">${aktion}${v.status==="abgeschlossen"?`<a class="btn" href="verkostung.html?e=${esc(v.id)}">Ergebnisseite</a>`:""}${v.status==="abgeschlossen"&&isAdmin()?`<button class="btn" id="zfBtn">${proben.some(p=>p.zusammenfassung)?"Zusammenfassungen erneuern":"Zusammenfassungen erstellen"}</button>`:""}<button class="btn" id="vkEdit">Bearbeiten</button>${isAdmin()?`<button class="btn danger" id="vkDel">Löschen</button>`:""}</div>
+    <div class="top-actions">${aktion}${v.status==="abgeschlossen"?`<a class="btn" href="verkostung.html?e=${esc(v.id)}">Ergebnisseite</a>`:""}<button class="btn" id="vkEdit">Bearbeiten</button>${isAdmin()?`<button class="btn danger" id="vkDel">Löschen</button>`:""}</div>
     <div class="vk-grid">
       <section class="vk-card qrbox"><h3>Einladung</h3>
         <div class="qr" id="qrKlein">${QR.svg(link)}</div>
@@ -97,18 +97,6 @@ function detailZeigen(){
   $("#stEnde") && ($("#stEnde").onclick = () => bestaetigen("Verkostung abschließen?", "Danach kann niemand mehr bewerten, und das Ergebnis erscheint öffentlich in der Liga und bei den Verkostungen.", "Abschließen", () => setStatus("abgeschlossen")));
   $("#stWieder") && ($("#stWieder").onclick = () => bestaetigen("Wieder öffnen?", "Die Gäste können dann wieder bewerten. Das Ergebnis verschwindet so lange aus der öffentlichen Liga.", "Wieder öffnen", () => setStatus("laeuft")));
   $("#vkEdit").onclick = () => vkForm(v);
-  $("#zfBtn") && ($("#zfBtn").onclick = async () => {
-    const btn = $("#zfBtn"); btn.disabled = true; btn.textContent = "Wird erstellt …";
-    const { data, error } = await sb.functions.invoke("verkostung-zusammenfassen", { body: { verkostung_id: v.id } });
-    if (error || data?.fehler) {
-      let txt = data?.fehler;
-      if (!txt && error?.context?.json) { try { txt = (await error.context.json())?.fehler; } catch (_) {} }
-      toast(txt || fehlertext(error) || "Zusammenfassung fehlgeschlagen.");
-      btn.disabled = false; btn.textContent = "Zusammenfassungen erstellen"; return;
-    }
-    toast(data?.anzahl ? `${data.anzahl} Zusammenfassung${data.anzahl===1?"":"en"} erstellt` : (data?.hinweis || "Keine Kommentare zum Zusammenfassen."));
-    detailLaden();
-  });
   $("#vkDel") && ($("#vkDel").onclick = () => bestaetigen("Verkostung löschen?", `„${v.titel}“ mit allen ${bewertungen.length} Bewertungen wird endgültig gelöscht. Die Biere selbst bleiben erhalten.`, "Endgültig löschen", async () => {
     const {data, error} = await sb.from("verkostungen").delete().eq("id", v.id).select("id");
     if(error || !data?.length){ toast(error ? fehlertext(error) : "Löschen ist nur dem Admin erlaubt."); return; }
@@ -201,7 +189,6 @@ function probeDetail(probeId){
   const a = auswertung(probeId);
   const body = `<p class="hint">${esc(bierZeile(p.bier))}</p>
     ${Bilder.bierFotos(p.bier)}
-    ${p.zusammenfassung?sec("Zusammengefasst", `<p class="zusammenfassung">${esc(p.zusammenfassung)}</p>`):""}
     <div class="stats mini"><div class="stat"><b class="num">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div><div class="stat"><b class="num">${a.anzahl?Math.round(a.nochmal/a.anzahl*100):0} %</b><span>würden nochmal</span></div></div>
     ${sec("Geschmacksprofil", profil)}
     ${sec("Geruch", zaehle("geruch"))}

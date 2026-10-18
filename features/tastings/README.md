@@ -20,9 +20,9 @@ Ablauf: *In Vorbereitung* → *Läuft* → *Abgeschlossen*.
 |-------|------|
 | Gast | per Code beitreten (nur Name), bewerten solange „Läuft“, eigene Bewertung ändern, vor Beginn Biere vorschlagen; Ergebnisse lesen |
 | Braumeister | Verkostungen und Biere anlegen/bearbeiten, Status setzen, Vorschläge übernehmen, Bewertungen ausblenden; alle Namen und Kommentare sehen |
-| Admin | zusätzlich löschen (auch einzelne Teilnehmer samt ihrer Bewertungen), Bewertungen ändern und nachtragen (mit Vermerk und ursprünglicher Note), Bierstile ergänzen, Zusammenfassungen erstellen |
+| Admin | zusätzlich löschen (auch einzelne Teilnehmer samt ihrer Bewertungen), Bewertungen ändern und nachtragen (mit Vermerk und ursprünglicher Note), Bierstile ergänzen |
 
-Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **mit** Namen, wer welchen Kommentar geschrieben hat (seit 18.10.2026 – vorher anonym).
+Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **ohne** Zuordnung. Wer welche Note gab, sehen nur Braumeister.
 
 ## Dateien
 
@@ -56,15 +56,6 @@ Tabellen `verkostungen`, `proben`, `biere`, `bierstile`, `teilnehmer`, `bewertun
 Gäste haben **keinen** Tabellenzugriff, sondern nur die Funktionen `vk_beitreten`, `vk_laden`, `vk_bewerten`,
 `vk_vorschlagen` (mit Code + persönlichem Schlüssel). Öffentlich: `vk_archiv`, `vk_ergebnis`, `liga_daten`.
 Nur Admin: `vk_admin_bewerten`, `vk_admin_teilnehmer`, `vk_admin_teilnehmer_loeschen`.
-
-## Zusammenfassung
-
-Nach Abschluss kann der Admin per Knopf „Zusammenfassungen erstellen" (in der Verwaltung) für jedes Bier mit
-Kommentaren eine kurze, launige KI-Zusammenfassung erzeugen lassen – mit Namen, wo ein Kommentar klar
-zuordenbar ist. Das übernimmt die Edge Function `verkostung-zusammenfassen`: sie liest Kommentare, Noten und
-Namen, schickt sie an die Anthropic-API (Modell `claude-haiku-5-5`) und speichert das Ergebnis je Probe in
-`proben.zusammenfassung`. Erscheint dann auf Ergebnisseite, Liga und im Admin-Detail. Braucht das Secret
-`ANTHROPIC_API_KEY` (Supabase Dashboard → Edge Functions → Secrets). Läuft nur manuell, nie automatisch.
 
 ## Offene Punkte
 
