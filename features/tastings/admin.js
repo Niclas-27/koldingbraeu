@@ -283,7 +283,7 @@ async function probeAnlegen(bierId){
 /* Bier anlegen oder bearbeiten. vorgabe: {name, brauerei, stilName, vorschlag} */
 async function bierForm(bier, vorgabe, nachher){
   await ladeStile();
-  const {data: sude} = await sb.from("sude").select("id,nr,stil,datum").order("datum", {ascending:false});
+  const {data: sude} = await sb.from("sude").select("id,nr,stil,datum,bild_etikett").order("datum", {ascending:false});
   const b = bier || {name: vorgabe.name||"", brauerei: vorgabe.brauerei||"", eigen: false, stil_id: (stile.find(s=>s.name.toLowerCase()===(vorgabe.stilName||"").toLowerCase())||{}).id ?? null, alkohol: null, sud_id: null, notiz: "", bild_kronkorken: null, bild_flasche: null};
   const bildBasis = `biere/${bier?.id || "neu-" + crypto.randomUUID()}`;
   const bierVorschau = {name: b.name, stil: (stile.find(s=>s.id===b.stil_id)||{}).name};
@@ -311,6 +311,15 @@ async function bierForm(bier, vorgabe, nachher){
   $("#biAbbr").onclick = closeSheet;
   $("#bi_eigen").onchange = () => { $("#sudWrap").hidden = !$("#bi_eigen").checked; if($("#bi_eigen").checked && !$("#bi_br").value.trim()) $("#bi_br").value = "Koldingbräu"; };
   $("#bi_stil").onchange = () => { $("#neuStilWrap").hidden = $("#bi_stil").value !== "neu"; };
+  // Sud ausgewählt: dessen Etikettbild als Kronkorken übernehmen (eigene Kopie, nicht nur verlinkt – sonst würde
+  // ein Löschen des einen Bildes auch das andere zerstören), aber nur solange noch kein Kronkorken gesetzt ist.
+  $("#bi_sud").onchange = async () => {
+    const sud = (sude||[]).find(s => s.id === $("#bi_sud").value);
+    if(sud && sud.bild_etikett && !fKK.wert()){
+      try{ fKK.setzen(await Bilder.kopieren(sud.bild_etikett, bildBasis+"/kronkorken")); }
+      catch(_){ /* Übernahme fehlgeschlagen – Nutzer kann das Bild weiterhin manuell hochladen */ }
+    }
+  };
   $("#bierForm").onsubmit = async e => { e.preventDefault();
     const err = $("#biErr"), alk = $("#bi_alk").value;
     const out = {name: $("#bi_name").value.trim(), brauerei: $("#bi_br").value.trim() || null, eigen: $("#bi_eigen").checked,
