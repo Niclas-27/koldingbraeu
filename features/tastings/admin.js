@@ -344,17 +344,24 @@ async function bierForm(bier, vorgabe, nachher){
 
 /* Bierliste (alle Biere bearbeiten) */
 async function bierKatalog(){
-  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,stil_id,sud_id,notiz,bild_kronkorken,bild_flasche,bierstile(name),proben(count)").order("name");
+  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,stil_id,sud_id,notiz,bild_kronkorken,bild_flasche,bierstile(name)").order("name");
   if(error){ toast(fehlertext(error)); return; }
+  // Verkostungen je Bier ohne PostgREST-Aggregatfunktion zählen (die ist standardmäßig gesperrt): Zeilen laden und zählen.
+  if(data.length){
+    const {data: pr} = await sb.from("proben").select("bier_id").in("bier_id", data.map(b=>b.id));
+    const anzahl = new Map();
+    (pr||[]).forEach(p => anzahl.set(p.bier_id, (anzahl.get(p.bier_id)||0)+1));
+    data.forEach(b => b.anzahlVerkostungen = anzahl.get(b.id)||0);
+  }
   sheet("Biere", `<p class="hint">Jedes Bier gibt es nur einmal – so zählen seine Bewertungen aus allen Verkostungen zusammen in der Liga.</p>
-    ${data.length ? `<div class="picklist">${data.map(b=>`<div class="pick row">${Bilder.bier({...b, stil:b.bierstile?.name})}<span class="pt"><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))} · ${b.proben[0]?.count||0} Verkostungen</small></span>
+    ${data.length ? `<div class="picklist">${data.map(b=>`<div class="pick row">${Bilder.bier({...b, stil:b.bierstile?.name})}<span class="pt"><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))} · ${b.anzahlVerkostungen} Verkostungen</small></span>
       <span><button class="btn ghost" data-ed="${esc(b.id)}">Bearbeiten</button>${isAdmin()?`<button class="btn ghost danger" data-del="${esc(b.id)}">Löschen</button>`:""}</span></div>`).join("")}</div>` : `<p class="hint">Noch keine Biere. Biere legst du direkt in einer Verkostung an.</p>`}`,
     `<span class="spacer"></span><button class="btn" id="kZu">Schließen</button>`);
   $("#kZu").onclick = closeSheet;
   $("#sheetBody").querySelectorAll("[data-ed]").forEach(btn => btn.onclick = () => bierForm(data.find(b=>b.id===btn.dataset.ed), {}, bierKatalog));
   $("#sheetBody").querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => {
     const b = data.find(x=>x.id===btn.dataset.del);
-    if(b.proben[0]?.count){ toast("Das Bier ist in einer Verkostung – erst dort herausnehmen."); return; }
+    if(b.anzahlVerkostungen){ toast("Das Bier ist in einer Verkostung – erst dort herausnehmen."); return; }
     bestaetigen(`„${b.name}“ löschen?`, "Das Bier wird endgültig aus dem Katalog und der Liga entfernt.", "Endgültig löschen", async () => {
       const r = await sb.from("biere").delete().eq("id", b.id).select("id");
       if(r.error || !r.data?.length){ toast(r.error ? fehlertext(r.error) : "Löschen ist nur dem Admin erlaubt."); return; }

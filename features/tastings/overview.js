@@ -10,12 +10,21 @@ async function listeLaden(){
       <button class="btn" type="submit">Mitmachen</button>
     </form>`;
   if(isBM()){
-    const {data, error} = await sb.from("verkostungen").select("id,titel,datum,ort,blind,status,proben(count),teilnehmer(count)").neq("status","abgeschlossen").order("datum",{ascending:false}).order("angelegt",{ascending:false});
+    const {data, error} = await sb.from("verkostungen").select("id,titel,datum,ort,blind,status").neq("status","abgeschlossen").order("datum",{ascending:false}).order("angelegt",{ascending:false});
     if(error) h += `<p class="empty">${esc(fehlertext(error))}</p>`;
-    else if(data.length) h += sec("In Vorbereitung und laufend", `<div class="vk-list">${data.map(v=>`<a class="vk-item" href="verkostung.html?id=${esc(v.id)}">
+    else if(data.length){
+      const ids = data.map(v=>v.id);
+      // Zählen ohne PostgREST-Aggregatfunktion (die ist standardmäßig gesperrt): einfach die Zeilen laden und zählen.
+      const [pr, tn] = await Promise.all([
+        sb.from("proben").select("verkostung_id").in("verkostung_id", ids),
+        sb.from("teilnehmer").select("verkostung_id").in("verkostung_id", ids),
+      ]);
+      const zaehlen = (rows, id) => (rows||[]).filter(r=>r.verkostung_id===id).length;
+      h += sec("In Vorbereitung und laufend", `<div class="vk-list">${data.map(v=>`<a class="vk-item" href="verkostung.html?id=${esc(v.id)}">
         <span class="d num">${esc(fmtDateLong(v.datum))}</span>
-        <span class="t"><b>${esc(v.titel)}</b><small>${esc([v.ort, (v.proben[0]?.count||0)+" Biere", (v.teilnehmer[0]?.count||0)+" Teilnehmer", v.blind?"blind":""].filter(Boolean).join(" · "))}</small></span>
+        <span class="t"><b>${esc(v.titel)}</b><small>${esc([v.ort, zaehlen(pr.data,v.id)+" Biere", zaehlen(tn.data,v.id)+" Teilnehmer", v.blind?"blind":""].filter(Boolean).join(" · "))}</small></span>
         ${statusTag(v.status)}</a>`).join("")}</div>`);
+    }
   }
   if(archiv.error) h += `<p class="empty">${esc(fehlertext(archiv.error))}</p>`;
   else if(!archiv.data.length) h += `<p class="empty">${isBM()?"Noch keine abgeschlossene Verkostung. Leg mit „+ Neue Verkostung“ eine an.":"Noch keine abgeschlossenen Verkostungen."}</p>`;
