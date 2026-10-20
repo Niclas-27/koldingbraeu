@@ -36,7 +36,7 @@ function gastZeigen(){
   }
 
   if(v.status === "vorbereitung"){
-    h += `<div class="vk-card"><h3>Gleich geht’s los</h3><p class="hint">Sobald die Braumeister die Verkostung starten, kannst du hier die Biere bewerten. Die Seite aktualisiert sich von selbst.</p>
+    h += `<div class="vk-card"><h3>Bald geht’s los</h3><p class="hint">Sobald die Braumeister die Verkostung starten, kannst du hier die Biere bewerten. Die Seite aktualisiert sich von selbst.</p>
       ${offen && d.proben.length ? `<ul class="plain">${d.proben.map(p=>`<li><b>${p.nummer}.</b> ${esc(p.bier.name)} <small class="hint">${esc(bierZeile(p.bier))}</small></li>`).join("")}</ul>` : d.proben.length?`<p class="hint">${d.proben.length} Biere stehen bereit – welche, wird erst am Ende verraten.</p>`:""}
     </div>`;
     if(ich){
