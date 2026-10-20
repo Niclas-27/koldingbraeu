@@ -2,6 +2,7 @@
 .codebox{flex-direction:row;align-items:flex-end;flex-wrap:wrap}
 .codebox label{flex:1 1 220px}
 .vk-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.ankuendigungen{display:flex;flex-direction:column;gap:12px}
 .vk-item{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
 .vk-item:hover{background:var(--surface)}
 .vk-item .d{color:var(--muted);font-size:.85rem}

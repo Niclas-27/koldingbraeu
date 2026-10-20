@@ -25,6 +25,18 @@ async function listeLaden(){
         <span class="t"><b>${esc(v.titel)}</b><small>${esc([v.ort, zaehlen(pr.data,v.id)+" Biere", zaehlen(tn.data,v.id)+" Teilnehmer", v.blind?"blind":""].filter(Boolean).join(" · "))}</small></span>
         ${statusTag(v.status)}</a>`).join("")}</div>`);
     }
+  } else {
+    // Öffentliche Ankündigung für nicht angemeldete Gäste: zeigt an, dass etwas kommt, ohne Code oder Teilnehmernamen zu verraten.
+    const {data, error} = await sb.rpc("vk_angekuendigt");
+    if(!error && data && data.length){
+      h += sec("Demnächst", `<div class="ankuendigungen">${data.map(v => `<div class="vk-card">
+          <div class="vk-head"><div><b>${esc(v.titel)}</b><p class="hint">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</p></div>${statusTag(v.status)}</div>
+          <p class="hint">${v.status==="laeuft" ? "Läuft schon – mit dem Code oder QR-Link von den Braumeistern kannst du noch mitmachen." : "Bald geht’s los – mit dem Code oder QR-Link von den Braumeistern bist du dabei."}</p>
+          ${v.blind
+            ? `<p class="hint">${v.anzahlProben} ${v.anzahlProben===1?"Bier steht":"Biere stehen"} bereit – welche, wird erst am Ende verraten.</p>`
+            : (v.proben.length ? `<ul class="plain">${v.proben.map(p=>`<li><b>${p.nummer}.</b> ${esc(p.name)} <small class="hint">${esc(bierZeile(p))}</small></li>`).join("")}</ul>` : "")}
+        </div>`).join("")}</div>`);
+    }
   }
   if(archiv.error) h += `<p class="empty">${esc(fehlertext(archiv.error))}</p>`;
   else if(!archiv.data.length) h += `<p class="empty">${isBM()?"Noch keine abgeschlossene Verkostung. Leg mit „+ Neue Verkostung“ eine an.":"Noch keine abgeschlossenen Verkostungen."}</p>`;
