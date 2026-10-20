@@ -30,6 +30,7 @@ async function listeLaden(){
     const {data, error} = await sb.rpc("vk_angekuendigt");
     if(!error && data && data.length){
       h += sec("Demnächst", `<div class="ankuendigungen">${data.map(v => `<div class="vk-card">
+          ${v.bild_titel ? `<div class="ank-bild"><img src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy"></div>` : (v.blind ? `<div class="ank-bild">${Bilder.titelPlatzhalter()}</div>` : "")}
           <div class="vk-head"><div><b>${esc(v.titel)}</b><p class="hint">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</p></div>${statusTag(v.status)}</div>
           <p class="hint">${v.status==="laeuft" ? "Läuft schon – mit dem Code oder QR-Link von den Braumeistern kannst du noch mitmachen." : "Bald geht’s los – mit dem Code oder QR-Link von den Braumeistern bist du dabei."}</p>
           ${v.blind
