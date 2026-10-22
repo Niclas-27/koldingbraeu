@@ -31,11 +31,13 @@ async function listeLaden(){
     if(!error && data && data.length){
       h += sec("Demnächst", `<div class="ankuendigungen">${data.map(v => `<div class="vk-card">
           ${v.bild_titel ? `<div class="ank-bild"><img src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy"></div>` : (v.blind ? `<div class="ank-bild">${Bilder.titelPlatzhalter()}</div>` : "")}
-          <div class="vk-head"><div><b>${esc(v.titel)}</b><p class="hint">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</p></div>${statusTag(v.status)}</div>
-          <p class="hint">${v.status==="laeuft" ? "Läuft schon – mit dem Code oder QR-Link von den Braumeistern kannst du noch mitmachen." : "Bald geht’s los – mit dem Code oder QR-Link von den Braumeistern bist du dabei."}</p>
-          ${v.blind
-            ? `<p class="hint">${v.anzahlProben} ${v.anzahlProben===1?"Bier steht":"Biere stehen"} bereit – welche, wird erst am Ende verraten.</p>`
-            : (v.proben.length ? `<ul class="plain">${v.proben.map(p=>`<li><b>${p.nummer}.</b> ${esc(p.name)} <small class="hint">${esc(bierZeile(p))}</small></li>`).join("")}</ul>` : "")}
+          <div class="ank-inhalt">
+            <div class="vk-head"><div><b>${esc(v.titel)}</b><p class="hint">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</p></div>${statusTag(v.status)}</div>
+            <p class="hint">${v.status==="laeuft" ? "Läuft schon – mit dem Code oder QR-Link von den Braumeistern kannst du noch mitmachen." : "Bald geht’s los – mit dem Code oder QR-Link von den Braumeistern bist du dabei."}</p>
+            ${v.blind
+              ? `<p class="hint">${v.anzahlProben} ${v.anzahlProben===1?"Bier steht":"Biere stehen"} bereit – welche, wird erst am Ende verraten.</p>`
+              : (v.proben.length ? `<ul class="plain">${v.proben.map(p=>`<li><b>${p.nummer}.</b> ${esc(p.name)} <small class="hint">${esc(bierZeile(p))}</small></li>`).join("")}</ul>` : "")}
+          </div>
         </div>`).join("")}</div>`);
     }
   }
@@ -43,13 +45,17 @@ async function listeLaden(){
   else if(!archiv.data.length) h += `<p class="empty">${isBM()?"Noch keine abgeschlossene Verkostung. Leg mit „+ Neue Verkostung“ eine an.":"Noch keine abgeschlossenen Verkostungen."}</p>`;
   else h += sec("Bisherige Verkostungen", `<div class="vk-cards">${archiv.data.map(v => {
       const sieger = v.proben.find(p => p.schnitt != null);
-      return `<a class="vk-tile${v.bild_titel?" mit-titel":""}" href="verkostung.html?e=${esc(v.id)}">
-        ${v.bild_titel?`<img class="vt-bild" src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy">`:""}
-        <span class="d">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</span>
+      const inhalt = `<span class="d">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</span>
         <b class="t">${esc(v.titel)}</b>
         <span class="m">${v.proben.length} ${v.proben.length===1?"Bier":"Biere"}${(v.namen||[]).length ? " · mit "+esc(v.namen.join(", ")) : ""}</span>
-        ${sieger?`<span class="w">${Bilder.bier(sieger)}<span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}
-      </a>`;}).join("")}</div>`);
+        ${sieger?`<span class="w">${Bilder.bier(sieger)}<span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}`;
+      return v.bild_titel
+        ? `<a class="vk-tile mit-titel" href="verkostung.html?e=${esc(v.id)}">
+        <img class="vt-bild" src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy">
+        <div class="vt-body">${inhalt}</div>
+      </a>`
+        : `<a class="vk-tile" href="verkostung.html?e=${esc(v.id)}">${inhalt}</a>`;
+      }).join("")}</div>`);
   main().innerHTML = h;
   $("#codeForm").onsubmit = e => { e.preventDefault(); const c = $("#c_code").value.trim().toLowerCase().replace(/.*[?&]v=/, "").replace(/[^a-z0-9]/g, ""); if(c) location.href = "verkostung.html?v="+encodeURIComponent(c); };
   if(isBM()){ $("#neuBtn").onclick = () => vkForm(null); $("#bierBtn").onclick = bierKatalog; }
