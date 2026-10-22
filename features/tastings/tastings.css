@@ -35,26 +35,37 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .probe .pg{font-size:.85rem;color:var(--amber);font-weight:600}
 .probe.done{border-color:var(--hop);background:var(--hop-soft)}
 .probe.done .pg b{display:inline-block;min-width:36px;text-align:center;font-size:1.2rem;color:var(--hop)}
-/* Bewertungsbogen */
-.scale{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px}
-.scale button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 0;font-family:var(--font-data);font-size:1rem;cursor:pointer;min-height:44px}
+/* Bewertungsbogen: ein Abschnitt pro Bildschirm, Bedienelemente für's Handy vergrößert */
+.fortschritt{display:flex;align-items:center;gap:10px}
+.fortschritt .punkte{display:flex;gap:5px;flex:1}
+.fortschritt .punkte i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.fortschritt .punkte i.ab{background:var(--amber)}
+.fortschritt .zahl{font-size:.78rem;color:var(--muted);flex:none;font-family:var(--font-data)}
+#bogenInhalt fieldset{gap:20px}
+#bogenInhalt legend{font-family:var(--font-display);font-size:1.3rem;font-weight:800;font-stretch:82%;color:var(--ink);text-transform:none;letter-spacing:0;margin-bottom:2px}
+.scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 0;font-family:var(--font-data);font-size:1.15rem;font-weight:600;cursor:pointer;min-height:52px}
 .scale button[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-@media (max-width:420px){.scale{grid-template-columns:repeat(6,minmax(0,1fr))}}
-.yn{display:flex;gap:8px}
-.yn button{flex:1;max-width:140px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 0;font-weight:600;cursor:pointer}
+.yn{display:flex;gap:10px}
+.yn button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:15px 0;font-weight:700;font-size:1.02rem;cursor:pointer;min-height:52px}
 .yn button[aria-pressed="true"]{background:var(--hop-soft);border-color:var(--hop);color:var(--hop)}
 .yn button[data-yn="false"][aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
-details.grp{border-top:1px solid var(--line);padding-top:10px}
-details.grp summary{cursor:pointer;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);padding:4px 0;list-style-position:inside}
-details.grp[open]{display:flex;flex-direction:column;gap:14px;padding-bottom:6px}
-.sl-top{display:flex;justify-content:space-between;font-size:.9rem}
-.sl-top output{color:var(--amber);font-weight:500}
-.sl input[type=range]{width:100%;accent-color:var(--amber);margin:6px 0 0;height:28px}
-.sl.unset input[type=range]{accent-color:var(--line);opacity:.7}
+.sl-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.95rem;font-weight:600}
+.sl-top output{color:var(--amber);font-weight:700;font-size:1.25rem;font-family:var(--font-data)}
 .sl.unset .sl-top output{color:var(--muted)}
-.sl-ends{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)}
-.tagpick{display:flex;flex-wrap:wrap;gap:6px}
-.tagpick .chip{padding:7px 12px}
+.sl input[type=range]{-webkit-appearance:none;appearance:none;width:100%;margin:8px 0 0;height:52px;background:transparent}
+.sl input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:6px;background:var(--line)}
+.sl input[type=range]::-moz-range-track{height:12px;border-radius:6px;background:var(--line)}
+.sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:32px;height:32px;border-radius:50%;background:var(--amber);border:3px solid var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.25);margin-top:-10px;cursor:pointer}
+.sl input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;background:var(--amber);border:3px solid var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
+.sl.unset input[type=range]::-webkit-slider-thumb{background:var(--muted)}
+.sl.unset input[type=range]::-moz-range-thumb{background:var(--muted)}
+.sl-ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-8px}
+.tagpick{display:flex;flex-wrap:wrap;gap:8px}
+.tagpick .chip{padding:10px 16px;font-size:.92rem;min-height:44px}
+#bWeiter,#bZurueck,#bAbbr{min-height:48px;font-size:1rem}
+#bWeiter{flex:1}
+#bZurueck{flex:none;width:48px;padding:0;justify-content:center}
 /* Braumeister-Ansicht */
 .qrbox{align-items:flex-start}
 .qr{background:#fff;border-radius:8px;padding:4px;line-height:0;width:180px;max-width:100%}
