@@ -43,14 +43,16 @@ function bogenZeigen(opts){
   }
 
   function schrittHtml(){
-    const s = BOGEN_SCHRITTE[schritt], n = schritt + 1, total = BOGEN_SCHRITTE.length;
-    return `<div class="fortschritt"><span class="punkte">${BOGEN_SCHRITTE.map((_,i)=>`<i class="${i<=schritt?"ab":""}"></i>`).join("")}</span><span class="zahl num">${n} / ${total}</span></div>
-      <fieldset><legend>${esc(s.label)}</legend>${inhaltHtml(s)}</fieldset>
+    const s = BOGEN_SCHRITTE[schritt];
+    return `<fieldset><legend>${esc(s.label)}</legend>${inhaltHtml(s)}</fieldset>
       <span class="err" id="bErr"></span>`;
   }
   function footHtml(){
-    const letzte = schritt === BOGEN_SCHRITTE.length - 1;
-    return `${schritt>0?`<button class="btn" id="bZurueck" aria-label="Zurück">←</button>`:""}<button class="btn primary" id="bWeiter">${letzte?"Speichern":"Weiter"}</button>`;
+    const letzte = schritt === BOGEN_SCHRITTE.length - 1, n = schritt + 1, total = BOGEN_SCHRITTE.length;
+    return `<div class="bogen-fuss">
+      <div class="fortschritt"><span class="punkte">${BOGEN_SCHRITTE.map((_,i)=>`<i class="${i<=schritt?"ab":""}"></i>`).join("")}</span><span class="zahl num">${n} / ${total}</span></div>
+      <div class="bogen-knoepfe">${schritt>0?`<button class="btn" id="bZurueck" aria-label="Zurück">←</button>`:""}<button class="btn primary" id="bWeiter">${letzte?"Speichern":"Weiter"}</button></div>
+    </div>`;
   }
 
   function verdrahten(){
