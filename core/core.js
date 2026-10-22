@@ -78,24 +78,6 @@ function markMenu(){
   document.querySelectorAll(".menu a[data-seite]").forEach(a=>{if(a.dataset.seite===s)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
 }
 
-/* --- Hell/Dunkel-Schalter: gilt seitenübergreifend, Wahl wird in localStorage gemerkt; ohne
-   eigene Wahl folgt die Seite weiter der Systemeinstellung (siehe core/base.css). --- */
-function aktuellesTheme(){
-  const t=document.documentElement.getAttribute("data-theme");
-  if(t)return t;
-  return window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
-}
-function themeKnopfZeichnen(){
-  const btn=$("#themeBtn"); if(!btn)return;
-  btn.textContent=aktuellesTheme()==="dark"?"☀️":"🌙";
-}
-function themeUmschalten(){
-  const neu=aktuellesTheme()==="dark"?"light":"dark";
-  document.documentElement.setAttribute("data-theme",neu);
-  lsSet("kb_theme",neu);
-  themeKnopfZeichnen();
-}
-
 /* --- Anmelden, Passwort vergessen, Passwort festlegen --- */
 function openLogin(prefill){
   sheet("Anmelden",`<form id="loginForm" class="stack" novalidate>
@@ -259,7 +241,6 @@ async function boot(){
   sb=window.supabase.createClient(CONFIG.url,CONFIG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
   KB.sb=sb;
   $("#closeBtn").onclick=closeSheet;$("#scrim").onclick=closeSheet;
-  $("#themeBtn").onclick=themeUmschalten; themeKnopfZeichnen();
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet();});
   $("#loginBtn").onclick=()=>openLogin();
   $("#accountBtn").onclick=openAccount;
