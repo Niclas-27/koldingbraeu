@@ -20,6 +20,7 @@ function ageText(iso){if(!iso)return"";const days=Math.floor((Date.now()-new Dat
   const months=Math.round(days/30.44);if(months<24)return`vor ${months} Monaten`;return`vor ${(days/365.25).toFixed(1).replace(".",",")} Jahren`;}
 function title(b){return b.stil||`Sud ${b.nr}`;}
 function malzSum(b){return(b.malz||[]).reduce((a,m)=>a+(+m.gramm||0),0);}
+function hopfenSum(b){return(b.hopfen||[]).reduce((a,h)=>a+(+hopfenNeu(h).gramm||0),0);}
 function fmtKg(g){return(g/1000).toLocaleString("de-DE",{maximumFractionDigits:2})+" kg";}
 /* Bild-Vorschau eines Suds: Etikett, sonst Foto, sonst gezeichneter Kronkorken in der gewählten Kronkorken-Farbe (sonst Bierfarbe) */
 function sudFarbe(b){const v=Bz.zahl(String(b.ausschlag||b.wuerze||b.biermenge||"").match(/\d+(?:[.,]\d+)?/)?.[0]);return Bz.ebc({ausschlag:v,malze:(b.malz||[]).map(m=>({name:m.sorte,gramm:m.gramm,ebc:m.ebc}))});}
@@ -72,7 +73,8 @@ function renderStats(){
   let last;
   if(isBM()){const gv=b.map(x=>gradeVal(x.bewertung)).filter(v=>v!=null);const avg=gv.length?gv.reduce((a,v)=>a+v,0)/gv.length:null;
     last=`<div class="stat"><b class="num">${avg==null?"–":avg.toFixed(1).replace(".",",")}</b><span>Ø Note</span></div>`;}
-  else last=`<div class="stat"><b class="num">${years.length}</b><span>Jahrgänge</span></div>`;
+  else{const hopfen=b.reduce((a,x)=>a+hopfenSum(x),0);
+    last=`<div class="stat"><b class="num">${Math.round(hopfen).toLocaleString("de-DE")}</b><span>g Hopfen verbraut</span></div>`;}
   $("#stats").innerHTML=`
     <div class="stat"><b class="num">${b.length}</b><span>Sude</span></div>
     <div class="stat"><b class="num">${Math.round(malz/1000)}</b><span>kg Malz verbraut</span></div>
