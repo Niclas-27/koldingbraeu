@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<script>try{var t=localStorage.getItem("kb_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Koldingbräu Braubuch</title>
 <meta name="description" content="Das Braubuch von Koldingbräu – unsere Sude mit Schüttung, Hopfen, Hefe und Messwerten.">
@@ -24,6 +25,7 @@
       <p id="subtitle">Das Braubuch</p>
     </div>
     <div class="top-actions">
+      <button class="btn ghost theme-btn" id="themeBtn" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel umschalten"></button>
       <button class="btn" id="exportBtn" hidden>Als CSV sichern</button>
       <button class="btn" id="adminBtn" hidden>Verwaltung</button>
       <button class="btn primary" id="newBtn" hidden>+ Neuer Sud</button>

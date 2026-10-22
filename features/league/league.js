@@ -8,7 +8,7 @@ const {$, esc, fmtZahl, fehlertext, lsGet, lsSet} = KB;
 const MIN = 3; // ab so vielen Bewertungen zählt ein Bier für die Liga
 
 let zeilen = null;  // eine Zeile je Bier und Verkostung
-const offen = new Set();  // aufgeklappte Biere
+let offenId = null;       // aufgeklapptes Bier – immer nur eins gleichzeitig
 let springen = null;      // Bier aus dem Link (#bier=…), zu dem gescrollt wird
 const f = { stil: "", herkunft: "alle", jahr: "", alle: false };
 try { Object.assign(f, JSON.parse(lsGet("kb_liga") || "{}")); } catch(_) {}
@@ -40,7 +40,7 @@ function zeigen(){
   const drin = alle.filter(b => b.anzahl >= MIN), wenig = alle.filter(b => b.anzahl < MIN);
 
   const zeile = (b, platz) => `<li id="bier-${esc(b.id)}" class="${platz && platz <= 3 ? "top p"+platz : ""}${platz ? "" : " wenig"}">
-      <details data-b="${esc(b.id)}"${offen.has(b.id)?" open":""}><summary>
+      <details data-b="${esc(b.id)}"${offenId===b.id?" open":""}><summary>
       <span class="pl num">${platz ? platz+"." : "–"}</span>
       <span class="nm mit-bild">${Bilder.bier(b)}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
       <span class="sc"><b class="num">${fmtZahl(b.schnitt, 2)}</b></span>
@@ -74,7 +74,14 @@ function zeigen(){
   $("#lgJahr").onchange = e => { f.jahr = e.target.value; zeigen(); };
   $("#lgStile").querySelectorAll(".chip").forEach(c => c.onclick = () => { f.stil = c.dataset.s; zeigen(); });
   const a = $("#lgAlle"); if(a) a.onchange = () => { f.alle = a.checked; zeigen(); };
-  $("#liga").querySelectorAll("details[data-b]").forEach(d => d.addEventListener("toggle", () => { d.open ? offen.add(d.dataset.b) : offen.delete(d.dataset.b); }));
+  $("#liga").querySelectorAll("details[data-b]").forEach(d => d.addEventListener("toggle", () => {
+    if(d.open){
+      offenId = d.dataset.b;
+      $("#liga").querySelectorAll("details[data-b]").forEach(x => { if(x !== d && x.open) x.open = false; });
+    } else if(offenId === d.dataset.b){
+      offenId = null;
+    }
+  }));
   Bilder.bierFotosVerdrahten($("#liga"));
   if(springen){ const el = document.getElementById("bier-"+springen); springen = null; if(el) setTimeout(() => el.scrollIntoView({block:"center", behavior:"smooth"}), 50); }
 }
@@ -90,7 +97,7 @@ KB.seite = {
         const z = zeilen.find(z => z.bier_id === m[1]);
         Object.assign(f, {stil: "", herkunft: "alle", jahr: ""});
         if(zeilen.filter(x => x.bier_id === z.bier_id).reduce((a,x)=>a + +x.anzahl, 0) < MIN) f.alle = true;
-        offen.add(m[1]); springen = m[1];
+        offenId = m[1]; springen = m[1];
       }
     }
     zeigen();
