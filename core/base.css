@@ -30,7 +30,12 @@
   --warn:#e2826b; --warn-soft:#3a1d16; color-scheme:dark;
 }
 *{box-sizing:border-box}
+/* Verhindert seitliches Wackeln/Scrollen am Handy (z. B. durch die Slide-in-Animation der
+   Sheets, die kurz über den rechten Rand hinausragt) – auf html, weil der Viewport-Scroll im
+   Standardmodus vom Wurzelelement gesteuert wird, nicht vom body. */
+html{overflow-x:hidden}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  overflow-x:hidden;max-width:100vw;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));}
 .wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
 h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0}

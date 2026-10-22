@@ -36,6 +36,8 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .probe.done{border-color:var(--hop);background:var(--hop-soft)}
 .probe.done .pg b{display:inline-block;min-width:36px;text-align:center;font-size:1.2rem;color:var(--hop)}
 /* Bewertungsbogen: ein Abschnitt pro Bildschirm, Bedienelemente für's Handy vergrößert */
+#b_kom{min-height:160px;font-size:1.1rem;padding:12px 14px}
+@media (max-width:560px){#b_kom{min-height:220px}}
 .bogen-fuss{display:flex;flex-direction:column;gap:10px;flex:1}
 .bogen-knoepfe{display:flex;gap:10px}
 .fortschritt{display:flex;align-items:center;gap:10px}

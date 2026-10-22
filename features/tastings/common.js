@@ -10,7 +10,7 @@ const STATUS = {vorbereitung:"In Vorbereitung", laeuft:"Läuft", abgeschlossen:"
 const MERKMALE = [
   ["Aussehen", [["farbe","Farbe","hell","dunkel"],["klarheit","Klarheit","klar","trüb"],["schaum","Schaum","wenig","viel"]]],
   ["Geruch", [["intensitaet","Intensität","schwach","kräftig"]]],
-  ["Geschmack", [["bitter","Bittere","mild","bitter"],["suesse","Süße","süß","trocken"],["malzhopfen","Betonung","malzig","hopfig"],["saeure","Säure","keine","deutlich"]]],
+  ["Geschmack", [["bitter","Bittere","mild","bitter"],["suesse","Süße","süß","trocken"],["malzhopfen","Betonung","malzig","hopfig"]]],
   ["Mundgefühl", [["koerper","Körper","schlank","vollmundig"],["kohlensaeure","Kohlensäure","wenig","spritzig"],["abgang","Abgang","kurz","lang"]]],
 ];
 const GERUCH = ["malzig","brotig","Karamell","röstig","blumig","Zitrus","tropisch","harzig/kräuterig","Banane","Nelke","fruchtig","säuerlich"];
