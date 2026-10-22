@@ -50,7 +50,7 @@ function bogenZeigen(opts){
   }
   function footHtml(){
     const letzte = schritt === BOGEN_SCHRITTE.length - 1;
-    return `${schritt>0?`<button class="btn" id="bZurueck" aria-label="Zurück">←</button>`:""}<span class="spacer"></span><button class="btn" id="bAbbr">Abbrechen</button><button class="btn primary" id="bWeiter">${letzte?"Speichern":"Weiter"}</button>`;
+    return `${schritt>0?`<button class="btn" id="bZurueck" aria-label="Zurück">←</button>`:""}<button class="btn primary" id="bWeiter">${letzte?"Speichern":"Weiter"}</button>`;
   }
 
   function verdrahten(){
@@ -61,7 +61,6 @@ function bogenZeigen(opts){
     inhalt.querySelectorAll(".yn button").forEach(b => b.onclick = () => { const v = b.dataset.yn==="true"; f.nochmal = f.nochmal===v ? null : v; inhalt.querySelectorAll(".yn button").forEach(x=>x.setAttribute("aria-pressed", String(f.nochmal!==null && (x.dataset.yn==="true")===f.nochmal))); });
     inhalt.querySelectorAll(".scale button").forEach(b => b.onclick = () => { f.note = +b.dataset.n; $("#bErr").textContent = ""; inhalt.querySelectorAll(".scale button").forEach(x=>x.setAttribute("aria-checked", String(x===b))); });
 
-    $("#bAbbr").onclick = closeSheet;
     const zurueck = $("#bZurueck");
     if(zurueck) zurueck.onclick = () => { schritt--; renderSchritt(); };
     $("#bWeiter").onclick = async () => {

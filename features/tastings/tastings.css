@@ -42,7 +42,7 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .fortschritt .punkte i.ab{background:var(--amber)}
 .fortschritt .zahl{font-size:.78rem;color:var(--muted);flex:none;font-family:var(--font-data)}
 #bogenInhalt fieldset{gap:20px}
-#bogenInhalt legend{font-family:var(--font-display);font-size:1.3rem;font-weight:800;font-stretch:82%;color:var(--ink);text-transform:none;letter-spacing:0;margin-bottom:2px}
+#bogenInhalt legend{font-family:var(--font-display);font-size:1.7rem;font-weight:800;font-stretch:82%;color:var(--ink);text-transform:none;letter-spacing:0;margin-bottom:2px}
 .scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 0;font-family:var(--font-data);font-size:1.15rem;font-weight:600;cursor:pointer;min-height:52px}
 .scale button[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -63,9 +63,7 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .sl-ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-8px}
 .tagpick{display:flex;flex-wrap:wrap;gap:8px}
 .tagpick .chip{padding:10px 16px;font-size:.92rem;min-height:44px}
-#bWeiter,#bZurueck,#bAbbr{min-height:48px;font-size:1rem}
-#bWeiter{flex:1}
-#bZurueck{flex:none;width:48px;padding:0;justify-content:center}
+#bWeiter,#bZurueck{min-height:48px;font-size:1rem;flex:1;justify-content:center}
 /* Braumeister-Ansicht */
 .qrbox{align-items:flex-start}
 .qr{background:#fff;border-radius:8px;padding:4px;line-height:0;width:180px;max-width:100%}
