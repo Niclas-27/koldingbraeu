@@ -50,7 +50,7 @@
   .rowlist.rz4 .r{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 36px}.rowlist.rz4 .r input:first-child{grid-column:1/-1}}
 .printonly{display:none}
 @media print{
-  header.top,.menu,.foot,.noprint,.toast,.scrim,.sheet,#notice{display:none!important}
+  .site-header,.menu,.foot,.noprint,.toast,.scrim,.sheet,#notice{display:none!important}
   .printonly{display:inline}
   body{background:#fff;color:#000}
   .rz-blatt{border:0;padding:0;max-width:none}

@@ -77,6 +77,23 @@ function markMenu(){
   const s=document.body.dataset.seite;
   document.querySelectorAll(".menu a[data-seite]").forEach(a=>{if(a.dataset.seite===s)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
 }
+function wireMenu(){
+  const btn=$("#menuToggle");
+  if(!btn)return;
+  const header=btn.closest(".site-header");
+  btn.onclick=()=>{
+    const open=header.classList.toggle("open");
+    btn.setAttribute("aria-expanded",open?"true":"false");
+    btn.setAttribute("aria-label",open?"Menü schließen":"Menü öffnen");
+  };
+  document.querySelectorAll(".menu a[data-seite]").forEach(a=>{
+    a.addEventListener("click",()=>{
+      header.classList.remove("open");
+      btn.setAttribute("aria-expanded","false");
+      btn.setAttribute("aria-label","Menü öffnen");
+    });
+  });
+}
 
 /* --- Anmelden, Passwort vergessen, Passwort festlegen --- */
 function openLogin(prefill){
@@ -237,6 +254,7 @@ async function refresh(){
 /* --- Start --- */
 async function boot(){
   markMenu();
+  wireMenu();
   if(!window.supabase||!window.supabase.createClient){notice("Die Seite konnte nicht geladen werden. Bitte neu laden.");return;}
   sb=window.supabase.createClient(CONFIG.url,CONFIG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
   KB.sb=sb;
