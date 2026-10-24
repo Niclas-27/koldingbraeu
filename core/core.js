@@ -95,6 +95,28 @@ function wireMenu(){
   });
 }
 
+/* --- Hell/Dunkel --- */
+const ICON_MOND=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg>`;
+const ICON_SONNE=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>`;
+function aktuellesTheme(){
+  const t=lsGet("kb_theme");
+  if(t==="light"||t==="dark")return t;
+  return window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+}
+function themeAnwenden(t){document.documentElement.setAttribute("data-theme",t);}
+function themeKnopfZeichnen(){
+  const btn=$("#themeBtn");if(!btn)return;
+  const t=aktuellesTheme();
+  btn.innerHTML=t==="dark"?ICON_SONNE:ICON_MOND;
+  btn.setAttribute("aria-label",t==="dark"?"Hellmodus aktivieren":"Dunkelmodus aktivieren");
+}
+function themeUmschalten(){
+  const neu=aktuellesTheme()==="dark"?"light":"dark";
+  lsSet("kb_theme",neu);
+  themeAnwenden(neu);
+  themeKnopfZeichnen();
+}
+
 /* --- Anmelden, Passwort vergessen, Passwort festlegen --- */
 function openLogin(prefill){
   sheet("Anmelden",`<form id="loginForm" class="stack" novalidate>
@@ -255,6 +277,9 @@ async function refresh(){
 async function boot(){
   markMenu();
   wireMenu();
+  themeAnwenden(aktuellesTheme());
+  themeKnopfZeichnen();
+  const themeBtn=$("#themeBtn");if(themeBtn)themeBtn.onclick=themeUmschalten;
   if(!window.supabase||!window.supabase.createClient){notice("Die Seite konnte nicht geladen werden. Bitte neu laden.");return;}
   sb=window.supabase.createClient(CONFIG.url,CONFIG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
   KB.sb=sb;
