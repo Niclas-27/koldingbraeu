@@ -44,9 +44,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
 /* Kopf */
-.site-header{position:sticky;top:0;z-index:30;background:var(--surface-a);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.site-header{position:sticky;top:0;z-index:15;background:var(--surface-a);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .site-header .inner{max-width:1040px;margin:0 auto;padding:9px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
-.site-header .accent{height:3px;background:linear-gradient(90deg,var(--amber),var(--hop))}
+.site-header .accent{display:none}
 .brand-mini{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:1 1 0%;min-width:0}
 .brand-logo{height:35px;width:auto;display:block;flex:none}
 .kb-logo-ink{fill:var(--ink)}
@@ -63,8 +63,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 @media (max-width:760px){
   .menu-toggle{display:flex;margin-left:auto}
   .site-header .inner{position:relative;min-height:40px}
-  .site-header .brand-mini{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .site-header .brand-mini{position:absolute;left:50%;top:20px;transform:translate(-50%,-50%)}
   .site-header .menu,.site-header .top-actions{display:none;width:100%}
+  .site-header.open .inner{padding-top:56px}
   .site-header.open .menu{display:flex}
   .site-header.open .top-actions{display:flex}
   .site-header .menu{flex-direction:column;border:none;background:transparent;padding:0;gap:4px;max-width:none;overflow:visible}
