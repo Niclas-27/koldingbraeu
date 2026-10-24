@@ -1,15 +1,23 @@
 /* Koldingbräu – Seite „Liga“
-   Öffentliche Rangliste aller Biere aus abgeschlossenen Verkostungen.
+   Öffentliche Rangliste aller Biere aus abgeschlossenen Verkostungen (liga.html).
    Grundlage ist allein die Gesamtnote (Durchschnitt über alle Bewertungen); gefiltert wird im Browser.
-   Jedes Bier klappt auf und verlinkt auf die Ergebnisseiten der Verkostungen, bei denen es dabei war. */
+   Jedes Bier verlinkt auf seine eigene Detailseite (liga.html?bier=<uuid>) mit Durchschnittswerten,
+   Kommentaren und Bildern aus allen Verkostungen, bei denen es dabei war. */
 (function () {
 "use strict";
-const {$, esc, fmtZahl, fehlertext, lsGet, lsSet} = KB;
+const {$, esc, fmtZahl, fehlertext, lsGet, lsSet, sec} = KB;
 const MIN = 3; // ab so vielen Bewertungen zählt ein Bier für die Liga
 
+// Gleiche Merkmale wie im Bewertungsbogen (features/tastings/common.js) – hier dupliziert, weil
+// liga.html den Bereich „Verkostungen“ nicht lädt. Für die Beschriftung des Geschmacksprofils.
+const MERKMALE = [
+  ["Aussehen", [["farbe","Farbe","hell","dunkel"],["klarheit","Klarheit","klar","trüb"],["schaum","Schaum","wenig","viel"]]],
+  ["Geruch", [["intensitaet","Intensität","schwach","kräftig"]]],
+  ["Geschmack", [["bitter","Bittere","mild","bitter"],["suesse","Süße","süß","trocken"],["malzhopfen","Betonung","malzig","hopfig"]]],
+  ["Mundgefühl", [["koerper","Körper","schlank","vollmundig"],["kohlensaeure","Kohlensäure","wenig","spritzig"],["abgang","Abgang","kurz","lang"]]],
+];
+
 let zeilen = null;  // eine Zeile je Bier und Verkostung
-let offenId = null;       // aufgeklapptes Bier – immer nur eins gleichzeitig
-let springen = null;      // Bier aus dem Link (#bier=…), zu dem gescrollt wird
 const f = { stil: "", herkunft: "alle", jahr: "", alle: false };
 try { Object.assign(f, JSON.parse(lsGet("kb_liga") || "{}")); } catch(_) {}
 
@@ -20,9 +28,8 @@ function zusammenfassen(){
     if(f.herkunft === "eigen" && !z.eigen) return;
     if(f.herkunft === "fremd" && z.eigen) return;
     if(f.jahr && String(z.datum).slice(0,4) !== f.jahr) return;
-    const b = m.get(z.bier_id) || {id: z.bier_id, name: z.name, brauerei: z.brauerei, eigen: z.eigen, stil: z.stil, bild_kronkorken: z.bild_kronkorken, bild_flasche: z.bild_flasche, summe: 0, anzahl: 0, nochmal: 0, verkostungen: 0, abende: []};
+    const b = m.get(z.bier_id) || {id: z.bier_id, name: z.name, brauerei: z.brauerei, eigen: z.eigen, stil: z.stil, bild_kronkorken: z.bild_kronkorken, bild_flasche: z.bild_flasche, summe: 0, anzahl: 0, nochmal: 0, verkostungen: 0};
     b.summe += +z.summe; b.anzahl += +z.anzahl; b.nochmal += +z.nochmal; b.verkostungen++;
-    b.abende.push(z);
     m.set(z.bier_id, b);
   });
   const liste = [...m.values()].map(b => ({...b, schnitt: b.summe / b.anzahl}));
@@ -39,18 +46,14 @@ function zeigen(){
   const alle = zusammenfassen();
   const drin = alle.filter(b => b.anzahl >= MIN), wenig = alle.filter(b => b.anzahl < MIN);
 
-  const zeile = (b, platz) => `<li id="bier-${esc(b.id)}" class="${platz && platz <= 3 ? "top p"+platz : ""}${platz ? "" : " wenig"}">
-      <details data-b="${esc(b.id)}"${offenId===b.id?" open":""}><summary>
+  const zeile = (b, platz) => `<li class="${platz && platz <= 3 ? "top p"+platz : ""}${platz ? "" : " wenig"}">
+      <a href="liga.html?bier=${esc(b.id)}">
       <span class="pl num">${platz ? platz+"." : "–"}</span>
       <span class="nm mit-bild">${Bilder.bier(b)}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
-      <span class="sc"><b class="num">${fmtZahl(b.schnitt, 2)}</b></span>
+      <span class="sc"><b class="num">${fmtZahl(b.schnitt, 1)}</b></span>
       <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"} · ${Math.round(b.nochmal / b.anzahl * 100)} % nochmal</small>
       <span class="bar"><i style="width:${Math.round(b.schnitt * 10)}%"></i></span>
-      </summary>
-      <div class="erg-detail">${Bilder.bierFotos(b)}<h4>Verkostet bei</h4><ul class="abende">${b.abende.slice().sort((x,y)=>String(y.datum).localeCompare(String(x.datum))).map(z => `<li>
-        <a href="verkostung.html?e=${esc(z.verkostung_id)}">${esc(z.titel)}</a><small>${esc(KB.fmtDateLong(String(z.datum)))}</small>
-        <span class="num">${fmtZahl(z.summe / z.anzahl, 1)}</span><small>${z.anzahl} Bew.</small></li>`).join("")}</ul></div>
-      </details>
+      </a>
     </li>`;
   let platz = 0, vorher = null;
   const rang = drin.map((b, i) => { const k = b.schnitt.toFixed(4); if(k !== vorher){ platz = i + 1; vorher = k; } return zeile(b, platz); }).join("");
@@ -74,31 +77,60 @@ function zeigen(){
   $("#lgJahr").onchange = e => { f.jahr = e.target.value; zeigen(); };
   $("#lgStile").querySelectorAll(".chip").forEach(c => c.onclick = () => { f.stil = c.dataset.s; zeigen(); });
   const a = $("#lgAlle"); if(a) a.onchange = () => { f.alle = a.checked; zeigen(); };
-  $("#liga").querySelectorAll("details[data-b]").forEach(d => d.addEventListener("toggle", () => {
-    if(d.open){
-      offenId = d.dataset.b;
-      $("#liga").querySelectorAll("details[data-b]").forEach(x => { if(x !== d && x.open) x.open = false; });
-    } else if(offenId === d.dataset.b){
-      offenId = null;
-    }
-  }));
+}
+
+/* ---------- Bier-Detailseite (liga.html?bier=<uuid>) ---------- */
+const tags = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(t)}${n>1?` ${n}×`:""}</span>`).join(" ");
+const profil = merkmale => MERKMALE.flatMap(([,l])=>l).filter(([k]) => merkmale[k]).map(([k,label,l,r]) =>
+  `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
+
+async function zeigeDetail(bierId){
+  $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Zur Liga</a></p><p class="empty">Wird geladen …</p>`;
+  const {data, error} = await KB.sb.rpc("bier_detail", {p_id: bierId});
+  if(error){ $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Zur Liga</a></p><p class="empty">${esc(fehlertext(error))}</p>`; return; }
+  const b = data.bier;
+  document.title = b.name + " · Koldingbräu";
+  const kennzahlen = `<div class="kws">
+      <div class="kw"><span>Schnitt</span><b class="num">${data.schnitt!=null?fmtZahl(data.schnitt,1):"–"}</b></div>
+      <div class="kw"><span>Bewertungen</span><b class="num">${data.anzahl||0}</b></div>
+      <div class="kw"><span>Nochmal</span><b class="num">${data.anzahl?Math.round(data.nochmal/data.anzahl*100):"–"}</b><small>${data.anzahl?"%":""}</small></div>
+      <div class="kw"><span>Alkohol</span><b class="num">${b.alkohol!=null?fmtZahl(b.alkohol,1):"–"}</b><small>${b.alkohol!=null?"% Vol.":""}</small></div>
+    </div>`;
+  const header = `<header class="bier-kopf">
+      ${Bilder.bier(b,"gross")}
+      <p class="kicker">${esc([b.brauerei, b.stil].filter(Boolean).join(" · ") || "Bier")}</p>
+      <h2>${esc(b.name)}</h2>
+      ${kennzahlen}
+      ${b.eigen?`<div class="tags"><span class="tag pub">Koldingbräu</span></div>`:""}
+    </header>`;
+  const bilder = Bilder.bierFotos(b);
+  const hatWerte = data.anzahl > 0;
+  const body = `<p class="noprint"><a class="back" href="liga.html">← Zur Liga</a></p>
+    <article class="bier-blatt">
+      ${header}
+      ${bilder?sec("Bilder", bilder):""}
+      ${hatWerte ? `
+        ${profil(data.merkmale)?sec("Geschmacksprofil", profil(data.merkmale)):""}
+        ${Object.keys(data.geruch).length?sec("Geruch", `<p>${tags(data.geruch)}</p>`):""}
+        ${Object.keys(data.fehler).length?sec("Fehlaromen", `<p>${tags(data.fehler)}</p>`):""}
+        ${data.kommentare.length?sec("Was gesagt wurde", `<ul class="zitate">${data.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul>`):""}
+      ` : `<p class="empty">Für dieses Bier gibt es noch keine Bewertungen aus abgeschlossenen Verkostungen.</p>`}
+      ${sec("Verkostet bei", data.verkostungen.length?`<ul class="abende">${data.verkostungen.map(v=>`<li>
+          <a href="verkostung.html?e=${esc(v.id)}">${esc(v.titel)}</a><small>${esc(KB.fmtDateLong(String(v.datum)))}</small>
+          <span class="num">${v.schnitt!=null?fmtZahl(v.schnitt,1):"–"}</span><small>${v.anzahl} Bew.</small></li>`).join("")}</ul>`:`<p class="empty">Noch keine Verkostung.</p>`)}
+    </article>`;
+  $("#liga").innerHTML = body;
   Bilder.bierFotosVerdrahten($("#liga"));
-  if(springen){ const el = document.getElementById("bier-"+springen); springen = null; if(el) setTimeout(() => el.scrollIntoView({block:"center", behavior:"smooth"}), 50); }
 }
 
 KB.seite = {
   async laden(){
+    const bierId = new URLSearchParams(location.search).get("bier");
+    if(bierId){ await zeigeDetail(bierId); return; }
     if(!zeilen){
       const {data, error} = await KB.sb.rpc("liga_daten");
       if(error){ $("#liga").innerHTML = `<p class="empty">${esc(fehlertext(error))}</p>`; return; }
       zeilen = data || [];
-      const m = location.hash.match(/bier=([0-9a-f-]{36})/);
-      if(m && zeilen.some(z => z.bier_id === m[1])){
-        const z = zeilen.find(z => z.bier_id === m[1]);
-        Object.assign(f, {stil: "", herkunft: "alle", jahr: ""});
-        if(zeilen.filter(x => x.bier_id === z.bier_id).reduce((a,x)=>a + +x.anzahl, 0) < MIN) f.alle = true;
-        offenId = m[1]; springen = m[1];
-      }
     }
     zeigen();
   },

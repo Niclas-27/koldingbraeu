@@ -225,17 +225,25 @@ a{color:var(--amber)}
 .btn.ghost.danger{color:var(--warn)}
 a.btn{color:var(--ink);text-decoration:none}
 .rank.erg li{display:block;padding:0}
-.rank.erg summary{display:grid;grid-template-columns:36px minmax(0,1fr) auto;grid-template-areas:"pl nm sc" "pl nm mt" "pl bar bar";gap:2px 12px;align-items:center;padding:12px 4px 10px;cursor:pointer;list-style:none}
+.rank.erg summary,.rank.erg li>a{display:grid;grid-template-columns:36px minmax(0,1fr) auto;grid-template-areas:"pl nm sc" "pl nm mt" "pl bar bar";gap:2px 12px;align-items:center;padding:12px 4px 10px;cursor:pointer;list-style:none;text-decoration:none;color:inherit}
 .rank.erg summary::-webkit-details-marker{display:none}
-.rank.erg summary:hover{background:var(--surface)}
+.rank.erg summary:hover,.rank.erg li>a:hover{background:var(--surface)}
 .rank.erg details[open] summary{background:var(--surface)}
 .rank.erg details.leer summary{cursor:default}
-@media (max-width:560px){.rank.erg summary{grid-template-areas:"pl nm sc" "pl mt mt" "pl bar bar"}}
+@media (max-width:560px){.rank.erg summary,.rank.erg li>a{grid-template-areas:"pl nm sc" "pl mt mt" "pl bar bar"}}
 .erg-detail{display:flex;flex-direction:column;gap:16px;padding:8px 4px 18px 52px}
 @media (max-width:560px){.erg-detail{padding-left:8px}}
 .erg-detail h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:0 0 6px;font-family:var(--font-body)}
 .erg-detail p{margin:0}
 .rank .erg-detail li{border-bottom:0}
+/* Geschmacksprofil (Schieberegler-Balken) und Zitate: geteilt zwischen Verkostungsergebnis und Bier-Detailseite */
+.pf{display:grid;grid-template-columns:80px minmax(0,1fr) 80px;gap:4px 10px;align-items:center;font-size:.82rem;color:var(--muted);margin-bottom:8px}
+.pf-r{text-align:right}
+.pf-t{position:relative;height:8px;border-radius:4px;background:var(--line)}
+.pf-t i{position:absolute;top:-4px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--amber);border:2px solid var(--bg)}
+.pf-n{grid-column:2;text-align:center;font-size:.72rem;margin-top:-2px}
+.zitate{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.zitate li{border-left:3px solid var(--amber-soft);padding:2px 0 2px 10px;font-style:italic}
 
 /* --- Bilder (lib/bilder.js): Bierbilder, Platzhalter, Bildfeld, Auswahl-Dialog, Großansicht --- */
 .bb{display:inline-flex;flex:none;align-items:center;justify-content:center;overflow:hidden;background:transparent}

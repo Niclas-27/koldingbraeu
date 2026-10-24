@@ -1,4 +1,9 @@
 /* Koldingbräu – Bereich Liga: Verkostungen je Bier */
+/* Bier-Detailseite (liga.html?bier=<id>): Kopf im Stil der anderen Detailseiten (Sude, Rezepte) */
+.bier-blatt{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px clamp(16px,4vw,32px);display:flex;flex-direction:column;gap:22px;max-width:760px;width:100%;margin:0 auto}
+.bier-kopf{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.bier-kopf h2{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:800;font-stretch:80%;color:var(--amber);text-transform:uppercase;letter-spacing:.01em;line-height:1}
+.bier-kopf .tags{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:4px}
 .abende{list-style:none;margin:0;padding:0}
 .abende li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 12px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line)}
 .abende li small{color:var(--muted);font-size:.78rem}

@@ -88,6 +88,18 @@ const rpcs={
  liga_daten(){const r=[];const add=(id,n,br,e,s,d,sum,an,no)=>r.push({bier_id:id,name:n,brauerei:br,eigen:e,stil:s,verkostung_id:"v"+d,titel:"Runde "+d,datum:d,summe:sum,anzahl:an,nochmal:no});
    add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2026-04-01",45,6,4);add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2025-10-01",30,4,2);
    add("b2","Augustiner Hell","Augustiner",false,"Helles","2026-04-01",57,7,6);add("00000000-0000-0000-0000-0000000000b3","Hazy Hops","Kehrwieder",false,"IPA","2026-04-01",20,3,1);return {data:r,error:null};},
+ bier_detail(a){
+   const biereMap={
+    "00000000-0000-0000-0000-0000000000b1":{id:a.p_id,name:"Kolding Kölsch",brauerei:"Koldingbräu",eigen:true,stil:"Kölsch",alkohol:4.9,bild_kronkorken:"biere/b1/kronkorken-a.jpg",bild_flasche:null},
+    "b2":{id:a.p_id,name:"Augustiner Hell",brauerei:"Augustiner",eigen:false,stil:"Helles",alkohol:5.2,bild_kronkorken:null,bild_flasche:null},
+    "00000000-0000-0000-0000-0000000000b3":{id:a.p_id,name:"Hazy Hops",brauerei:"Kehrwieder",eigen:false,stil:"IPA",alkohol:6.5,bild_kronkorken:null,bild_flasche:null},
+   };
+   const b=biereMap[a.p_id];
+   if(!b) return {data:null,error:{message:"Dieses Bier gibt es nicht."}};
+   if(a.p_id==="00000000-0000-0000-0000-0000000000b3")
+     return {data:{bier:b,schnitt:6.67,anzahl:3,nochmal:1,noten:[8,7,5],merkmale:{bitter:{wert:7,n:3},intensitaet:{wert:6,n:3}},geruch:{tropisch:2,harzig:1},fehler:{},kommentare:["Schön harzig-herb.","Trinkt sich leicht."],verkostungen:[{id:"v2026-04-01",titel:"Runde 2026-04-01",datum:"2026-04-01",schnitt:6.67,anzahl:3,nochmal:1}]},error:null};
+   return {data:{bier:b,schnitt:null,anzahl:0,nochmal:0,noten:[],merkmale:{},geruch:{},fehler:{},kommentare:[],verkostungen:[]},error:null};
+ },
 };
 window.supabase={createClient(){return {
  from:q,

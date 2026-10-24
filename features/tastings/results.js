@@ -44,7 +44,7 @@ async function ergebnisLaden(){
         ${profil(p)?`<div><h4>Geschmacksprofil</h4>${profil(p)}</div>`:""}
         ${Object.keys(p.geruch).length?`<div><h4>Geruch</h4><p>${tags(p.geruch)}</p></div>`:""}
         ${Object.keys(p.fehler).length?`<div><h4>Fehlaromen</h4><p>${tags(p.fehler)}</p></div>`:""}
-        <p><a href="liga.html#bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>
+        <p><a href="liga.html?bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>
       </div></details></li>`;}).join("")}</ol>
       <p class="hint">Antippen zeigt Einzelnoten, Kommentare und Geschmacksprofil.</p></section>`;
   if(data.galerie.length) h += sec(`Fotos vom Abend (${data.galerie.length})`, Bilder.galerieHtml(data.galerie));

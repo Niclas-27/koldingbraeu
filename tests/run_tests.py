@@ -118,7 +118,9 @@ async def main():
         t = await seite("anon", "liga.html", "liga"); pruefe("Liga zeigt Biere", "Augustiner Hell" in t)
         async def liga_bilder(pg): pruefe("Liga zeigt Platzhalter-Kronkorken", await pg.locator(".rank .bb svg").count() >= 3)
         await seite("anon", "liga.html", "liga_bilder", liga_bilder)
-        t = await seite("anon", "liga.html#bier=00000000-0000-0000-0000-0000000000b3", "liga_sprung"); pruefe("Sprung klappt Bier mit Verkostungen auf", "Hazy" in t and "Runde 2026-04-01" in t)
+        async def liga_detail(pg):
+            pruefe("Bier-Detailseite zeigt eigenes Blatt", await pg.locator(".bier-blatt").count() == 1)
+        t = await seite("anon", "liga.html?bier=00000000-0000-0000-0000-0000000000b3", "liga_detail", liga_detail); pruefe("Deep-Link öffnet Bier-Detailseite", "hazy" in t.lower() and "Runde 2026-04-01" in t)
         await seite("anon", "liga.html", "liga_handy", None, 390, 844)
 
         print("Rezepte")
