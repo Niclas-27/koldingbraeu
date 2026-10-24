@@ -15,12 +15,6 @@
 .rz-blatt{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px clamp(16px,4vw,32px);display:flex;flex-direction:column;gap:22px;max-width:760px;width:100%;margin:0 auto}
 .rz-kopf{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
 .rz-kopf h2{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:800;font-stretch:80%;color:var(--amber);text-transform:uppercase;letter-spacing:.01em;line-height:1}
-.kws{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;max-width:520px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:6px 0}
-.kw{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-left:1px solid var(--line)}
-.kw:first-child{border-left:0}
-.kw span{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.kw b{font-size:1.25rem;font-weight:500}
-.kw small{font-size:.72rem;color:var(--muted)}
 .rz-beschr{font-style:italic;max-width:560px;margin:0}
 .rz-skala{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin-top:4px}
 .rz-skala input[type=number]{width:84px;text-align:center;border:1px solid var(--hop);background:var(--hop-soft);color:var(--hop);border-radius:999px;padding:6px 8px;font-weight:700;font-family:var(--font-data)}
@@ -56,7 +50,6 @@
   .rz-blatt{border:0;padding:0;max-width:none}
   .wrap{padding:0}
 }
-@media (max-width:420px){.kw span{font-size:.58rem;letter-spacing:.03em}.kw b{font-size:1.1rem}}
 
 /* Bilder */
 .rz-card{display:grid;grid-template-columns:minmax(0,1fr) 52px;grid-auto-flow:row;column-gap:12px}

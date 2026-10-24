@@ -93,7 +93,7 @@ function renderChart(){
   s+=`<polyline fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-opacity=".5" points="${pts.map(p=>x(p.t)+","+y(p.v)).join(" ")}"/>`;
   pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${x(p.t)}" cy="${y(p.v)}" r="${last?6:4.5}" fill="${p.v<=1.7?"var(--hop)":p.v<=2.7?"var(--amber)":"var(--warn)"}" stroke="var(--bg)" stroke-width="1.5" style="cursor:pointer" data-id="${esc(p.b.id)}"><title>${esc(title(p.b))} · ${esc(fmtDate(p.b.datum))}${esc(p.b.datum.slice(0,4))} · Note ${esc(p.b.bewertung)}</title></circle>`;});
   s+=`</svg>`;$("#chart").innerHTML=s;
-  $("#chart").querySelectorAll("circle[data-id]").forEach(c=>c.addEventListener("click",()=>openDetail(c.dataset.id)));
+  $("#chart").querySelectorAll("circle[data-id]").forEach(c=>c.addEventListener("click",()=>{location.href="index.html?sud="+encodeURIComponent(c.dataset.id);}));
 }
 function renderChips(){
   const styles=[...new Set(state.brews.map(b=>b.stil).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"de"));
@@ -112,68 +112,86 @@ function renderList(){
   const groups=[];if(state.sort==="note"){groups.push({k:"Nach Note",items:b});}
   else b.forEach(x=>{const k=x.datum?x.datum.slice(0,4):"Ohne Datum";let g=groups[groups.length-1];if(!g||g.k!==k){g={k,items:[]};groups.push(g);}g.items.push(x);});
   $("#list").innerHTML=groups.map(g=>`<section class="year"><div class="year-head"><h2>${esc(g.k)}</h2><span>${g.items.length} Sud${g.items.length===1?"":"e"}</span></div>${g.items.map(rowHTML).join("")}</section>`).join("");
-  $("#list").querySelectorAll(".brew").forEach(r=>r.onclick=()=>openDetail(r.dataset.id));
 }
 function rowHTML(b){
   const bm=isBM();const gv=gradeVal(b.bewertung);const malz=(b.malz||[]).map(m=>m.sorte).filter(Boolean).join(", ");
   const cap=b.etikett?`<i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}" title="Kronkorken ${esc(CAP_LABEL[b.etikett]||b.etikett)}"></i>`:"";
   const lock=bm&&!b.oeffentlich?`<span class="lock" title="Nur für angemeldete Braumeister sichtbar">intern</span>`:"";
   const sub=[malz,b.hopfensorten,b.hefe].filter(Boolean).join(" · ");
-  return `<button class="brew" data-id="${esc(b.id)}">
+  return `<a class="brew" href="index.html?sud=${esc(b.id)}">
     ${sudBild(b)}<div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
     <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span>${lock}</div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
     <div class="facts"><div class="num">${b.stammwuerze?esc(b.stammwuerze)+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(gv)}" title="Bewertung">${esc(b.bewertung||"–")}</span>`:""}</div>
-  </button>`;
+  </a>`;
 }
 function renderAll(){renderStats();renderChips();renderList();}
 
-/* --- Details --- */
-function openDetail(id){
-  const b=state.brews.find(x=>x.id===id);if(!b)return;
+/* --- Details (eigene Seite index.html?sud=<id>, wie bei den Rezepten) --- */
+let aktuellerSud=null;
+function zeigeDetail(b){
+  aktuellerSud=b;
+  $("#overview").hidden=true;$("#filter").hidden=true;
+  document.title=title(b)+" · Koldingbräu";
   const bm=isBM();const total=malzSum(b);
   const grist=(b.malz||[]).length?`<div class="grist">${b.malz.map(m=>`<div class="grist-row"><span>${esc(m.sorte)}${m.ebc!=null&&m.ebc!==""?` <small style="color:var(--muted)">${esc(Bz.fmtZahl(m.ebc))} EBC</small>`:""}</span><span class="num">${m.gramm?esc((+m.gramm).toLocaleString("de-DE"))+" g":"–"}</span><div class="grist-bar"><i style="width:${total?Math.round((+m.gramm||0)/total*100):0}%"></i></div></div>`).join("")}<div class="grist-row" style="color:var(--muted)"><span>Schüttung gesamt</span><span class="num">${fmtKg(total)}</span></div></div>`:"";
   const steps=(b.maischplan||[]).filter(Boolean).length?`<ol class="steps">${b.maischplan.filter(Boolean).map((s,i)=>`<li><b>${i+1}</b><span>${esc(s)}</span></li>`).join("")}</ol>`:"";
   const hops=(b.hopfen||[]).length?`<div class="hops">${b.hopfen.map(h=>`<div><b style="font-weight:500">${hopfenLinks(h)}</b><span>${hopfenRechts(h)}</span></div>`).join("")}</div>`:"";
-  const head=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      ${bm?`<span class="grade ${gradeCls(gradeVal(b.bewertung))}">${esc(b.bewertung||"–")}</span>`:""}
-      <span class="num">${esc(fmtDate(b.datum))}${esc(b.datum?b.datum.slice(0,4):"")}</span>
-      <span class="tag">Nr. ${esc(b.nr)}</span>
-      ${b.etikett?`<span class="tag" style="display:inline-flex;gap:6px;align-items:center"><i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}"></i>${esc(CAP_LABEL[b.etikett]||b.etikett)}</span>`:""}
-      <span class="tag">${esc(ageText(b.datum))}</span>
-      ${b.datum_geschaetzt?`<span class="tag" title="In der Tabelle stand das Datum ohne Jahr">Jahr ergänzt</span>`:""}
-      ${bm?(b.oeffentlich?`<span class="tag pub">öffentlich</span>`:`<span class="tag intern">intern</span>`):""}
-    </div>${b.rezept_id?`<p class="meta-line" id="rezeptVerweis">Nach Rezept …</p>`:""}`;
+  const kronkorken=b.bild_etikett
+    ?`<button type="button" class="sud-etikett" id="sudEtikett"><img class="sud-bild gross kb-zack" src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`
+    :b.bild_foto?""
+    :`<span class="sud-bild gross ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;
+  const kw=(label,wert)=>`<div class="kw"><span>${esc(label)}</span><b class="num">${wert==null||wert===""?"–":esc(wert)}</b></div>`;
+  const posten=[["Stammwürze",b.stammwuerze],["Alkohol",b.alkohol]];
+  if(bm)posten.push(["Bewertung",b.bewertung]);
+  posten.push(["Ausschlagwürze",b.ausschlag]);
+  const kennzahlen=`<div class="kws" style="grid-template-columns:repeat(${posten.length},minmax(0,1fr))">${posten.map(p=>kw(...p)).join("")}</div>`;
+  const header=`<header class="sud-kopf">
+      ${kronkorken}
+      <p class="kicker">Sud Nr. ${esc(b.nr)}</p>
+      <h2>${esc(title(b))}</h2>
+      ${kennzahlen}
+      <div class="tags">
+        <span class="num">${esc(fmtDate(b.datum))}${esc(b.datum?b.datum.slice(0,4):"")}</span>
+        ${b.etikett?`<span class="tag" style="display:inline-flex;gap:6px;align-items:center"><i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}"></i>${esc(CAP_LABEL[b.etikett]||b.etikett)}</span>`:""}
+        <span class="tag">${esc(ageText(b.datum))}</span>
+        ${b.datum_geschaetzt?`<span class="tag" title="In der Tabelle stand das Datum ohne Jahr">Jahr ergänzt</span>`:""}
+        ${bm?(b.oeffentlich?`<span class="tag pub">öffentlich</span>`:`<span class="tag intern">intern</span>`):""}
+      </div>
+    </header>${b.rezept_id?`<p class="meta-line" id="rezeptVerweis">Nach Rezept …</p>`:""}`;
   const changed=bm&&b.geaendert?`<p class="meta-line">Zuletzt geändert ${esc(fmtDateTime(b.geaendert))}${personName(b.geaendert_von)?" von "+esc(personName(b.geaendert_von)):""}</p>`:"";
-  const bilder=(b.bild_foto?`<img class="titelbild" id="sudFoto" src="${esc(Bilder.url(b.bild_foto))}" alt="Foto: ${esc(title(b))}">`:"");
-  const etikett=b.bild_etikett?`<button type="button" class="etikett-zeig" id="sudEtikett"><img class="kb-zack" src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`:"";
-  const body=bilder+head
-    +(etikett?sec("Etikett",etikett):"")
-    +sec("Schüttung",grist)
-    +sec("Wasser & Maische",kv([["Hauptguss",b.hauptguss],["Nachguss",b.nachguss],["Wasserbehandlung",b.wasser]])+(steps?`<div style="margin-top:12px">${steps}</div>`:""))
-    +sec("Läutern & Kochen",kv([["Läutern",b.laeutern],["Kochzeit",b.kochzeit],["Würzemenge",b.wuerze],["Stammwürze",b.stammwuerze]]))
-    +sec("Hopfen",(b.hopfensorten?`<p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")+hops)
-    +sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Messung vor Abfüllung",b.restextrakt]]))
-    +sec("Abfüllung",kv([["Ausschlagwürze",b.ausschlag],["Biermenge",b.biermenge!=null&&b.biermenge!==""?String(b.biermenge).replace(".",",")+" L":""],["Speise / Zucker",b.zucker],["Flaschen",b.flaschen],["Alkohol",b.alkohol],["Abgefüllt am",b.abgefuellt]]))
-    +sec("Notizen",b.notizen?`<div class="note">${esc(b.notizen)}</div>`:"")
-    +changed;
-  let foot=`<span class="spacer"></span><button class="btn" id="closeBtn2">Schließen</button>`;
-  if(bm)foot=`${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<span class="spacer"></span><button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn primary" id="editBtn">Bearbeiten</button>`;
-  sheet(title(b),body,foot);
+  const bilder=(b.bild_foto?`<img class="sud-foto" id="sudFoto" src="${esc(Bilder.url(b.bild_foto))}" alt="Foto: ${esc(title(b))}">`:"");
+  const body=`<p class="noprint"><a class="back" href="index.html">← Alle Sude</a></p>
+    <article class="sud-blatt">
+      ${bilder}
+      ${header}
+      ${sec("Schüttung",grist)}
+      ${sec("Wasser & Maische",kv([["Hauptguss",b.hauptguss],["Nachguss",b.nachguss],["Wasserbehandlung",b.wasser]])+(steps?`<div style="margin-top:12px">${steps}</div>`:""))}
+      ${sec("Läutern & Kochen",kv([["Läutern",b.laeutern],["Kochzeit",b.kochzeit],["Würzemenge",b.wuerze],["Stammwürze",b.stammwuerze]]))}
+      ${sec("Hopfen",(b.hopfensorten?`<p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")+hops)}
+      ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Messung vor Abfüllung",b.restextrakt]]))}
+      ${sec("Abfüllung",kv([["Ausschlagwürze",b.ausschlag],["Biermenge",b.biermenge!=null&&b.biermenge!==""?String(b.biermenge).replace(".",",")+" L":""],["Speise / Zucker",b.zucker],["Flaschen",b.flaschen],["Alkohol",b.alkohol],["Abgefüllt am",b.abgefuellt]]))}
+      ${sec("Notizen",b.notizen?`<div class="note">${esc(b.notizen)}</div>`:"")}
+      ${changed}
+    </article>
+    ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn primary" id="editBtn">Bearbeiten</button></div>`:""}`;
+  $("#list").innerHTML=body;
   if(bm){$("#editBtn").onclick=()=>openEditor(b,false);$("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);}
-  else $("#closeBtn2").onclick=closeSheet;
   const bp=[b.bild_foto,b.bild_etikett].filter(Boolean);
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
   if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
   if(b.rezept_id)sb.from("rezepte").select("id,name").eq("id",b.rezept_id).maybeSingle().then(({data})=>{const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
 }
 function confirmDelete(b){
-  $("#sheetFoot").innerHTML=`<span style="align-self:center;font-size:.9rem">„${esc(title(b))}“ vom ${esc(fmtDate(b.datum))}${esc(b.datum?.slice(0,4)||"")} endgültig löschen?</span><span class="spacer"></span><button class="btn" id="noDel">Abbrechen</button><button class="btn danger" id="yesDel">Ja, löschen</button>`;
-  $("#noDel").onclick=()=>openDetail(b.id);
+  sheet("Sud löschen?",`<p>„${esc(title(b))}“ vom ${esc(fmtDate(b.datum))}${esc(b.datum?.slice(0,4)||"")} wird endgültig gelöscht.</p>`,
+    `<span class="spacer"></span><button class="btn" id="noDel">Abbrechen</button><button class="btn danger" id="yesDel">Ja, löschen</button>`);
+  $("#noDel").onclick=closeSheet;
   $("#yesDel").onclick=async()=>{$("#yesDel").disabled=true;
     const {data,error}=await sb.from("sude").delete().eq("id",b.id).select("id");
-    if(error||!data||!data.length){toast(error?fehlertext(error):"Löschen ist nur dem Admin erlaubt.");openDetail(b.id);return;}
+    if(error||!data||!data.length){toast(error?fehlertext(error):"Löschen ist nur dem Admin erlaubt.");closeSheet();return;}
     Bilder.loeschen(b.bild_foto);Bilder.loeschen(b.bild_etikett);
-    state.brews=state.brews.filter(x=>x.id!==b.id);closeSheet();renderAll();toast("Sud gelöscht");};
+    state.brews=state.brews.filter(x=>x.id!==b.id);closeSheet();toast("Sud gelöscht");
+    location.href="index.html";
+  };
 }
 /* --- Editor --- */
 const FIELDS=[
@@ -208,7 +226,7 @@ function openEditor(src,asCopy){
   $("#sheetTitle").textContent=editingId?`Sud ${draft.nr} bearbeiten`:asCopy?`Neuer Sud nach Vorlage`:src&&src.ausRezept?`Neuer Sud nach „${src.name}“`:"Neuer Sud";
   drawForm();
   $("#sheetFoot").innerHTML=`<span class="err" id="formErr"></span><span class="spacer"></span><button class="btn" id="cancelEdit">Abbrechen</button><button class="btn primary" id="saveBtn">${editingId?"Änderungen speichern":"Sud anlegen"}</button>`;
-  $("#cancelEdit").onclick=()=>editingId?openDetail(editingId):closeSheet();
+  $("#cancelEdit").onclick=closeSheet;
   $("#saveBtn").onclick=save;
   openSheet();$("#sheetBody").scrollTop=0;
 }
@@ -260,7 +278,9 @@ async function save(){
   const alt=editingId&&state.brews.find(b=>b.id===editingId);
   if(alt)["bild_foto","bild_etikett"].forEach(k=>{if(alt[k]&&alt[k]!==data[k])Bilder.loeschen(alt[k]);});
   state.brews=state.brews.filter(b=>b.id!==data.id).concat([data]);
-  renderAll();toast(editingId?"Gespeichert":`Sud ${data.nr} angelegt`);openDetail(data.id);
+  closeSheet();
+  if(editingId&&aktuellerSud&&aktuellerSud.id===editingId){toast("Gespeichert");zeigeDetail(data);}
+  else{toast(editingId?"Gespeichert":`Sud ${data.nr} angelegt`);location.href="index.html?sud="+data.id;}
 }
 /* --- Neuer Sud: leer oder aus Rezept --- */
 async function neuerSud(){
@@ -325,8 +345,7 @@ let einstieg=true;
 function einstiegVerarbeiten(){
   if(!einstieg)return;einstieg=false;
   const p=new URLSearchParams(location.search);
-  if(p.get("sud")){const id=p.get("sud");history.replaceState(null,"",location.pathname);if(state.brews.some(b=>b.id===id))openDetail(id);else KB.notice("Diesen Sud gibt es nicht oder er ist nicht öffentlich.");}
-  else if(p.get("ausRezept")&&isBM()){
+  if(p.get("ausRezept")&&isBM()){
     history.replaceState(null,"",location.pathname);
     let x=null;try{x=JSON.parse(sessionStorage.getItem("kb_sud_aus_rezept")||"null");sessionStorage.removeItem("kb_sud_aus_rezept");}catch(_){}
     if(x&&x.rezept){openEditor({ausRezept:true,name:x.name,draft:draftAusRezept(x.rezept,{...x.rezept,id:x.rezept_id,name:x.name},x.ziel,x.anlage)},false);}
@@ -361,6 +380,16 @@ KB.seite = {
     $("#q").addEventListener("input",e=>{state.q=e.target.value;renderList();});
     $("#sort").addEventListener("change",e=>{state.sort=e.target.value;KB.lsSet("kb_sort",state.sort);renderList();});
   },
-  async laden(){ if(await loadBrews()){renderAll();einstiegVerarbeiten();} },
+  async laden(){
+    if(!await loadBrews())return;
+    const sudId=new URLSearchParams(location.search).get("sud");
+    if(sudId){
+      const b=state.brews.find(x=>x.id===sudId);
+      if(b)zeigeDetail(b);
+      else{$("#overview").hidden=true;$("#filter").hidden=true;$("#list").innerHTML=`<p class="noprint"><a class="back" href="index.html">← Alle Sude</a></p><p class="empty">Diesen Sud gibt es nicht oder er ist nicht öffentlich.</p>`;}
+      return;
+    }
+    renderAll();einstiegVerarbeiten();
+  },
 };
 })();

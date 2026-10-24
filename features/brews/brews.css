@@ -13,7 +13,7 @@
 .year-head{display:flex;align-items:baseline;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .year-head h2{font-size:1.6rem;font-weight:800;font-stretch:80%}
 .year-head span{color:var(--muted);font-size:.85rem}
-.brew{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left;width:100%}
+.brew{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;background:transparent;border-left:0;border-right:0;border-top:0;text-align:left;width:100%;text-decoration:none;color:inherit}
 .brew:hover{background:var(--surface)}
 .brew .date{font-family:var(--font-data);font-size:.8rem;color:var(--muted);line-height:1.25}
 .brew .date b{display:block;font-size:1.05rem;color:var(--ink);font-weight:500}
@@ -61,8 +61,16 @@ button.wahl-k:hover{border-color:var(--muted)}
 .sud-bild{width:44px;height:44px;border-radius:8px;object-fit:cover;display:flex;align-items:center;justify-content:center;background:var(--surface);overflow:hidden}
 .sud-bild.ph{background:transparent}
 .sud-bild.ph svg{height:100%;width:auto}
-.etikett-zeig{padding:0;border:0;background:transparent;cursor:zoom-in;display:block;width:160px;height:160px}
-.etikett-zeig img{width:100%;height:100%;object-fit:cover;display:block}
-#sheetBody .titelbild{display:block;width:100%;max-height:340px;object-fit:cover;border-radius:var(--radius);margin:0 0 14px;cursor:zoom-in;background:var(--line)}
+.sud-bild.gross{width:120px;height:120px;border-radius:10px}
+.sud-bild.gross.ph{width:120px;height:120px}
+.sud-etikett{padding:0;border:0;background:transparent;cursor:zoom-in;border-radius:10px}
 @media (max-width:560px){.brew{grid-template-columns:40px 48px minmax(0,1fr) auto;gap:10px}.sud-bild{width:40px;height:40px}}
 @media (max-width:380px){.brew{grid-template-columns:36px 44px minmax(0,1fr) auto;gap:8px}.sud-bild{width:36px;height:36px}}
+
+/* Sud-Seite (index.html?sud=<id>, eigene Seite statt Seitenblatt – wie bei den Rezepten) */
+.sud-blatt{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px clamp(16px,4vw,32px);display:flex;flex-direction:column;gap:22px;max-width:760px;width:100%;margin:0 auto}
+.sud-kopf{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.sud-kopf h2{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:800;font-stretch:80%;color:var(--amber);text-transform:uppercase;letter-spacing:.01em;line-height:1}
+.sud-kopf .tags{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.sud-foto{display:block;width:100%;max-height:380px;object-fit:cover;border-radius:var(--radius);margin:0 0 4px;cursor:zoom-in;background:var(--line)}
+.sud-aktionen{justify-content:center;max-width:760px;margin:0 auto;flex-wrap:wrap}

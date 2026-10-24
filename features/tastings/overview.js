@@ -6,7 +6,7 @@ async function listeLaden(){
   let h = `<div class="vk-head"><div><h2>Verkostungen</h2><p class="hint">Biere nebeneinander probieren, bewerten und am Ende das Ranking aufdecken.</p></div>
     ${isBM()?`<div class="top-actions"><button class="btn" id="bierBtn">Biere</button><button class="btn primary" id="neuBtn">+ Neue Verkostung</button></div>`:""}</div>
     <form id="codeForm" class="vk-card codebox" novalidate>
-      <label class="f" for="c_code">Code von der Einladung<input id="c_code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="z. B. k7m2p9qx4a"></label>
+      <label class="f" for="c_code">Code von der Einladung<input id="c_code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="z. B. k7m2p9qx4a"></label>
       <button class="btn" type="submit">Mitmachen</button>
     </form>`;
   if(isBM()){

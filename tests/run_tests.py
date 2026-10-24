@@ -50,7 +50,9 @@ async def main():
 
         print("Sude")
         t = await seite("anon", "index.html", "sude_gast"); pruefe("Gast sieht öffentlichen Sud", "Kölsch" in t); pruefe("Gast sieht keinen internen Sud", "IPA" not in t)
-        t = await seite("bm", "index.html", "sude_braumeister"); pruefe("Braumeister sieht „Neuer Sud“", "Neuer Sud" in t)
+        async def sud_liste(pg):
+            pruefe("Sud-Liste zeigt Platzhalter-Flaschen", await pg.locator(".brew .sud-bild svg").count() == 2)
+        t = await seite("bm", "index.html", "sude_braumeister", sud_liste); pruefe("Braumeister sieht „Neuer Sud“", "Neuer Sud" in t)
 
         print("Verkostungen")
         t = await seite("anon", "verkostung.html", "vk_uebersicht"); pruefe("Übersicht zeigt Karten mit Teilnehmern", "Frühjahrsrunde" in t and "mit Niels" in t)
@@ -158,12 +160,11 @@ async def main():
             await pg.click("#cancelEdit")
         await seite("bm", "index.html", "sud_neu", neuer_sud)
         async def rueckweg(pg):
-            pruefe("Deep-Link öffnet Sud", not await pg.locator("#sheet").is_hidden())
+            pruefe("Deep-Link öffnet Sud als eigene Seite", await pg.locator(".sud-blatt").count() == 1)
             await pg.click("#rzBtn"); await pg.wait_for_timeout(900)
             pruefe("Rückweg: Sud → Rezept", "Entstanden aus" in await pg.inner_text("#rz"))
         await seite("bm", "index.html?sud=s1", "sud_rueckweg", rueckweg)
         async def sud_foto(pg):
-            pruefe("Sud-Liste zeigt Platzhalter-Flaschen", await pg.locator(".brew .sud-bild svg").count() == 2)
             await pg.click("#editBtn"); await pg.wait_for_selector("#bf_foto")
             await bild_waehlen(pg, "#bf_foto [data-bf=neu]")
             await pg.click("[data-add=malz]")

@@ -267,7 +267,7 @@ async function bierWaehlen(){
   const liste = (data||[]).filter(b=>!schon.has(b.id));
   const zeile = b => `<button class="pick" data-b="${esc(b.id)}" data-s="${esc((b.name+" "+(b.brauerei||"")+" "+(b.bierstile?.name||"")).toLowerCase())}">${Bilder.bier({...b, stil:b.bierstile?.name})}<span><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))}</small></span></button>`;
   sheet("Bier hinzufügen", `<button class="btn primary" id="neuesBier" style="align-self:flex-start">+ Neues Bier anlegen</button>
-    ${liste.length?`<input class="search" id="bSuche" type="search" placeholder="In der Bierliste suchen …" aria-label="Bierliste durchsuchen"><div class="picklist" id="pickList">${liste.map(zeile).join("")}</div>`:`<p class="hint">Die Bierliste ist noch leer – leg das erste Bier an.</p>`}`,
+    ${liste.length?`<input class="search" id="bSuche" type="search" autocomplete="off" placeholder="In der Bierliste suchen …" aria-label="Bierliste durchsuchen"><div class="picklist" id="pickList">${liste.map(zeile).join("")}</div>`:`<p class="hint">Die Bierliste ist noch leer – leg das erste Bier an.</p>`}`,
     `<span class="spacer"></span><button class="btn" id="bwZu">Abbrechen</button>`);
   $("#bwZu").onclick = closeSheet;
   $("#neuesBier").onclick = () => bierForm(null, {});
