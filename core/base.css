@@ -63,7 +63,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 @media (max-width:760px){
   .menu-toggle{display:flex;margin-left:auto}
   .site-header .inner{position:relative;min-height:40px}
-  .site-header .brand-mini{position:absolute;left:50%;top:20px;transform:translate(-50%,-50%)}
+  .site-header .brand-mini{position:absolute;left:16px;top:29px;transform:translateY(-50%)}
+  .site-header .brand-logo{height:28px}
   .site-header .menu,.site-header .top-actions{display:none;width:100%}
   .site-header.open .inner{padding-top:56px}
   .site-header.open .menu{display:flex}
