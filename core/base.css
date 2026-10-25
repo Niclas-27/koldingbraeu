@@ -291,8 +291,9 @@ img.bb{object-fit:cover;background:var(--surface)}
 .lb-zahl{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:.85rem}
 .galerie{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
 .galerie .g-item{position:relative;aspect-ratio:1}
-.galerie .g-zeig{padding:0;border:0;background:var(--line);border-radius:8px;overflow:hidden;width:100%;height:100%;cursor:zoom-in;display:block}
+.galerie .g-zeig{position:relative;padding:0;border:0;background:var(--line);border-radius:8px;overflow:hidden;width:100%;height:100%;cursor:zoom-in;display:block}
 .galerie img{width:100%;height:100%;object-fit:cover;display:block}
+.g-datum{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-family:var(--font-data);padding:1px 5px;border-radius:4px;line-height:1.45;pointer-events:none}
 .galerie .g-actions{position:absolute;top:4px;right:4px;display:flex;gap:4px}
 .galerie .g-weg,.galerie .g-bearb{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;cursor:pointer;font-size:.78rem;display:inline-flex;align-items:center;justify-content:center;padding:0}
 /* Mit Bildunterschrift (z. B. Sud-Galerie): größere Kacheln, Bild + Text statt reinem Quadrat */

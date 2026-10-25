@@ -178,6 +178,9 @@ async def main():
             pruefe("Gast sieht Galerie-Bildunterschrift", "Einmaischen" in await pg.inner_text("#sudGalerieSec"))
             pruefe("Gast sieht keine „Hinzufügen“-Kachel", await pg.locator("#galerieAdd").count() == 0)
             pruefe("Gast sieht keinen Lösch-Knopf", await pg.locator("#sudGalerie .g-weg").count() == 0)
+            pruefe("Foto ohne Aufnahmedatum zeigt Hochlade-Datum", await pg.inner_text("#sudGalerie .g-item .g-datum") == "01.03.26")
+            await pg.click(".galerie .g-zeig >> nth=0"); await pg.wait_for_timeout(200)
+            pruefe("Datum erscheint nicht in der Großansicht", await pg.locator(".lightbox .g-datum").count() == 0)
         await seite("anon", "index.html?sud=s1", "sud_galerie_gast", sud_galerie_gast)
         async def sud_galerie(pg):
             pruefe("Braumeister sieht bestehendes Foto mit Bildunterschrift", "Einmaischen" in await pg.inner_text("#sudGalerieSec"))

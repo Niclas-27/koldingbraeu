@@ -64,6 +64,23 @@ lesend und nur, wenn der Sud „Öffentlich zeigen” ist (RLS prüft das direkt
   `extra` (zusätzliches Raster-Element, hier die „Hinzufügen”-Kachel). Abwärtskompatibel – Verkostungen
   übergeben weiterhin reine Pfad-Arrays ohne Bildunterschrift.
 
+### Aufnahmedatum auf dem Vorschaubild (seit 25.10.2026)
+
+Jedes Vorschaubild zeigt klein unten rechts das Datum im Format `DD.MM.JJ` (nicht in der Großansicht).
+
+- Quelle ist das **EXIF-Aufnahmedatum** der Foto-Datei (`DateTimeOriginal`, sonst `DateTime`), ausgelesen
+  im Browser aus der Originaldatei *bevor* `Bilder.verkleinern` sie auf ein Canvas zeichnet (dabei geht
+  EXIF verloren). Dafür `Bilder.exifDatum(datei)` in `lib/bilder.js` – ein minimaler, abhängigkeitsfreier
+  JPEG/Exif-Parser (liest nur die ersten 128 KB), liefert `"YYYY-MM-DD"` oder `null`.
+- Hat ein Foto kein EXIF-Datum (z. B. Screenshot, bereits bearbeitetes Bild), zeigt die Oberfläche
+  stattdessen das Hochlade-Datum (`sud_bilder.angelegt`) an.
+- Neue Spalte `sud_bilder.aufgenommen` (date, nullable) – `schema/03_sud_fotos_datum.sql`.
+- `galerieHtml`-Einträge dürfen zusätzlich `datum` (fertig formatierter String) tragen → rendert
+  `<span class="g-datum">` unten rechts im Vorschaubild; ohne `datum` bleibt alles wie zuvor.
+- Unit-Test für den Exif-Parser: `tests/exif_test.js` (reiner Node, baut sich einen minimalen
+  JPEG+Exif-Puffer selbst), da das Playwright-Testfoto `tests/data/foto.jpg` kein EXIF enthält und daher
+  nur den Fallback-Pfad abdeckt.
+
 ## Offene Punkte
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)

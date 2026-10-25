@@ -147,10 +147,10 @@ function zeigeDetail(b){
     ?`<button type="button" class="sud-etikett" id="sudEtikett"><img class="sud-bild gross kb-zack" src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`
     :b.bild_foto?""
     :`<span class="sud-bild gross ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;
-  const kw=(label,wert)=>`<div class="kw"><span>${esc(label)}</span><b class="num">${wert==null||wert===""?"–":esc(wert)}</b></div>`;
-  const posten=[["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Alkohol",fmtNum(b.alkohol,"% vol")]];
+  const kw=(label,wert,einheit)=>`<div class="kw"><span>${esc(label)}</span><b class="num">${wert==null||wert===""?"–":esc(wert)}</b>${einheit?`<small>${esc(einheit)}</small>`:""}</div>`;
+  const posten=[["Stammwürze",b.stammwuerze!=null?Bz.fmtZahl(b.stammwuerze):null,"°P"],["Alkohol",b.alkohol!=null?Bz.fmtZahl(b.alkohol):null,"% Vol."]];
   if(bm)posten.push(["Bewertung",b.bewertung]);
-  posten.push(["Ausschlagwürze",fmtNum(b.ausschlag,"l")]);
+  posten.push(["Ausschlagwürze",b.ausschlag!=null?Bz.fmtZahl(b.ausschlag):null,"l"]);
   const kennzahlen=`<div class="kws" style="grid-template-columns:repeat(${posten.length},minmax(0,1fr))">${posten.map(p=>kw(...p)).join("")}</div>`;
   const header=`<header class="sud-kopf">
       ${kronkorken}
@@ -198,9 +198,16 @@ function zeigeDetail(b){
 /* --- Fotos vom Brautag: eigene Galerie je Sud, mit optionaler Bildunterschrift.
    Hochladen/Löschen/Bearbeiten nur Braumeister/Admin (anders als bei Verkostungen keine Gäste-Uploads). --- */
 let galerie=[],galerieSudId=null,galeriePending=[];
+/* Aufnahmedatum (aus Exif) bzw. ersatzweise Hochlade-Datum, klein auf dem Vorschaubild: DD.MM.JJ */
+function fotoDatum(g){
+  const iso=g.aufgenommen||(g.angelegt?g.angelegt.slice(0,10):null);
+  if(!iso)return null;
+  const [y,m,d]=iso.split("-");
+  return `${d.padStart(2,"0")}.${m.padStart(2,"0")}.${y.slice(-2)}`;
+}
 async function galerieLaden(sudId){
   galerieSudId=sudId;galeriePending=[];
-  const {data,error}=await sb.from("sud_bilder").select("id,pfad,bildunterschrift,angelegt").eq("sud_id",sudId).order("angelegt");
+  const {data,error}=await sb.from("sud_bilder").select("id,pfad,bildunterschrift,aufgenommen,angelegt").eq("sud_id",sudId).order("angelegt");
   galerie=error?[]:(data||[]);
   if(aktuellerSud&&aktuellerSud.id===sudId)galerieZeichnen();
 }
@@ -211,8 +218,9 @@ function galerieZeichnen(){
   if(!galerie.length&&!bm){abschnitt.hidden=true;return;}
   abschnitt.hidden=false;
   const addKachel=bm?`<button type="button" class="g-add" id="galerieAdd" aria-label="Fotos hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M8 6h2l1-2h2l1 2h2"/></svg>Fotos hinzufügen</button>`:"";
-  el.innerHTML=Bilder.galerieHtml(galerie,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel});
-  Bilder.galerieVerdrahten(el,galerie,bm?galerieLoeschenBestaetigen:null,bm?galerieBearbeiten:null);
+  const items=galerie.map(g=>({...g,datum:fotoDatum(g)}));
+  el.innerHTML=Bilder.galerieHtml(items,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel});
+  Bilder.galerieVerdrahten(el,items,bm?galerieLoeschenBestaetigen:null,bm?galerieBearbeiten:null);
   const add=$("#galerieAdd");if(add)add.onclick=()=>$("#galerieFile").click();
   galerieTrayZeichnen();
 }
@@ -251,7 +259,7 @@ function galerieLoeschenBestaetigen(i){
 async function galerieDateienGewaehlt(){
   const dateien=[...$("#galerieFile").files];$("#galerieFile").value="";
   for(const datei of dateien){
-    try{const bild=await Bilder.ladeBild(datei);const blobs=await Bilder.verkleinern(bild);galeriePending.push({url:URL.createObjectURL(datei),blobs,caption:""});}
+    try{const [bild,aufgenommen]=await Promise.all([Bilder.ladeBild(datei),Bilder.exifDatum(datei)]);const blobs=await Bilder.verkleinern(bild);galeriePending.push({url:URL.createObjectURL(datei),blobs,caption:"",aufgenommen});}
     catch(e){toast(e.message);}
   }
   galerieTrayZeichnen();
@@ -276,7 +284,7 @@ async function galerieHochladen(){
   for(const p of galeriePending){
     try{
       const pfad=await Bilder.hochladen(basis,p.blobs);
-      const {data,error}=await sb.from("sud_bilder").insert({sud_id:galerieSudId,pfad,bildunterschrift:p.caption.trim()||null}).select().single();
+      const {data,error}=await sb.from("sud_bilder").insert({sud_id:galerieSudId,pfad,bildunterschrift:p.caption.trim()||null,aufgenommen:p.aufgenommen||null}).select().single();
       if(error)throw error;
       neu.push(data);
     }catch(e){toast(fehlertext(e));}
