@@ -108,6 +108,19 @@ auch direkt per Drag & Drop auf die Galerie ziehen – z. B. aus der Mac-Fotos-M
   `tests/run_tests.py`) – echtes Browser-Drag lässt sich darüber nicht testen, wohl aber die Events, die ein
   echter Drop auslöst.
 
+### Mit dem Finger wischen in der Großansicht (seit 25.10.2026)
+
+In der Großansicht (`Bilder.zeigen()` in `lib/bilder.js`, nicht brews-spezifisch) kann man jetzt auf dem Handy
+zum nächsten/vorigen Foto wischen, statt nur die Pfeil-Knöpfe zu treffen. Da `zeigen()` von allen Galerien der
+Seite genutzt wird (Sud-Fotos, Verkostungs-Galerie, Liga-Bilder), profitieren automatisch alle davon.
+
+- Reine `touchstart`/`touchend`-Auswertung (kein Live-Mitziehen des Bildes) – zählt nur eine überwiegend
+  waagerechte Wischgeste über 45 px Mindestlänge als Foto-Wechsel, damit ein leicht schräger Tap zum
+  Schließen nicht versehentlich das Foto wechselt. Nach links = nächstes, nach rechts = voriges Foto.
+  Bei nur einem Foto passiert nichts.
+- Playwright-Test löst dafür eigene `TouchEvent`/`Touch`-Objekte aus (`wische()` in `tests/run_tests.py`);
+  der Browser-Kontext braucht dafür `has_touch=True` beim `new_context(...)`.
+
 ## Offene Punkte
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)
