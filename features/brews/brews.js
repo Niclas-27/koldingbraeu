@@ -187,7 +187,7 @@ function zeigeDetail(b){
     </article>
     ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn primary" id="editBtn">Bearbeiten</button></div>`:""}`;
   $("#list").innerHTML=body;
-  if(bm){$("#editBtn").onclick=()=>openEditor(b,false);$("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);}
+  if(bm){$("#editBtn").onclick=()=>editInline(b);$("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);}
   const bp=[b.bild_foto,b.bild_etikett].filter(Boolean);
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
   if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
@@ -357,9 +357,10 @@ function rowsHTML(kind,items){
   if(kind==="hopfen")return items.map((h,i)=>`<div class="r"><input id="hop_s_${i}" placeholder="Sorte" value="${esc(h.sorte)}" aria-label="Hopfensorte"><input id="hop_g_${i}" type="number" step="any" inputmode="decimal" placeholder="Gramm" value="${esc(h.gramm??"")}" aria-label="Menge in Gramm"><input id="hop_a_${i}" type="number" step="any" inputmode="decimal" placeholder="% α" value="${esc(h.alpha??"")}" aria-label="Alphasäure in Prozent"><input id="hop_z_${i}" type="number" step="any" inputmode="numeric" placeholder="min" value="${esc(h.zeit??"")}" aria-label="Kochzeit der Gabe in Minuten"><select id="hop_t_${i}" aria-label="Art der Hopfengabe">${Object.entries(TYP).map(([k,l])=>`<option value="${k}"${h.typ===k?" selected":""}>${l}</option>`).join("")}</select><button type="button" class="x" data-del="hopfen" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>${h.alt?`<small class="hint">vorher: ${esc(h.alt)}</small>`:""}`).join("");
   return items.map((r,i)=>`<div class="r"><input id="rast_t_${i}" type="number" step="any" inputmode="decimal" placeholder="°C" value="${esc(r.temperatur??"")}" aria-label="Temperatur der ${i+1}. Rast"><input id="rast_z_${i}" type="number" step="1" min="0" inputmode="numeric" placeholder="min" value="${esc(r.zeit??"")}" aria-label="Dauer der ${i+1}. Rast in Minuten"><button type="button" class="x" data-del="rasten" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
 }
-let draft=null,editingId=null,bildBasis="";
+let draft=null,editingId=null,bildBasis="",bearbeitenInline=false;
 function openEditor(src,asCopy){
   if(!isBM())return;
+  bearbeitenInline=false;
   const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
   if(src&&src.ausRezept){draft=Object.assign({nr:nextNr,datum:todayIso(),oeffentlich:false},src.draft);editingId=null;}
   else if(!src){draft={nr:nextNr,datum:todayIso(),oeffentlich:false,malz:[{sorte:"",gramm:"",ebc:null}],rasten:[{temperatur:"",zeit:""}],hopfen:[hopfenNeu(null)]};editingId=null;}
@@ -369,15 +370,41 @@ function openEditor(src,asCopy){
   draft.hopfen=draft.hopfen.map(hopfenNeu);
   bildBasis=`sude/${editingId||"neu-"+crypto.randomUUID()}`;
   $("#sheetTitle").textContent=editingId?`Sud ${draft.nr} bearbeiten`:asCopy?`Neuer Sud nach Vorlage`:src&&src.ausRezept?`Neuer Sud nach „${src.name}“`:"Neuer Sud";
-  drawForm();
+  drawForm("#sheetBody");
   $("#sheetFoot").innerHTML=`<span class="err" id="formErr"></span><span class="spacer"></span><button class="btn" id="cancelEdit">Abbrechen</button><button class="btn primary" id="saveBtn">${editingId?"Änderungen speichern":"Sud anlegen"}</button>`;
   $("#cancelEdit").onclick=closeSheet;
   $("#saveBtn").onclick=save;
   openSheet();$("#sheetBody").scrollTop=0;
 }
-function drawForm(){
+/* Bestehenden Sud direkt auf seiner Detailseite bearbeiten, ohne Seitenblatt: das Formular ersetzt
+   die Ansicht an Ort und Stelle (wie openEditor, aber ohne Sheet). Neuanlegen/Kopieren/Aus-Rezept
+   bleiben beim Sheet, weil es dafür noch keine eigene Detailseite gibt. */
+function editInline(b){
+  if(!isBM())return;
+  bearbeitenInline=true;
+  draft=JSON.parse(JSON.stringify(b));editingId=b.id;
+  ["malz","rasten","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
+  draft.hopfen=draft.hopfen.map(hopfenNeu);
+  bildBasis=`sude/${editingId}`;
+  $("#list").innerHTML=`<p class="noprint"><a class="back" href="index.html">← Alle Sude</a></p>
+    <article class="sud-blatt">
+      <h2>Sud ${esc(draft.nr)} bearbeiten</h2>
+      <div id="sudEditBody"></div>
+      <div class="sheet-foot noprint" style="border-top:1px solid var(--line);margin-top:4px">
+        <span class="err" id="formErr"></span><span class="spacer"></span>
+        <button type="button" class="btn" id="cancelEdit">Abbrechen</button>
+        <button type="button" class="btn primary" id="saveBtn">Änderungen speichern</button>
+      </div>
+    </article>`;
+  drawForm("#sudEditBody");
+  $("#cancelEdit").onclick=()=>zeigeDetail(b);
+  $("#saveBtn").onclick=save;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function drawForm(ziel){
+  ziel=ziel||"#sheetBody";
   const d=draft;const fs=(t,inner)=>`<fieldset><legend>${t}</legend>${inner}</fieldset>`;
-  $("#sheetBody").innerHTML=`<form id="form" novalidate>
+  $(ziel).innerHTML=`<form id="form" novalidate>
     ${fs("Grunddaten",`<div class="grid2">${FIELDS[0][1].map(f=>field(f,d[f[0]])).join("")}</div>
       <label class="check"><input type="checkbox" id="f_oeffentlich" name="oeffentlich"${d.oeffentlich?" checked":""}><span><b>Öffentlich zeigen</b><br><span class="hint">Gäste sehen dann Werte, Schüttung, Hopfen und Hefe – Notizen und Bewertung bleiben intern.</span></span></label>`)}
     ${fs("Bilder",`<div class="grid2">${Bilder.feldHtml("bf_foto",d.bild_foto,{art:"frei",beschriftung:"Foto vom Sud"})}${Bilder.feldHtml("bf_etikett",d.bild_etikett,{art:"frei",beschriftung:"Etikett"})}</div><p class="hint">Beides freiwillig. Das Foto erscheint oben in der Ansicht, das Etikett als Vorschaubild in der Liste.</p>`)}
@@ -393,8 +420,10 @@ function drawForm(){
   $("#form").onsubmit=e=>{e.preventDefault();save();};
   Bilder.feldVerdrahten("bf_foto",{art:"frei",basis:bildBasis+"/foto",titel:"Foto vom Sud",geaendert:p=>{draft.bild_foto=p;}});
   Bilder.feldVerdrahten("bf_etikett",{art:"frei",basis:bildBasis+"/etikett",titel:"Etikett",geaendert:p=>{draft.bild_etikett=p;}});
-  $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:"",ebc:null}:k==="hopfen"?hopfenNeu(null):k==="rasten"?{temperatur:"",zeit:""}:"");const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
-  $("#form").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{collect();draft[b.dataset.del].splice(+b.dataset.i,1);const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
+  const scrollTop=()=>bearbeitenInline?window.scrollY:$("#sheetBody").scrollTop;
+  const scrollWiederherstellen=top=>{if(bearbeitenInline)window.scrollTo(0,top);else $("#sheetBody").scrollTop=top;};
+  $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:"",ebc:null}:k==="hopfen"?hopfenNeu(null):k==="rasten"?{temperatur:"",zeit:""}:"");const top=scrollTop();drawForm(ziel);scrollWiederherstellen(top);});
+  $("#form").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{collect();draft[b.dataset.del].splice(+b.dataset.i,1);const top=scrollTop();drawForm(ziel);scrollWiederherstellen(top);});
 }
 function collect(){
   const f=$("#form");if(!f)return;
@@ -424,7 +453,7 @@ async function save(){
   const alt=editingId&&state.brews.find(b=>b.id===editingId);
   if(alt)["bild_foto","bild_etikett"].forEach(k=>{if(alt[k]&&alt[k]!==data[k])Bilder.loeschen(alt[k]);});
   state.brews=state.brews.filter(b=>b.id!==data.id).concat([data]);
-  closeSheet();
+  if(!bearbeitenInline)closeSheet();
   if(editingId&&aktuellerSud&&aktuellerSud.id===editingId){toast("Gespeichert");zeigeDetail(data);}
   else{toast(editingId?"Gespeichert":`Sud ${data.nr} angelegt`);location.href="index.html?sud="+data.id;}
 }

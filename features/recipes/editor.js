@@ -1,7 +1,7 @@
 /* Koldingbräu – Rezepte: Rezept anlegen und bearbeiten
    Zutaten sind Freitext mit Werten; Vorschläge kommen aus allen bisherigen Rezepten und Suden. */
 "use strict";
-let rDraft = null, rEditId = null, rAlt = null, rBildBasis = "", vorschlaege = null;
+let rDraft = null, rEditId = null, rAlt = null, rBildBasis = "", vorschlaege = null, rInline = false;
 
 async function ladeVorschlaege(){
   if(vorschlaege) return vorschlaege;
@@ -24,27 +24,56 @@ const leer = () => ({ name: "", stil: "", autor: "Koldingbräu", quelle: "eigene
 
 async function rezeptForm(r){
   const v = await ladeVorschlaege();
+  rInline = false;
   rDraft = JSON.parse(JSON.stringify(r || leer()));
   rEditId = r ? r.id : null;
   rAlt = r ? {bild_foto: r.bild_foto || null, bild_etikett: r.bild_etikett || null} : null;
   rBildBasis = `rezepte/${rEditId || "neu-" + crypto.randomUUID()}`;
   ["malze", "rasten", "hopfen", "weitere"].forEach(k => { if(!Array.isArray(rDraft[k])) rDraft[k] = []; });
   $("#sheetTitle").textContent = r ? "Rezept bearbeiten" : "Neues Rezept";
-  rFormZeichnen(v);
+  rFormZeichnen(v, "#sheetBody");
   $("#sheetFoot").innerHTML = `<span class="err" id="rzErr"></span><span class="spacer"></span><button class="btn" id="rzAbbr">Abbrechen</button><button class="btn primary" id="rzSave">${r ? "Speichern" : "Anlegen"}</button>`;
   $("#rzAbbr").onclick = closeSheet;
   $("#rzSave").onclick = rSpeichern;
   KB.openSheet(); $("#sheetBody").scrollTop = 0;
 }
 
-function rFormZeichnen(v){
+/* Bestehendes Rezept direkt auf seiner Detailseite bearbeiten, ohne dass ein Sheet aufgeht: das Formular
+   ersetzt die Ansicht an Ort und Stelle (wie rezeptForm, aber ohne Sheet). Neuanlegen bleibt beim Sheet,
+   weil es dafür noch keine eigene Detailseite gibt. */
+async function rezeptEditInline(r){
+  const v = await ladeVorschlaege();
+  rInline = true;
+  rDraft = JSON.parse(JSON.stringify(r));
+  rEditId = r.id;
+  rAlt = {bild_foto: r.bild_foto || null, bild_etikett: r.bild_etikett || null};
+  rBildBasis = `rezepte/${rEditId}`;
+  ["malze", "rasten", "hopfen", "weitere"].forEach(k => { if(!Array.isArray(rDraft[k])) rDraft[k] = []; });
+  rMain().innerHTML = `<p class="noprint"><a class="back" href="rezepte.html">← Alle Rezepte</a></p>
+    <article class="rz-blatt">
+      <h2>${esc(r.name)} bearbeiten</h2>
+      <div id="rzEditBody"></div>
+      <div class="sheet-foot noprint" style="border-top:1px solid var(--line);margin-top:4px">
+        <span class="err" id="rzErr"></span><span class="spacer"></span>
+        <button type="button" class="btn" id="rzAbbr">Abbrechen</button>
+        <button type="button" class="btn primary" id="rzSave">Änderungen speichern</button>
+      </div>
+    </article>`;
+  rFormZeichnen(v, "#rzEditBody");
+  $("#rzAbbr").onclick = () => { rInline = false; detailZeigen(); };
+  $("#rzSave").onclick = rSpeichern;
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+function rFormZeichnen(v, ziel){
+  ziel = ziel || "#sheetBody";
   v = v || vorschlaege;
   const d = rDraft, fs = (t, inner) => `<fieldset><legend>${t}</legend>${inner}</fieldset>`;
   const inp = (k, label, typ, extra) => `<label class="f" for="r_${k}">${label}<input id="r_${k}" data-k="${k}"${typ === "number" ? ' type="number" step="any" inputmode="decimal"' : ""} value="${esc(d[k] ?? "")}"${extra || ""}></label>`;
   const typSel = (i, t) => `<select data-l="hopfen" data-i="${i}" data-f="typ" aria-label="Art der Hopfengabe">${Object.entries(TYP_LABEL).map(([k, l]) => `<option value="${k}"${t === k ? " selected" : ""}>${l}</option>`).join("")}</select>`;
   const zelle = (l, i, f, val, ph, num, list) => `<input data-l="${l}" data-i="${i}" data-f="${f}" placeholder="${ph}" aria-label="${ph}" value="${esc(val ?? "")}"${num ? ' type="number" step="any" inputmode="decimal"' : ""}${list ? ` list="${list}"` : ""}>`;
   const weg = (l, i) => `<button type="button" class="x" data-weg="${l}" data-i="${i}" aria-label="Zeile entfernen">✕</button>`;
-  $("#sheetBody").innerHTML = `<form id="rzForm" novalidate>
+  $(ziel).innerHTML = `<form id="rzForm" novalidate>
     <datalist id="dl_malz">${[...v.malz.keys()].sort().map(n => `<option value="${esc(n)}">`).join("")}</datalist>
     <datalist id="dl_hopfen">${v.hopfen.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
     <datalist id="dl_hefe">${v.hefe.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
@@ -75,7 +104,9 @@ function rFormZeichnen(v){
   Bilder.feldVerdrahten("rf_foto", {art: "frei", basis: rBildBasis + "/foto", titel: "Foto", geaendert: p => { rDraft.bild_foto = p; }});
   Bilder.feldVerdrahten("rf_etikett", {art: "frei", basis: rBildBasis + "/etikett", titel: "Etikett", geaendert: p => { rDraft.bild_etikett = p; }});
   const neu = { malze: () => ({name: "", gramm: null, ebc: null}), rasten: () => ({temperatur: null, zeit: null}), hopfen: () => ({sorte: "", gramm: null, alpha: null, zeit: null, typ: "Kochen"}), weitere: () => ({name: "", menge: null, einheit: "g", zeitpunkt: ""}) };
-  const neuZeichnen = () => { const top = $("#sheetBody").scrollTop; rFormZeichnen(); $("#sheetBody").scrollTop = top; };
+  const scrollTop = () => rInline ? window.scrollY : $("#sheetBody").scrollTop;
+  const scrollWiederherstellen = top => { if(rInline) window.scrollTo(0, top); else $("#sheetBody").scrollTop = top; };
+  const neuZeichnen = () => { const top = scrollTop(); rFormZeichnen(v, ziel); scrollWiederherstellen(top); };
   f.querySelectorAll("[data-neu]").forEach(b => b.onclick = () => { rSammeln(); rDraft[b.dataset.neu].push(neu[b.dataset.neu]()); neuZeichnen(); });
   f.querySelectorAll("[data-weg]").forEach(b => b.onclick = () => { rSammeln(); rDraft[b.dataset.weg].splice(+b.dataset.i, 1); neuZeichnen(); });
   // Malzfarbe vorschlagen, sobald ein Malzname eingetragen ist
@@ -122,7 +153,8 @@ async function rSpeichern(){
   if(error){ btn.disabled = false; err.textContent = fehlertext(error); return; }
   vorschlaege = null;
   if(rAlt) ["bild_foto", "bild_etikett"].forEach(k => { if(rAlt[k] && rAlt[k] !== (out[k] || null)) Bilder.loeschen(rAlt[k]); });
-  closeSheet(); toast(rEditId ? "Gespeichert" : "Rezept angelegt");
+  if(!rInline) closeSheet(); toast(rEditId ? "Gespeichert" : "Rezept angelegt");
+  rInline = false;
   if(rEditId && rezeptId === rEditId){ sicht.alpha = {}; await detailLaden(); }
   else location.href = "rezepte.html?id=" + data.id;
 }
