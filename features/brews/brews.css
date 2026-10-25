@@ -31,8 +31,9 @@
 .grist-bar{grid-column:1/-1;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
 .grist-bar i{display:block;height:100%;background:var(--amber)}
 .steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
-.steps li{display:flex;gap:10px;font-size:.92rem}
-.steps li b{font-family:var(--font-data);font-weight:500;color:var(--muted);min-width:20px}
+.steps li{display:flex;justify-content:space-between;gap:10px;font-size:.92rem}
+.steps li b{font-weight:500}
+.steps li span{color:var(--muted)}
 .hops{display:flex;flex-direction:column;gap:6px}
 .hops div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;font-size:.92rem;padding-bottom:6px;border-bottom:1px dashed var(--line)}
 .hops span{color:var(--muted);font-family:var(--font-data);font-size:.82rem}

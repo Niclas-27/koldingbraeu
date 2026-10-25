@@ -4,10 +4,10 @@
 "use strict";
 const {$, esc, state, isBM, isAdmin, fmtDate, fmtDateTime, personName, todayIso, toast, sheet, openSheet, closeSheet, kv, sec, fehlertext} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});  // Client entsteht erst beim Start
-// Spalten, die Gäste lesen dürfen (ohne notizen, bewertung)
-const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,maischplan,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett";
+// Spalten, die Gäste lesen dürfen (ohne notizen, bewertung); Messwerte seit 25.10.2026 Zahl+Einheit statt Freitext
+const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,einmaischtemperatur,abmaischtemperatur,rasten,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett";
 // Spalten, die beim Speichern geschrieben werden
-const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","maischplan","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_etikett"];
+const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_etikett"];
 const CAPS = {rot:"#c23b2b",blau:"#2f5fa8",orange:"#e5862b",silber:"#b9bec4",gruen:"#3f8a3a",gold:"#c9a227",schwarz:"#1c1c1c",weiss:"#f4f4f0",gelb:"#e8c82e"};
 const CAP_LABEL = {rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"Grün",gold:"Gold",schwarz:"Schwarz",weiss:"Weiß",gelb:"Gelb"};
 Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
@@ -22,8 +22,10 @@ function title(b){return b.stil||`Sud ${b.nr}`;}
 function malzSum(b){return(b.malz||[]).reduce((a,m)=>a+(+m.gramm||0),0);}
 function hopfenSum(b){return(b.hopfen||[]).reduce((a,h)=>a+(+hopfenNeu(h).gramm||0),0);}
 function fmtKg(g){return(g/1000).toLocaleString("de-DE",{maximumFractionDigits:2})+" kg";}
+/* Messwert mit Einheit, oder null (für kv()/kw(), die null-Werte als „–“ bzw. gar nicht zeigen) */
+function fmtNum(v,einheit,stellen=1){return v==null?null:`${Bz.fmtZahl(v,stellen)} ${einheit}`;}
 /* Bild-Vorschau eines Suds: Etikett, sonst Foto, sonst gezeichneter Kronkorken in der gewählten Kronkorken-Farbe (sonst Bierfarbe) */
-function sudFarbe(b){const v=Bz.zahl(String(b.ausschlag||b.wuerze||b.biermenge||"").match(/\d+(?:[.,]\d+)?/)?.[0]);return Bz.ebc({ausschlag:v,malze:(b.malz||[]).map(m=>({name:m.sorte,gramm:m.gramm,ebc:m.ebc}))});}
+function sudFarbe(b){const v=b.ausschlag??b.wuerze??b.biermenge??null;return Bz.ebc({ausschlag:v,malze:(b.malz||[]).map(m=>({name:m.sorte,gramm:m.gramm,ebc:m.ebc}))});}
 function sudBild(b){const p=b.bild_etikett||b.bild_foto;
   if(p)return`<img class="sud-bild kb-zack" src="${esc(Bilder.url(p,true))}" alt="" loading="lazy">`;
   return`<span class="sud-bild ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;}
@@ -121,7 +123,7 @@ function rowHTML(b){
   return `<a class="brew" href="index.html?sud=${esc(b.id)}">
     ${sudBild(b)}<div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
     <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span>${lock}</div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
-    <div class="facts"><div class="num">${b.stammwuerze?esc(b.stammwuerze)+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(gv)}" title="Bewertung">${esc(b.bewertung||"–")}</span>`:""}</div>
+    <div class="facts"><div class="num">${b.stammwuerze!=null?esc(fmtNum(b.stammwuerze,"°P"))+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(gv)}" title="Bewertung">${esc(b.bewertung||"–")}</span>`:""}</div>
   </a>`;
 }
 function renderAll(){renderStats();renderChips();renderList();}
@@ -134,16 +136,21 @@ function zeigeDetail(b){
   document.title=title(b)+" · Koldingbräu";
   const bm=isBM();const total=malzSum(b);
   const grist=(b.malz||[]).length?`<div class="grist">${b.malz.map(m=>`<div class="grist-row"><span>${esc(m.sorte)}${m.ebc!=null&&m.ebc!==""?` <small style="color:var(--muted)">${esc(Bz.fmtZahl(m.ebc))} EBC</small>`:""}</span><span class="num">${m.gramm?esc((+m.gramm).toLocaleString("de-DE"))+" g":"–"}</span><div class="grist-bar"><i style="width:${total?Math.round((+m.gramm||0)/total*100):0}%"></i></div></div>`).join("")}<div class="grist-row" style="color:var(--muted)"><span>Schüttung gesamt</span><span class="num">${fmtKg(total)}</span></div></div>`:"";
-  const steps=(b.maischplan||[]).filter(Boolean).length?`<ol class="steps">${b.maischplan.filter(Boolean).map((s,i)=>`<li><b>${i+1}</b><span>${esc(s)}</span></li>`).join("")}</ol>`:"";
+  const rastZeilen=[
+    b.einmaischtemperatur!=null?`<li><b>Einmaischen</b><span class="num">${esc(Bz.fmtZahl(b.einmaischtemperatur))} °C</span></li>`:"",
+    ...(b.rasten||[]).map((r,i)=>`<li><b>${i+1}. Rast</b><span class="num">${r.temperatur!=null?esc(Bz.fmtZahl(r.temperatur))+" °C":"–"}${r.zeit!=null?" · "+esc(Bz.fmtZahl(r.zeit,0))+" min":""}</span></li>`),
+    b.abmaischtemperatur!=null?`<li><b>Abmaischen</b><span class="num">${esc(Bz.fmtZahl(b.abmaischtemperatur))} °C</span></li>`:"",
+  ].filter(Boolean);
+  const steps=rastZeilen.length?`<ol class="steps">${rastZeilen.join("")}</ol>`:"";
   const hops=(b.hopfen||[]).length?`<div class="hops">${b.hopfen.map(h=>`<div><b style="font-weight:500">${hopfenLinks(h)}</b><span>${hopfenRechts(h)}</span></div>`).join("")}</div>`:"";
   const kronkorken=b.bild_etikett
     ?`<button type="button" class="sud-etikett" id="sudEtikett"><img class="sud-bild gross kb-zack" src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`
     :b.bild_foto?""
     :`<span class="sud-bild gross ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;
   const kw=(label,wert)=>`<div class="kw"><span>${esc(label)}</span><b class="num">${wert==null||wert===""?"–":esc(wert)}</b></div>`;
-  const posten=[["Stammwürze",b.stammwuerze],["Alkohol",b.alkohol]];
+  const posten=[["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Alkohol",fmtNum(b.alkohol,"% vol")]];
   if(bm)posten.push(["Bewertung",b.bewertung]);
-  posten.push(["Ausschlagwürze",b.ausschlag]);
+  posten.push(["Ausschlagwürze",fmtNum(b.ausschlag,"l")]);
   const kennzahlen=`<div class="kws" style="grid-template-columns:repeat(${posten.length},minmax(0,1fr))">${posten.map(p=>kw(...p)).join("")}</div>`;
   const header=`<header class="sud-kopf">
       ${kronkorken}
@@ -165,11 +172,14 @@ function zeigeDetail(b){
       ${bilder}
       ${header}
       ${sec("Schüttung",grist)}
-      ${sec("Wasser & Maische",kv([["Hauptguss",b.hauptguss],["Nachguss",b.nachguss],["Wasserbehandlung",b.wasser]])+(steps?`<div style="margin-top:12px">${steps}</div>`:""))}
-      ${sec("Läutern & Kochen",kv([["Läutern",b.laeutern],["Kochzeit",b.kochzeit],["Würzemenge",b.wuerze],["Stammwürze",b.stammwuerze]]))}
-      ${sec("Hopfen",(b.hopfensorten?`<p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")+hops)}
-      ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Messung vor Abfüllung",b.restextrakt]]))}
-      ${sec("Abfüllung",kv([["Ausschlagwürze",b.ausschlag],["Biermenge",b.biermenge!=null&&b.biermenge!==""?String(b.biermenge).replace(".",",")+" L":""],["Speise / Zucker",b.zucker],["Flaschen",b.flaschen],["Alkohol",b.alkohol],["Abgefüllt am",b.abgefuellt]]))}
+      ${sec("Brauwasser",kv([["Hauptguss",fmtNum(b.hauptguss,"l")],["Nachguss",fmtNum(b.nachguss,"l")],["Wasserbehandlung",b.wasser]]))}
+      ${sec("Maischplan",steps)}
+      ${sec("Läutern & Kochen"+(b.kochzeit!=null?` · ${Bz.fmtZahl(b.kochzeit,0)} min`:""),
+        kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")]])
+        +(b.hopfensorten?`<p style="margin:12px 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")
+        +(hops?`<div style="margin-top:${b.hopfensorten?"0":"12px"}">${hops}</div>`:""))}
+      ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Restextrakt",fmtNum(b.restextrakt,"°P")]]))}
+      ${sec("Abfüllung",kv([["Ausschlagwürze",fmtNum(b.ausschlag,"l")],["Biermenge",fmtNum(b.biermenge,"l")],["Speise / Zucker",b.zucker],["Flaschen",b.flaschen],["Alkohol",fmtNum(b.alkohol,"% vol")],["Abgefüllt am",b.abgefuellt?fmtDate(b.abgefuellt)+b.abgefuellt.slice(0,4):null]]))}
       ${sec("Notizen",b.notizen?`<div class="note">${esc(b.notizen)}</div>`:"")}
       ${changed}
     </article>
@@ -196,10 +206,11 @@ function confirmDelete(b){
 /* --- Editor --- */
 const FIELDS=[
  ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (Schulnote, z. B. 2+)"]]],
- ["Wasser",[["hauptguss","Hauptguss"],["nachguss","Nachguss"],["wasser","Wasserbehandlung (Milchsäure, pH)"]]],
- ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit"],["wuerze","Würzemenge"],["stammwuerze","Stammwürze"]]],
- ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge"],["messungen","Messungen"],["restextrakt","Messung vor Abfüllung"]]],
- ["Abfüllung",[["ausschlag","Ausschlagwürze"],["biermenge","Biermenge in Litern","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],["alkohol","Alkohol"],["abgefuellt","Abgefüllt am"]]],
+ ["Brauwasser",[["hauptguss","Hauptguss in Litern","number"],["nachguss","Nachguss in Litern","number"],["wasser","Wasserbehandlung (Milchsäure, pH)"]]],
+ ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["stammwuerze","Stammwürze in °P","number"]]],
+ ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge"],["messungen","Messungen"],["restextrakt","Restextrakt in °P","number"]]],
+ ["Abfüllung",[["ausschlag","Ausschlagwürze in Litern","number"],["biermenge","Biermenge in Litern","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],["alkohol","Alkohol in % vol","number"],["abgefuellt","Abgefüllt am","date"]]],
+ ["Maischplan",[["einmaischtemperatur","Einmaischtemperatur in °C","number"],["abmaischtemperatur","Abmaischtemperatur in °C","number"]]],
 ];
 function field([k,label,type],v){
   const id="f_"+k;
@@ -210,17 +221,17 @@ function field([k,label,type],v){
 function rowsHTML(kind,items){
   if(kind==="malz")return items.map((m,i)=>`<div class="r"><input id="malz_s_${i}" placeholder="Malzsorte" value="${esc(m.sorte)}" aria-label="Malzsorte"><input id="malz_g_${i}" type="number" step="any" inputmode="decimal" placeholder="Gramm" value="${esc(m.gramm??"")}" aria-label="Menge in Gramm"><input id="malz_e_${i}" type="number" step="any" inputmode="decimal" placeholder="EBC" value="${esc(m.ebc??"")}" aria-label="Farbe in EBC"><button type="button" class="x" data-del="malz" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
   if(kind==="hopfen")return items.map((h,i)=>`<div class="r"><input id="hop_s_${i}" placeholder="Sorte" value="${esc(h.sorte)}" aria-label="Hopfensorte"><input id="hop_g_${i}" type="number" step="any" inputmode="decimal" placeholder="Gramm" value="${esc(h.gramm??"")}" aria-label="Menge in Gramm"><input id="hop_a_${i}" type="number" step="any" inputmode="decimal" placeholder="% α" value="${esc(h.alpha??"")}" aria-label="Alphasäure in Prozent"><input id="hop_z_${i}" type="number" step="any" inputmode="numeric" placeholder="min" value="${esc(h.zeit??"")}" aria-label="Kochzeit der Gabe in Minuten"><select id="hop_t_${i}" aria-label="Art der Hopfengabe">${Object.entries(TYP).map(([k,l])=>`<option value="${k}"${h.typ===k?" selected":""}>${l}</option>`).join("")}</select><button type="button" class="x" data-del="hopfen" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>${h.alt?`<small class="hint">vorher: ${esc(h.alt)}</small>`:""}`).join("");
-  return items.map((s,i)=>`<div class="r one"><input id="rast_${i}" placeholder="z. B. 63 °C 30 Min." value="${esc(s)}" aria-label="Rast ${i+1}"><button type="button" class="x" data-del="maischplan" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
+  return items.map((r,i)=>`<div class="r"><input id="rast_t_${i}" type="number" step="any" inputmode="decimal" placeholder="°C" value="${esc(r.temperatur??"")}" aria-label="Temperatur der ${i+1}. Rast"><input id="rast_z_${i}" type="number" step="1" min="0" inputmode="numeric" placeholder="min" value="${esc(r.zeit??"")}" aria-label="Dauer der ${i+1}. Rast in Minuten"><button type="button" class="x" data-del="rasten" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
 }
 let draft=null,editingId=null,bildBasis="";
 function openEditor(src,asCopy){
   if(!isBM())return;
   const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
   if(src&&src.ausRezept){draft=Object.assign({nr:nextNr,datum:todayIso(),oeffentlich:false},src.draft);editingId=null;}
-  else if(!src){draft={nr:nextNr,datum:todayIso(),oeffentlich:false,malz:[{sorte:"",gramm:"",ebc:null}],maischplan:[""],hopfen:[hopfenNeu(null)]};editingId=null;}
-  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:"",ausschlag:"",biermenge:null,flaschen:null,alkohol:"",abgefuellt:"",notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null});editingId=null;}
+  else if(!src){draft={nr:nextNr,datum:todayIso(),oeffentlich:false,malz:[{sorte:"",gramm:"",ebc:null}],rasten:[{temperatur:"",zeit:""}],hopfen:[hopfenNeu(null)]};editingId=null;}
+  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:null,ausschlag:null,biermenge:null,flaschen:null,alkohol:null,abgefuellt:null,notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null});editingId=null;}
   else{draft=JSON.parse(JSON.stringify(src));editingId=src.id;}
-  ["malz","maischplan","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
+  ["malz","rasten","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
   draft.hopfen=draft.hopfen.map(hopfenNeu);
   bildBasis=`sude/${editingId||"neu-"+crypto.randomUUID()}`;
   $("#sheetTitle").textContent=editingId?`Sud ${draft.nr} bearbeiten`:asCopy?`Neuer Sud nach Vorlage`:src&&src.ausRezept?`Neuer Sud nach „${src.name}“`:"Neuer Sud";
@@ -237,7 +248,8 @@ function drawForm(){
       <label class="check"><input type="checkbox" id="f_oeffentlich" name="oeffentlich"${d.oeffentlich?" checked":""}><span><b>Öffentlich zeigen</b><br><span class="hint">Gäste sehen dann Werte, Schüttung, Hopfen und Hefe – Notizen und Bewertung bleiben intern.</span></span></label>`)}
     ${fs("Bilder",`<div class="grid2">${Bilder.feldHtml("bf_foto",d.bild_foto,{art:"frei",beschriftung:"Foto vom Sud"})}${Bilder.feldHtml("bf_etikett",d.bild_etikett,{art:"frei",beschriftung:"Etikett"})}</div><p class="hint">Beides freiwillig. Das Foto erscheint oben in der Ansicht, das Etikett als Vorschaubild in der Liste.</p>`)}
     ${fs("Schüttung",`<div class="rowlist m3" id="rl_malz">${rowsHTML("malz",d.malz)}</div><button type="button" class="add" data-add="malz">+ Malz</button>`)}
-    ${fs("Wasser & Maischplan",`<div class="grid2">${FIELDS[1][1].map(f=>field(f,d[f[0]])).join("")}</div><div class="rowlist" id="rl_maischplan">${rowsHTML("maischplan",d.maischplan)}</div><button type="button" class="add" data-add="maischplan">+ Rast</button>`)}
+    ${fs("Brauwasser",`<div class="grid2">${FIELDS[1][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
+    ${fs("Maischplan",`<div class="grid2">${FIELDS[5][1].map(f=>field(f,d[f[0]])).join("")}</div>${d.maischplan_alt&&d.maischplan_alt.length?`<p class="hint">Vorher (Freitext): ${esc(d.maischplan_alt.join(" · "))}</p>`:""}<div class="rowlist" id="rl_rasten">${rowsHTML("rasten",d.rasten)}</div><button type="button" class="add" data-add="rasten">+ Rast</button>`)}
     ${fs("Läutern & Kochen",`<div class="grid2">${FIELDS[2][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
     ${fs("Hopfen",`<label class="f" for="f_hopfensorten">Hopfensorten mit Alphasäure<input id="f_hopfensorten" name="hopfensorten" value="${esc(d.hopfensorten??"")}"></label><div class="rowlist h5" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-add="hopfen">+ Hopfengabe</button><p class="hint">Zeit = Kochzeit der Gabe in Minuten; bei Stopfhopfen leer lassen.</p>`)}
     ${fs("Gärung",`<div class="grid2">${FIELDS[3][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
@@ -247,7 +259,7 @@ function drawForm(){
   $("#form").onsubmit=e=>{e.preventDefault();save();};
   Bilder.feldVerdrahten("bf_foto",{art:"frei",basis:bildBasis+"/foto",titel:"Foto vom Sud",geaendert:p=>{draft.bild_foto=p;}});
   Bilder.feldVerdrahten("bf_etikett",{art:"frei",basis:bildBasis+"/etikett",titel:"Etikett",geaendert:p=>{draft.bild_etikett=p;}});
-  $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:"",ebc:null}:k==="hopfen"?hopfenNeu(null):"");const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
+  $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:"",ebc:null}:k==="hopfen"?hopfenNeu(null):k==="rasten"?{temperatur:"",zeit:""}:"");const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
   $("#form").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{collect();draft[b.dataset.del].splice(+b.dataset.i,1);const top=$("#sheetBody").scrollTop;drawForm();$("#sheetBody").scrollTop=top;});
 }
 function collect(){
@@ -260,7 +272,7 @@ function collect(){
   const nz=id=>{const el=$(id);return !el||el.value===""?null:Bz.zahl(el.value);};
   draft.malz=draft.malz.map((_,i)=>({sorte:($("#malz_s_"+i)?.value||"").trim(),gramm:nz("#malz_g_"+i),ebc:nz("#malz_e_"+i)}));
   draft.hopfen=draft.hopfen.map((h,i)=>({sorte:($("#hop_s_"+i)?.value||"").trim(),gramm:nz("#hop_g_"+i),alpha:nz("#hop_a_"+i),zeit:nz("#hop_z_"+i),typ:$("#hop_t_"+i)?.value||"Kochen",alt:h.alt}));
-  draft.maischplan=draft.maischplan.map((_,i)=>($("#rast_"+i)?.value||"").trim());
+  draft.rasten=draft.rasten.map((_,i)=>({temperatur:nz("#rast_t_"+i),zeit:nz("#rast_z_"+i)}));
 }
 async function save(){
   collect();
@@ -268,7 +280,7 @@ async function save(){
   if(!draft.datum){err.textContent="Bitte ein Braudatum eintragen.";$("#f_datum")?.focus();return;}
   if(draft.flaschen!=null&&!Number.isInteger(draft.flaschen)){err.textContent="Flaschen bitte als ganze Zahl eintragen.";$("#f_flaschen")?.focus();return;}
   const out={};WRITE_COLS.forEach(k=>{let v=draft[k];if(v==="")v=null;if(v!==undefined)out[k]=v;});
-  out.malz=(draft.malz||[]).filter(m=>m.sorte||m.gramm);out.hopfen=(draft.hopfen||[]).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>({...h,zeit:h.typ==="Stopfen"?null:h.zeit}));out.maischplan=(draft.maischplan||[]).filter(Boolean);
+  out.malz=(draft.malz||[]).filter(m=>m.sorte||m.gramm);out.hopfen=(draft.hopfen||[]).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>({...h,zeit:h.typ==="Stopfen"?null:h.zeit}));out.rasten=(draft.rasten||[]).filter(r=>r.temperatur!=null||r.zeit!=null);
   out.oeffentlich=!!draft.oeffentlich;out.datum_geschaetzt=!!draft.datum_geschaetzt;
   if(editingId&&out.datum!==state.brews.find(b=>b.id===editingId)?.datum)out.datum_geschaetzt=false;
   const btn=$("#saveBtn");btn.disabled=true;err.textContent="";
@@ -311,13 +323,14 @@ async function neuerSud(){
 }
 function draftAusRezept(u,r,ziel,mitAnl){
   const t=v=>v==null?"":Bz.fmtZahl(v);
-  const plan=[u.einmaischtemperatur!=null?`Einmaischen ${t(u.einmaischtemperatur)} °C`:"",...(u.rasten||[]).map(x=>`${t(x.temperatur)} °C ${t(x.zeit)} min`),u.abmaischtemperatur!=null?`Abmaischen ${t(u.abmaischtemperatur)} °C`:""].filter(Boolean);
   const sorten=[...new Map((u.hopfen||[]).filter(h=>h.sorte).map(h=>[h.sorte,h.alpha])).entries()].map(([s,a])=>a!=null?`${s} ${t(a)} %`:s).join(", ");
   const ziele=[r.stammwuerze!=null?`${t(r.stammwuerze)} °P`:"",r.bittere!=null?`${t(r.bittere)} IBU`:"",r.farbe!=null?`${t(r.farbe)} EBC`:"",r.alkohol!=null?`${t(r.alkohol)} % Alkohol`:""].filter(Boolean).join(" · ");
   const gaer=[r.gaertemperatur?`Gärtemperatur ${r.gaertemperatur}${/°/.test(r.gaertemperatur)?"":" °C"}`:"",r.endvergaerungsgrad!=null?`EVG ${t(r.endvergaerungsgrad)} %`:"",r.karbonisierung!=null?`Karbonisierung ${t(r.karbonisierung)} g/l`:""].filter(Boolean).join(" · ");
   return{stil:r.name,rezept_id:r.id,
-    hauptguss:u.hauptguss!=null?`${t(u.hauptguss)} l`:"",nachguss:u.nachguss!=null?`${t(u.nachguss)} l`:"",
-    maischplan:plan.length?plan:[""],kochzeit:u.kochzeit!=null?`${t(u.kochzeit)} min`:"",
+    hauptguss:u.hauptguss??null,nachguss:u.nachguss??null,
+    einmaischtemperatur:u.einmaischtemperatur??null,abmaischtemperatur:u.abmaischtemperatur??null,
+    rasten:(u.rasten||[]).map(x=>({temperatur:x.temperatur,zeit:x.zeit})),
+    kochzeit:u.kochzeit??null,
     malz:(u.malze||[]).map(m=>({sorte:m.name,gramm:m.gramm,ebc:m.ebc??null})),
     hopfen:(u.hopfen||[]).map(h=>({sorte:h.sorte,gramm:h.gramm,alpha:h.alpha,zeit:h.zeit,typ:h.typ})),
     hopfensorten:sorten,hefe:r.hefe||"",
@@ -325,13 +338,11 @@ function draftAusRezept(u,r,ziel,mitAnl){
 }
 /* Rückweg: aus einem Sud ein Rezept machen */
 async function rezeptAusSud(b){
-  const n=v=>{const m=String(v??"").match(/(\d+(?:[.,]\d+)?)/);return m?Bz.zahl(m[1]):null;};
-  let einm=null,abm=null;const rasten=[];
-  (b.maischplan||[]).filter(Boolean).forEach(s=>{const t=String(s).match(/(\d+(?:[.,]\d+)?)\s*°/);const z=String(s).match(/(\d+)\s*min/i);
-    if(/einmaisch/i.test(s))einm=t?Bz.zahl(t[1]):null;else if(/abmaisch/i.test(s))abm=t?Bz.zahl(t[1]):null;else if(t)rasten.push({temperatur:Bz.zahl(t[1]),zeit:z?+z[1]:null});});
+  const n=v=>v==null||v===""?null:Bz.zahl(v);
   const r={name:title(b),autor:"Koldingbräu",quelle:`aus Sud Nr. ${b.nr} (${fmtDate(b.datum)}${b.datum?b.datum.slice(0,4):""})`,aus_sud_id:b.id,
-    ausschlag:n(b.ausschlag)||n(b.wuerze)||n(b.biermenge),stammwuerze:n(b.stammwuerze),alkohol:n(b.alkohol),
-    hauptguss:n(b.hauptguss),nachguss:n(b.nachguss),kochzeit:n(b.kochzeit),einmaischtemperatur:einm,abmaischtemperatur:abm,rasten,
+    ausschlag:n(b.ausschlag)??n(b.wuerze)??n(b.biermenge),stammwuerze:n(b.stammwuerze),alkohol:n(b.alkohol),
+    hauptguss:n(b.hauptguss),nachguss:n(b.nachguss),kochzeit:n(b.kochzeit),einmaischtemperatur:n(b.einmaischtemperatur),abmaischtemperatur:n(b.abmaischtemperatur),
+    rasten:(b.rasten||[]).map(x=>({temperatur:x.temperatur,zeit:x.zeit})),
     malze:(b.malz||[]).filter(m=>m.sorte||m.gramm).map(m=>({name:m.sorte,gramm:Bz.zahl(m.gramm),ebc:m.ebc!=null&&m.ebc!==""?Bz.zahl(m.ebc):Bz.malzEbc(m.sorte)})),
     hopfen:(b.hopfen||[]).map(hopfenNeu).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>h),
     hefe:b.hefe||null,anmerkung:[b.hefemenge?`Hefemenge: ${b.hefemenge}`:"",b.wasser?`Wasser: ${b.wasser}`:"",b.laeutern?`Läutern: ${b.laeutern}`:"",b.notizen||""].filter(Boolean).join("\n")||null,oeffentlich:false};
@@ -353,8 +364,8 @@ function einstiegVerarbeiten(){
 }
 /* --- CSV-Export --- */
 function toCSV(){
-  const cols=["nr","datum","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","maischplan","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","abgefuellt","notizen","oeffentlich"];
-  const v=(b,c)=>c==="malz"?(b.malz||[]).map(m=>`${m.sorte} ${m.gramm??""}g`).join(" | "):c==="hopfen"?(b.hopfen||[]).map(h=>h.sorte===undefined?`${h.menge} (${h.zeit})`:`${h.gramm??""}g ${h.sorte}${h.alpha!=null?" "+h.alpha+"%":""} (${TYP[h.typ]||h.typ}${h.zeit!=null?" "+h.zeit+" min":""})`).join(" | "):c==="maischplan"?(b.maischplan||[]).join(" | "):c==="oeffentlich"?(b.oeffentlich?"ja":"nein"):(b[c]??"");
+  const cols=["nr","datum","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","rasten","abmaischtemperatur","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","abgefuellt","notizen","oeffentlich"];
+  const v=(b,c)=>c==="malz"?(b.malz||[]).map(m=>`${m.sorte} ${m.gramm??""}g`).join(" | "):c==="hopfen"?(b.hopfen||[]).map(h=>h.sorte===undefined?`${h.menge} (${h.zeit})`:`${h.gramm??""}g ${h.sorte}${h.alpha!=null?" "+h.alpha+"%":""} (${TYP[h.typ]||h.typ}${h.zeit!=null?" "+h.zeit+" min":""})`).join(" | "):c==="rasten"?(b.rasten||[]).map(r=>`${r.temperatur??""}°C ${r.zeit??""}min`).join(" | "):c==="oeffentlich"?(b.oeffentlich?"ja":"nein"):(b[c]??"");
   const q=x=>`"${String(x).replace(/"/g,'""')}"`;
   return [cols.join(";")].concat(state.brews.slice().sort((a,c)=>(a.datum||"").localeCompare(c.datum||"")).map(b=>cols.map(c=>q(v(b,c))).join(";"))).join("\n");
 }
