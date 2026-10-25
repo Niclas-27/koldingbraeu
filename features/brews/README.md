@@ -49,8 +49,13 @@ Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder”, 
 Eigener Abschnitt auf der Sud-Detailseite, unterhalb der übrigen Werte. Tabelle `sud_bilder`
 (`features/brews/schema/02_sud_fotos.sql`): Pfad, optionale Bildunterschrift, wer hochgeladen hat.
 Anders als bei den Verkostungsfotos gibt es hier **keine Gäste-Uploads** – nur Braumeister/Admin laden
-hoch, bearbeiten die Bildunterschrift (✎) oder löschen (✕, mit Bestätigung). Gäste sehen die Galerie nur
-lesend und nur, wenn der Sud „Öffentlich zeigen” ist (RLS prüft das direkt gegen `sude.oeffentlich`).
+hoch, bearbeiten die Bildunterschrift (✎) oder löschen (✕, mit Bestätigung). **Seit 25.10.2026 ist auch das
+Ansehen nur Braumeister/Admin vorbehalten**, unabhängig vom „Öffentlich zeigen”-Status des Suds (zuvor durften
+Gäste die Galerie öffentlicher Sude lesend sehen – auf Nutzerwunsch geändert, siehe `schema/04_sud_fotos_nur_braumeister.sql`,
+RLS-Policy „Galerie lesen” per `alter policy ... to authenticated` auf `private.ist_braumeister()` eingeschränkt,
+`anon` zusätzlich das Tabellen-Grant entzogen). Gäste sehen statt der Fotos nur den Hinweis „Melde dich als
+Braumeister an, um die Fotos vom Brautag zu sehen.” – die Oberfläche fragt dafür `sud_bilder` für Gäste gar nicht
+erst ab (`galerieLaden()` in `brews.js` überspringt die Abfrage, wenn `!isBM()`).
 
 - **Hochladen:** Kachel „Fotos hinzufügen” am Ende des Rasters → Mehrfachauswahl (auch Kamera am Handy) →
   jedes Foto landet zuerst in einer Ablage mit eigenem, optionalem Bildunterschrift-Feld; erst „Hochladen”

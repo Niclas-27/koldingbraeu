@@ -47,7 +47,7 @@ function q(t){
    log.push([t,op,payload]);
    let tab=db[t]||(db[t]=[]);
    if(rolle==="anon"&&t==="rezepte"&&op==="select"){tab=tab.filter(r=>r.oeffentlich);}
-   else if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile"&&t!=="sud_bilder")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);
+   else if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);
    let out;
    if(op==="select"){out=tab.filter(r=>filters.every(f=>f(r))).map(r=>embed(t,r));}
    else if(op==="insert"){const arr=(Array.isArray(payload)?payload:[payload]).map(p=>({id:t[0]+Math.random().toString(36).slice(2,7),code:"neucode234",status:"vorbereitung",...p}));tab.push(...arr);out=arr;}

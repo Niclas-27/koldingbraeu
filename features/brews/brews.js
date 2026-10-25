@@ -214,7 +214,9 @@ function galerieDragDropVerdrahten(abschnitt){
 }
 
 /* --- Fotos vom Brautag: eigene Galerie je Sud, mit optionaler Bildunterschrift.
-   Hochladen/Löschen/Bearbeiten nur Braumeister/Admin (anders als bei Verkostungen keine Gäste-Uploads). --- */
+   Hochladen/Löschen/Bearbeiten nur Braumeister/Admin (anders als bei Verkostungen keine Gäste-Uploads).
+   Seit 25.10.2026 auch das Ansehen nur Braumeister/Admin vorbehalten (RLS: features/brews/schema/04_sud_fotos_nur_braumeister.sql),
+   unabhängig vom „Öffentlich zeigen"-Status des Suds – Gäste sehen stattdessen einen Anmelde-Hinweis. --- */
 let galerie=[],galerieSudId=null,galeriePending=[];
 /* Aufnahmedatum (aus Exif) bzw. ersatzweise Hochlade-Datum, klein auf dem Vorschaubild: DD.MM.JJ */
 function fotoDatum(g){
@@ -225,6 +227,7 @@ function fotoDatum(g){
 }
 async function galerieLaden(sudId){
   galerieSudId=sudId;galeriePending=[];
+  if(!isBM()){galerie=[];if(aktuellerSud&&aktuellerSud.id===sudId)galerieZeichnen();return;}
   const {data,error}=await sb.from("sud_bilder").select("id,pfad,bildunterschrift,aufgenommen,angelegt").eq("sud_id",sudId).order("angelegt");
   galerie=error?[]:(data||[]);
   if(aktuellerSud&&aktuellerSud.id===sudId)galerieZeichnen();
@@ -233,8 +236,8 @@ function galerieZeichnen(){
   const abschnitt=$("#sudGalerieSec"),el=$("#sudGalerie");
   if(!abschnitt||!el)return;
   const bm=isBM();
-  if(!galerie.length&&!bm){abschnitt.hidden=true;return;}
   abschnitt.hidden=false;
+  if(!bm){el.innerHTML=`<p class="hint">Melde dich als Braumeister an, um die Fotos vom Brautag zu sehen.</p>`;return;}
   const addKachel=bm?`<button type="button" class="g-add" id="galerieAdd" aria-label="Fotos hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M8 6h2l1-2h2l1 2h2"/></svg>Fotos hinzufügen</button>`:"";
   const items=galerie.map(g=>({...g,datum:fotoDatum(g)}));
   el.innerHTML=Bilder.galerieHtml(items,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel})+(bm?`<p class="hint sg-drophint">oder Fotos direkt hierher ziehen</p>`:"");
