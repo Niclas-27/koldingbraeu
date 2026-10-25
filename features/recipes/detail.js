@@ -113,7 +113,7 @@ function detailZeigen(){
   if($("#rzEtikett")) $("#rzEtikett").onclick = () => Bilder.zeigen(bp, bp.length - 1);
   if(!isBM()) return;
   $("#sudAnlegen").onclick = () => sudAusRezept(aktuell());
-  $("#rzEdit").onclick = () => rezeptForm(R);
+  $("#rzEdit").onclick = () => rezeptEditInline(R);
   $("#rzName").onclick = umbenennen;
   $("#rzKlon").onclick = klonen;
   $("#rzExport").onclick = () => { download(dateiname(R.name) + (geaendert ? `_${zf(sicht.ziel)}l` : "") + ".json", JSON.stringify(B.zuMMuM(aktuell()), null, 2)); toast("Exportiert"); };
