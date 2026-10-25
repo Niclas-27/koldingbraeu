@@ -38,7 +38,7 @@ function notice(t){const n=$("#notice");if(!n)return;n.hidden=!t;n.textContent=t
 function lsGet(k){try{return localStorage.getItem(k);}catch(_){return null;}}
 function lsSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(_){}}
 
-/* --- Seitenblatt --- */
+/* --- Seitenblatt (weiterhin genutzt von Rezepten, Verkostungen, Liga, Verwaltung, Neuer Sud) --- */
 let onClose=null;
 function openSheet(){$("#sheet").hidden=false;$("#scrim").hidden=false;document.body.style.overflow="hidden";}
 function closeSheet(){$("#sheet").hidden=true;$("#scrim").hidden=true;document.body.style.overflow="";const f=onClose;onClose=null;if(f)f();}
@@ -62,14 +62,67 @@ function fehlertext(e){
   return"Das hat nicht geklappt. Bitte gleich noch einmal versuchen.";
 }
 
+/* --- Konto-Menü: ein einziger Container oben rechts statt eigenem Seitenblatt für Anmeldung/Konto --- */
+let panelCloseFn=null;
+function accInitials(p){
+  const name=((p&&p.name)||"").trim();
+  if(name){
+    const parts=name.split(/\s+/).filter(Boolean);
+    if(parts.length>=2)return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+    return parts[0].slice(0,2).toUpperCase();
+  }
+  const email=(p&&p.email)||"";
+  return email?email[0].toUpperCase():"?";
+}
+function openPanel(){$("#accountPanel").hidden=false;$("#accountToggle").setAttribute("aria-expanded","true");}
+function closePanel(){
+  const panel=$("#accountPanel");if(!panel||panel.hidden)return;
+  panel.hidden=true;
+  $("#accountToggle").setAttribute("aria-expanded","false");
+  const extra=$("#accPanelExtra");if(extra){extra.hidden=true;extra.innerHTML="";}
+  if(state.session){const li=$("#loggedInView");if(li)li.hidden=false;const lo=$("#loggedOutView");if(lo)lo.hidden=true;}
+  const f=panelCloseFn;panelCloseFn=null;if(f)f();
+}
+function showExtra(html,opts){
+  const lo=$("#loggedOutView"),li=$("#loggedInView"),extra=$("#accPanelExtra");
+  if(lo)lo.hidden=true;if(li)li.hidden=true;
+  extra.hidden=false;extra.innerHTML=html;
+  panelCloseFn=(opts&&opts.onClose)||null;
+  openPanel();
+}
+function backToMain(){
+  const extra=$("#accPanelExtra");if(extra){extra.hidden=true;extra.innerHTML="";}
+  if(state.session){$("#loggedInView").hidden=false;}else{$("#loggedOutView").hidden=false;}
+}
+
 /* --- Kopfzeile je nach Rolle --- */
 function renderChrome(){
   const inn=!!state.session, bm=isBM(), adm=isAdmin();
-  $("#loginBtn").hidden=inn;
   $("#adminBtn").hidden=!adm;
-  const who=$("#accountBtn");
-  if(inn&&state.profile){who.hidden=false;who.innerHTML=`<b>${esc(state.profile.name||state.profile.email||"Mein Konto")}</b>${state.profile.rolle?`<span class="role ${state.profile.rolle}">${esc(ROLLEN[state.profile.rolle])}</span>`:""}`;}
-  else who.hidden=true;
+  const label=$("#accToggleLabel"),av=$("#accToggleAvatar"),toggle=$("#accountToggle");
+  if(inn&&state.profile){
+    const initials=accInitials(state.profile);
+    if(label)label.hidden=true;
+    if(av){av.hidden=false;av.textContent=initials;}
+    if(toggle)toggle.classList.add("is-avatar");
+    const big=$("#accAvatarBig");if(big)big.textContent=initials;
+    const nm=$("#accNameTxt");if(nm)nm.textContent=state.profile.name||state.profile.email||"Mein Konto";
+    const role=$("#accRoleTxt");
+    if(role){
+      if(state.profile.rolle){role.hidden=false;role.textContent=ROLLEN[state.profile.rolle];role.className="role "+state.profile.rolle;}
+      else role.hidden=true;
+    }
+  }else{
+    if(label){label.hidden=false;label.textContent="Login";}
+    if(av)av.hidden=true;
+    if(toggle)toggle.classList.remove("is-avatar");
+  }
+  // Solange das Konto-Menü offen ist (und kein Unterformular wie "Passwort vergessen" zeigt), passend umschalten
+  const panel=$("#accountPanel"),extra=$("#accPanelExtra");
+  if(panel&&!panel.hidden&&extra&&extra.hidden){
+    $("#loggedOutView").hidden=inn;
+    $("#loggedInView").hidden=!inn;
+  }
   if(inn&&state.profile&&!bm)notice("Dein Konto hat noch keine Freigabe als Braumeister. Bitte wende dich an den Admin.");
   if(KB.seite&&KB.seite.chrome)KB.seite.chrome();
 }
@@ -85,6 +138,7 @@ function wireMenu(){
     const open=header.classList.toggle("open");
     btn.setAttribute("aria-expanded",open?"true":"false");
     btn.setAttribute("aria-label",open?"Menü schließen":"Menü öffnen");
+    if(!open)closePanel();
   };
   document.querySelectorAll(".menu a[data-seite]").forEach(a=>{
     a.addEventListener("click",()=>{
@@ -92,6 +146,42 @@ function wireMenu(){
       btn.setAttribute("aria-expanded","false");
       btn.setAttribute("aria-label","Menü öffnen");
     });
+  });
+}
+function wireAccountPanel(){
+  const toggle=$("#accountToggle"),panel=$("#accountPanel"),wrap=$("#accountWrap");
+  if(!toggle||!panel||!wrap)return;
+  toggle.onclick=()=>{
+    if(panel.hidden){
+      const extra=$("#accPanelExtra");if(extra){extra.hidden=true;extra.innerHTML="";}
+      $("#loggedOutView").hidden=!!state.session;
+      $("#loggedInView").hidden=!state.session;
+      openPanel();
+      setTimeout(()=>{if(!state.session)$("#l_email")?.focus();},50);
+    }else{
+      closePanel();
+    }
+  };
+  document.addEventListener("click",e=>{if(!panel.hidden&&!wrap.contains(e.target))closePanel();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!panel.hidden)closePanel();});
+  // Login-Formular ist im Markup fest verdrahtet (kein eigenes Seitenblatt mehr)
+  $("#loginForm").onsubmit=async e=>{e.preventDefault();
+    const email=$("#l_email").value.trim(),pw=$("#l_pw").value;
+    if(!email||!pw){$("#loginErr").textContent="Bitte E-Mail und Passwort eingeben.";return;}
+    $("#doLogin").disabled=true;$("#loginErr").textContent="";
+    const {error}=await sb.auth.signInWithPassword({email,password:pw});
+    if(error){$("#doLogin").disabled=false;$("#loginErr").textContent=fehlertext(error);return;}
+    $("#doLogin").disabled=false;$("#l_pw").value="";$("#loginErr").textContent="";
+    closePanel();toast("Angemeldet");
+  };
+  $("#forgotBtn").onclick=()=>openForgot($("#l_email").value.trim());
+  $("#accountBtn").onclick=openAccount;
+  $("#adminBtn").onclick=()=>{closePanel();openAdmin();};
+  $("#logoutQuickBtn").onclick=async()=>{$("#logoutQuickBtn").disabled=true;await sb.auth.signOut();$("#logoutQuickBtn").disabled=false;closePanel();toast("Abgemeldet");};
+  // Aktionsknöpfe, die ihr eigenes Seitenblatt öffnen (Neuer Sud, Als CSV sichern), schließen danach das Konto-Menü
+  $("#loggedInView").addEventListener("click",e=>{
+    if(e.target.closest("#accountBtn")||e.target.closest("#logoutQuickBtn"))return;
+    if(e.target.closest(".btn"))closePanel();
   });
 }
 
@@ -117,36 +207,16 @@ function themeUmschalten(){
   themeKnopfZeichnen();
 }
 
-/* --- Anmelden, Passwort vergessen, Passwort festlegen --- */
-function openLogin(prefill){
-  sheet("Anmelden",`<form id="loginForm" class="stack" novalidate>
-      <p class="hint">Nur für Braumeister von Koldingbräu. Neue Zugänge gibt es per Einladung.</p>
-      <label class="f" for="l_email">E-Mail<input id="l_email" type="email" autocomplete="username" required value="${esc(prefill||"")}"></label>
-      <label class="f" for="l_pw">Passwort<input id="l_pw" type="password" autocomplete="current-password" required></label>
-      <button type="button" class="linkbtn" id="forgotBtn">Passwort vergessen?</button>
-      <span class="err" id="loginErr"></span>
-    </form>`,
-    `<span class="spacer"></span><button class="btn" id="cancelLogin">Abbrechen</button><button class="btn primary" id="doLogin" form="loginForm" type="submit">Anmelden</button>`);
-  $("#cancelLogin").onclick=closeSheet;
-  $("#forgotBtn").onclick=()=>openForgot($("#l_email").value.trim());
-  $("#loginForm").onsubmit=async e=>{e.preventDefault();
-    const email=$("#l_email").value.trim(),pw=$("#l_pw").value;
-    if(!email||!pw){$("#loginErr").textContent="Bitte E-Mail und Passwort eingeben.";return;}
-    $("#doLogin").disabled=true;$("#loginErr").textContent="";
-    const {error}=await sb.auth.signInWithPassword({email,password:pw});
-    if(error){$("#doLogin").disabled=false;$("#loginErr").textContent=fehlertext(error);return;}
-    closeSheet();toast("Angemeldet");
-  };
-  setTimeout(()=>$(prefill?"#l_pw":"#l_email")?.focus(),50);
-}
+/* --- Passwort vergessen, Passwort festlegen: als Unteransicht im Konto-Menü --- */
 function openForgot(prefill){
-  sheet("Passwort vergessen",`<form id="forgotForm" class="stack" novalidate>
+  showExtra(`<p class="acc-extra-title">Passwort vergessen</p>
+    <form id="forgotForm" class="stack" novalidate>
       <p class="hint">Wir schicken dir einen Link per E-Mail. Damit meldest du dich an und legst ein neues Passwort fest.</p>
       <label class="f" for="fg_email">E-Mail<input id="fg_email" type="email" autocomplete="username" required value="${esc(prefill||"")}"></label>
       <span class="err" id="forgotErr"></span><span class="ok" id="forgotOk"></span>
-    </form>`,
-    `<button class="btn ghost" id="backLogin">Zurück</button><span class="spacer"></span><button class="btn primary" id="doForgot" form="forgotForm" type="submit">Link schicken</button>`);
-  $("#backLogin").onclick=()=>openLogin($("#fg_email").value.trim());
+      <div class="acc-row"><button type="button" class="btn ghost" id="backLogin">Zurück</button><button class="btn primary" id="doForgot" type="submit">Link schicken</button></div>
+    </form>`);
+  $("#backLogin").onclick=()=>{$("#l_email").value=$("#fg_email").value.trim();backToMain();};
   $("#forgotForm").onsubmit=async e=>{e.preventDefault();
     const email=$("#fg_email").value.trim();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$("#forgotErr").textContent="Bitte eine gültige E-Mail-Adresse eingeben.";return;}
@@ -156,17 +226,19 @@ function openForgot(prefill){
     // Aus Sicherheitsgründen nicht verraten, ob es die Adresse gibt
     $("#forgotOk").textContent="Wenn es zu dieser Adresse ein Konto gibt, ist der Link unterwegs. Schau auch im Spam-Ordner nach.";
   };
+  setTimeout(()=>$("#fg_email")?.focus(),50);
 }
 function openSetPassword(kind){
   const invite=kind==="invite";
-  sheet(invite?"Willkommen im Braubuch":"Neues Passwort festlegen",`<form id="pwForm" class="stack" novalidate>
+  showExtra(`<p class="acc-extra-title">${invite?"Willkommen im Braubuch":"Neues Passwort festlegen"}</p>
+    <form id="pwForm" class="stack" novalidate>
       <p class="hint">${invite?"Du wurdest als Braumeister eingeladen. Leg jetzt dein Passwort fest – damit meldest du dich künftig an.":"Du bist über den Link aus der E-Mail angemeldet. Leg jetzt ein neues Passwort fest."}</p>
       ${invite?`<label class="f" for="pw_name">Dein Name<input id="pw_name" autocomplete="name" value="${esc(state.profile?.name||"")}"></label>`:""}
       <label class="f" for="pw_1">Neues Passwort (mindestens 8 Zeichen)<input id="pw_1" type="password" autocomplete="new-password" minlength="8" required></label>
       <label class="f" for="pw_2">Passwort wiederholen<input id="pw_2" type="password" autocomplete="new-password" minlength="8" required></label>
       <span class="err" id="pwErr"></span>
-    </form>`,
-    `<span class="spacer"></span><button class="btn primary" id="doPw" form="pwForm" type="submit">Passwort speichern</button>`);
+      <button class="btn primary" id="doPw" type="submit">Passwort speichern</button>
+    </form>`);
   $("#pwForm").onsubmit=async e=>{e.preventDefault();
     const a=$("#pw_1").value,b=$("#pw_2").value;
     if(a.length<8){$("#pwErr").textContent="Bitte mindestens 8 Zeichen.";return;}
@@ -175,23 +247,23 @@ function openSetPassword(kind){
     const {error}=await sb.auth.updateUser({password:a});
     if(error){$("#doPw").disabled=false;$("#pwErr").textContent=fehlertext(error);return;}
     if(invite){const n=$("#pw_name").value.trim();if(n&&state.profile&&n!==state.profile.name){await sb.from("profile").update({name:n}).eq("id",state.profile.id);state.profile.name=n;renderChrome();}}
-    closeSheet();toast("Passwort gespeichert");
+    closePanel();toast("Passwort gespeichert");
   };
   setTimeout(()=>$(invite?"#pw_name":"#pw_1")?.focus(),50);
 }
 
-/* --- Mein Konto --- */
+/* --- Mein Konto: ebenfalls Unteransicht im Konto-Menü --- */
 function openAccount(){
   const p=state.profile||{};
-  sheet("Mein Konto",`<form id="accForm" class="stack" novalidate>
+  showExtra(`<p class="acc-extra-title">Mein Konto</p>
+    <form id="accForm" class="stack" novalidate>
       <label class="f" for="acc_name">Name<input id="acc_name" autocomplete="name" value="${esc(p.name||"")}"></label>
       <p class="hint">Angemeldet als ${esc(state.session?.user?.email||p.email||"")}${p.rolle?` · ${esc(ROLLEN[p.rolle])}`:""}</p>
       <label class="f" for="acc_pw">Neues Passwort (leer lassen, um es zu behalten)<input id="acc_pw" type="password" autocomplete="new-password" minlength="8"></label>
       <span class="err" id="accErr"></span>
-    </form>`,
-    `<button class="btn ghost" id="logoutBtn">Abmelden</button><span class="spacer"></span><button class="btn" id="cancelAcc">Abbrechen</button><button class="btn primary" id="doAcc" form="accForm" type="submit">Speichern</button>`);
-  $("#cancelAcc").onclick=closeSheet;
-  $("#logoutBtn").onclick=async()=>{$("#logoutBtn").disabled=true;await sb.auth.signOut();closeSheet();toast("Abgemeldet");};
+      <div class="acc-row"><button type="button" class="btn ghost" id="backAcc">Zurück</button><button class="btn primary" id="doAcc" type="submit">Speichern</button></div>
+    </form>`);
+  $("#backAcc").onclick=backToMain;
   $("#accForm").onsubmit=async e=>{e.preventDefault();
     const n=$("#acc_name").value.trim(),pw=$("#acc_pw").value;
     if(!n){$("#accErr").textContent="Bitte einen Namen eintragen.";return;}
@@ -199,11 +271,11 @@ function openAccount(){
     $("#doAcc").disabled=true;$("#accErr").textContent="";
     if(n!==p.name){const {error}=await sb.from("profile").update({name:n}).eq("id",p.id);if(error){$("#doAcc").disabled=false;$("#accErr").textContent=fehlertext(error);return;}state.profile.name=n;}
     if(pw){const {error}=await sb.auth.updateUser({password:pw});if(error){$("#doAcc").disabled=false;$("#accErr").textContent=fehlertext(error);return;}}
-    renderChrome();closeSheet();toast("Gespeichert");
+    renderChrome();closePanel();toast("Gespeichert");
   };
 }
 
-/* --- Verwaltung (nur Admin) --- */
+/* --- Verwaltung (nur Admin) – bleibt ein eigenes, größeres Seitenblatt --- */
 async function openAdmin(){
   if(!isAdmin())return;
   await loadPeople();
@@ -277,6 +349,7 @@ async function refresh(){
 async function boot(){
   markMenu();
   wireMenu();
+  wireAccountPanel();
   themeAnwenden(aktuellesTheme());
   themeKnopfZeichnen();
   const themeBtn=$("#themeBtn");if(themeBtn)themeBtn.onclick=themeUmschalten;
@@ -285,9 +358,6 @@ async function boot(){
   KB.sb=sb;
   $("#closeBtn").onclick=closeSheet;$("#scrim").onclick=closeSheet;
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet();});
-  $("#loginBtn").onclick=()=>openLogin();
-  $("#accountBtn").onclick=openAccount;
-  $("#adminBtn").onclick=openAdmin;
   if(KB.seite&&KB.seite.start)KB.seite.start();
 
   const {data:{session}}=await sb.auth.getSession();
@@ -295,7 +365,7 @@ async function boot(){
   await refresh();
   if(linkInfo.error){
     history.replaceState(null,"",location.pathname+location.search);
-    notice("Der Link aus der E-Mail ist abgelaufen oder wurde schon benutzt. Fordere über „Anmelden → Passwort vergessen?“ einen neuen an.");
+    notice("Der Link aus der E-Mail ist abgelaufen oder wurde schon benutzt. Fordere über „Login → Passwort vergessen?“ einen neuen an.");
   }
   if(session&&(linkInfo.type==="invite"||linkInfo.type==="recovery")){
     history.replaceState(null,"",location.pathname+location.search);
@@ -309,7 +379,7 @@ async function boot(){
       if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
         const changed=(state.session?.user?.id||null)!==(s?.user?.id||null);
         state.session=s;
-        if(changed||event==="SIGNED_OUT"){closeSheet();await refresh();}
+        if(changed||event==="SIGNED_OUT"){closeSheet();closePanel();await refresh();}
       }
       if(event==="TOKEN_REFRESHED")state.session=s;
     },0);

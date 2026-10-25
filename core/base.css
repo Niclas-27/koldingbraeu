@@ -53,7 +53,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .kb-logo-amber{fill:var(--amber)}
 .brand-mini .sub{display:none}
 .site-header .menu{flex:0 0 auto}
-.site-header .top-actions{flex:1 1 0%;justify-content:flex-end}
+.site-header .header-actions{flex:1 1 0%;display:flex;align-items:center;justify-content:flex-end;gap:8px}
 .menu-toggle{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:40px;border-radius:10px;border:1px solid transparent;background:transparent;cursor:pointer;padding:0;flex:none}
 .menu-toggle span{display:block;height:2px;width:18px;margin:0 auto;background:var(--ink);border-radius:1px;transition:transform .2s ease,opacity .15s ease}
 .site-header.open .menu-toggle span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
@@ -63,14 +63,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none}
 .theme-btn svg{width:20px;height:20px;display:block}
 @media (max-width:760px){
-  .menu-toggle{display:flex;margin-left:auto}
-  .site-header .inner{position:relative;min-height:40px}
+  .menu-toggle{display:flex}
+  .site-header .inner{position:relative;min-height:58px}
   .site-header .brand-mini{position:absolute;left:16px;top:29px;transform:translateY(-50%)}
   .site-header .brand-logo{height:28px}
-  .site-header .menu,.site-header .top-actions{display:none;width:100%}
+  .site-header .menu{display:none;width:100%}
+  .site-header .header-actions{position:absolute;right:16px;top:29px;transform:translateY(-50%);flex:none}
+  .account-wrap{position:static}
   .site-header.open .inner{padding-top:56px}
   .site-header.open .menu{display:flex}
-  .site-header.open .top-actions{display:flex}
   .site-header .menu{flex-direction:column;border:none;background:transparent;padding:0;gap:4px;max-width:none;overflow:visible}
   .site-header .menu a{width:100%;white-space:normal}
 }
@@ -81,7 +82,27 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn.danger{color:var(--warn);border-color:var(--warn)}
 .btn.ghost{border-color:transparent;background:transparent}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
-.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* --- Konto-Menü: ein Container oben rechts statt eigenem Seitenblatt für Login/Konto --- */
+.account-wrap{position:relative;flex:none}
+.account-toggle{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border:1px solid var(--line);background:var(--surface);border-radius:999px;cursor:pointer;font-weight:600;font-size:.9rem;color:var(--ink)}
+.account-toggle:hover{border-color:var(--muted)}
+.account-toggle[aria-expanded="true"]{border-color:var(--amber)}
+.account-toggle.is-avatar{border-color:transparent;background:transparent;padding:0;height:auto}
+.account-toggle.is-avatar:hover{border-color:transparent}
+.avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--amber-soft);color:var(--ink);font-family:var(--font-data);font-weight:600;font-size:.8rem;flex:none;width:36px;height:36px;line-height:1}
+.avatar-lg{width:44px;height:44px;font-size:.9rem}
+.account-panel{position:absolute;top:calc(100% + 10px);right:0;width:min(320px,calc(100vw - 32px));max-height:min(540px,calc(100vh - 110px));overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 34px rgba(0,0,0,.2);padding:16px;z-index:40;display:flex;flex-direction:column;gap:20px}
+.acc-who{display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.acc-who-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.acc-who-txt b{font-size:.98rem;overflow-wrap:anywhere;font-weight:700}
+.acc-actions{display:flex;flex-direction:column;gap:8px}
+.acc-actions .btn{justify-content:center;width:100%}
+.acc-row{display:flex;gap:8px;justify-content:flex-end}
+.acc-row .btn{flex:none}
+.acc-extra-title{margin:0;font-family:var(--font-display);font-weight:800;font-stretch:82%;font-size:1.1rem}
+#accountPanel .stack{max-width:none}
+
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px;padding:20px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
 .stat b{display:block;font-family:var(--font-display);font-size:2.2rem;font-weight:700;font-stretch:85%;line-height:1}
 .stat span{display:block;margin-top:4px;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.07em}
@@ -283,29 +304,16 @@ img.bb{object-fit:cover;background:var(--surface)}
 .bd-zoom{display:flex;gap:10px;align-items:center;font-size:.85rem;color:var(--muted)}
 .bd-zoom input{flex:1;accent-color:var(--amber)}
 .bd-fuss{display:flex;justify-content:flex-end;gap:8px}
-.lightbox{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-.lightbox img{max-width:96vw;max-height:84vh;border-radius:6px}
-.lb-cap{color:#f1ece2;font-size:.92rem;max-width:560px;text-align:center;padding:0 16px;margin:0}
+.lightbox{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center}
+.lightbox img{max-width:96vw;max-height:90vh;border-radius:6px}
 .lb-zu,.lb-pfeil{position:absolute;background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:1.4rem;cursor:pointer}
 .lb-zu{top:16px;right:16px;width:48px;height:48px;font-size:1.6rem}.lb-pfeil.l{left:12px;top:50%}.lb-pfeil.r{right:12px;top:50%}
 .lb-zahl{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:.85rem}
 .galerie{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
 .galerie .g-item{position:relative;aspect-ratio:1}
-.galerie .g-zeig{position:relative;padding:0;border:0;background:var(--line);border-radius:8px;overflow:hidden;width:100%;height:100%;cursor:zoom-in;display:block}
+.galerie .g-zeig{padding:0;border:0;background:var(--line);border-radius:8px;overflow:hidden;width:100%;height:100%;cursor:zoom-in;display:block}
 .galerie img{width:100%;height:100%;object-fit:cover;display:block}
-.g-datum{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;font-size:.62rem;font-family:var(--font-data);padding:1px 5px;border-radius:4px;line-height:1.45;pointer-events:none}
-.galerie .g-actions{position:absolute;top:4px;right:4px;display:flex;gap:4px}
-.galerie .g-weg,.galerie .g-bearb{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;cursor:pointer;font-size:.78rem;display:inline-flex;align-items:center;justify-content:center;padding:0}
-/* Mit Bildunterschrift (z. B. Sud-Galerie): größere Kacheln, Bild + Text statt reinem Quadrat */
-.galerie.mit-text{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-.galerie.mit-text .g-item{aspect-ratio:auto;display:flex;flex-direction:column;gap:5px}
-.galerie.mit-text .g-zeig{aspect-ratio:1;height:auto}
-.g-cap{font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.g-cap.leer{font-style:italic;opacity:.6}
-/* Kachel „Fotos hinzufügen" – gleiche Größe wie ein Galerie-Bild, als letztes Raster-Element */
-.g-add{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:.78rem;font-weight:600;width:100%}
-.g-add:hover{border-color:var(--amber);color:var(--amber)}
-.g-add svg{width:22px;height:22px}
+.galerie .g-weg{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;cursor:pointer;font-size:.9rem}
 .titelbild{width:100%;max-height:380px;object-fit:cover;border-radius:var(--radius);display:block;cursor:zoom-in}
 .rank .nm.mit-bild{display:flex;gap:10px;align-items:center}
 .rank .nm.mit-bild > span:last-child{min-width:0}

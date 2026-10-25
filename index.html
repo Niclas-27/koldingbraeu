@@ -30,19 +30,49 @@
         <a href="verkostung.html" data-seite="verkostung">Verkostungen</a>
         <a href="liga.html" data-seite="liga">Liga</a>
       </nav>
-      <div class="top-actions">
-        <button class="btn" id="exportBtn" hidden>Als CSV sichern</button>
-        <button class="btn" id="adminBtn" hidden>Verwaltung</button>
-        <button class="btn primary" id="newBtn" hidden>+ Neuer Sud</button>
+      <div class="header-actions" id="headerActions">
         <button type="button" class="theme-btn" id="themeBtn" aria-label="Dunkelmodus aktivieren"></button>
-        <button class="btn" id="loginBtn" hidden>Anmelden</button>
-        <button class="btn ghost who" id="accountBtn" hidden title="Mein Konto"></button>
+        <div class="account-wrap" id="accountWrap">
+          <button type="button" class="account-toggle" id="accountToggle" aria-haspopup="true" aria-expanded="false" aria-label="Konto-Menü öffnen">
+            <span id="accToggleLabel">Login</span>
+            <span class="avatar" id="accToggleAvatar" hidden></span>
+          </button>
+          <div class="account-panel" id="accountPanel" hidden>
+            <div id="loggedOutView" hidden>
+              <form id="loginForm" class="stack" novalidate>
+                <p class="hint">Nur für Braumeister von Koldingbräu. Neue Zugänge gibt es per Einladung.</p>
+                <label class="f" for="l_email">E-Mail<input id="l_email" type="email" autocomplete="username" required></label>
+                <label class="f" for="l_pw">Passwort<input id="l_pw" type="password" autocomplete="current-password" required></label>
+                <button type="button" class="linkbtn" id="forgotBtn">Passwort vergessen?</button>
+                <span class="err" id="loginErr"></span>
+                <button class="btn primary" id="doLogin" type="submit">Anmelden</button>
+              </form>
+            </div>
+            <div id="loggedInView" hidden>
+              <div class="acc-who">
+                <span class="avatar avatar-lg" id="accAvatarBig"></span>
+                <div class="acc-who-txt"><b id="accNameTxt"></b><span class="role" id="accRoleTxt" hidden></span></div>
+              </div>
+              <div class="acc-actions">
+                <button class="btn" id="exportBtn" hidden>Als CSV sichern</button>
+                <button class="btn" id="adminBtn" hidden>Verwaltung</button>
+                <button class="btn ghost" id="accountBtn">Mein Konto</button>
+                <button class="btn ghost danger" id="logoutQuickBtn">Abmelden</button>
+              </div>
+            </div>
+            <div id="accPanelExtra" hidden></div>
+          </div>
+        </div>
+        <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-label="Menü öffnen">
+          <span></span><span></span><span></span>
+        </button>
       </div>
-      <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-label="Menü öffnen">
-        <span></span><span></span><span></span>
-      </button>
     </div>
     <div class="accent"></div>
+  </div>
+
+  <div class="top-actions" id="sudeActions">
+    <button class="btn primary" id="newBtn" hidden>+ Neuer Sud</button>
   </div>
 
   <section class="overview" id="overview" aria-label="Überblick">
