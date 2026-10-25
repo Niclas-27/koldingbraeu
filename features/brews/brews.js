@@ -57,7 +57,8 @@ function hopfenRechts(h){
 /* --- Kopfzeile: was nur diese Seite betrifft --- */
 function chrome(){
   const bm=isBM();
-  $("#newBtn").hidden=!bm;
+  const istDetail=new URLSearchParams(location.search).has("sud");
+  $("#newBtn").hidden=!bm||istDetail;
   $("#exportBtn").hidden=!bm;
   $("#chartBox").hidden=!bm;
   $("#overview").classList.toggle("solo",!bm);
