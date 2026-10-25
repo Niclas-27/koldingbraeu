@@ -283,8 +283,9 @@ img.bb{object-fit:cover;background:var(--surface)}
 .bd-zoom{display:flex;gap:10px;align-items:center;font-size:.85rem;color:var(--muted)}
 .bd-zoom input{flex:1;accent-color:var(--amber)}
 .bd-fuss{display:flex;justify-content:flex-end;gap:8px}
-.lightbox{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center}
-.lightbox img{max-width:96vw;max-height:90vh;border-radius:6px}
+.lightbox{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.lightbox img{max-width:96vw;max-height:84vh;border-radius:6px}
+.lb-cap{color:#f1ece2;font-size:.92rem;max-width:560px;text-align:center;padding:0 16px;margin:0}
 .lb-zu,.lb-pfeil{position:absolute;background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:1.4rem;cursor:pointer}
 .lb-zu{top:16px;right:16px;width:48px;height:48px;font-size:1.6rem}.lb-pfeil.l{left:12px;top:50%}.lb-pfeil.r{right:12px;top:50%}
 .lb-zahl{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:.85rem}
@@ -292,7 +293,18 @@ img.bb{object-fit:cover;background:var(--surface)}
 .galerie .g-item{position:relative;aspect-ratio:1}
 .galerie .g-zeig{padding:0;border:0;background:var(--line);border-radius:8px;overflow:hidden;width:100%;height:100%;cursor:zoom-in;display:block}
 .galerie img{width:100%;height:100%;object-fit:cover;display:block}
-.galerie .g-weg{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;cursor:pointer;font-size:.9rem}
+.galerie .g-actions{position:absolute;top:4px;right:4px;display:flex;gap:4px}
+.galerie .g-weg,.galerie .g-bearb{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;cursor:pointer;font-size:.78rem;display:inline-flex;align-items:center;justify-content:center;padding:0}
+/* Mit Bildunterschrift (z. B. Sud-Galerie): größere Kacheln, Bild + Text statt reinem Quadrat */
+.galerie.mit-text{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.galerie.mit-text .g-item{aspect-ratio:auto;display:flex;flex-direction:column;gap:5px}
+.galerie.mit-text .g-zeig{aspect-ratio:1;height:auto}
+.g-cap{font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.g-cap.leer{font-style:italic;opacity:.6}
+/* Kachel „Fotos hinzufügen" – gleiche Größe wie ein Galerie-Bild, als letztes Raster-Element */
+.g-add{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:.78rem;font-weight:600;width:100%}
+.g-add:hover{border-color:var(--amber);color:var(--amber)}
+.g-add svg{width:22px;height:22px}
 .titelbild{width:100%;max-height:380px;object-fit:cover;border-radius:var(--radius);display:block;cursor:zoom-in}
 .rank .nm.mit-bild{display:flex;gap:10px;align-items:center}
 .rank .nm.mit-bild > span:last-child{min-width:0}

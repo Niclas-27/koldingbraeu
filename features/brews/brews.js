@@ -181,6 +181,7 @@ function zeigeDetail(b){
       ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Restextrakt",fmtNum(b.restextrakt,"°P")]]))}
       ${sec("Abfüllung",kv([["Ausschlagwürze",fmtNum(b.ausschlag,"l")],["Biermenge",fmtNum(b.biermenge,"l")],["Speise / Zucker",b.zucker],["Flaschen",b.flaschen],["Alkohol",fmtNum(b.alkohol,"% vol")],["Abgefüllt am",b.abgefuellt?fmtDate(b.abgefuellt)+b.abgefuellt.slice(0,4):null]]))}
       ${sec("Notizen",b.notizen?`<div class="note">${esc(b.notizen)}</div>`:"")}
+      <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div><input type="file" id="galerieFile" accept="image/*" multiple hidden></section>
       ${changed}
     </article>
     ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn primary" id="editBtn">Bearbeiten</button></div>`:""}`;
@@ -190,6 +191,100 @@ function zeigeDetail(b){
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
   if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
   if(b.rezept_id)sb.from("rezepte").select("id,name").eq("id",b.rezept_id).maybeSingle().then(({data})=>{const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
+  $("#galerieFile").onchange=galerieDateienGewaehlt;
+  galerieLaden(b.id);
+}
+
+/* --- Fotos vom Brautag: eigene Galerie je Sud, mit optionaler Bildunterschrift.
+   Hochladen/Löschen/Bearbeiten nur Braumeister/Admin (anders als bei Verkostungen keine Gäste-Uploads). --- */
+let galerie=[],galerieSudId=null,galeriePending=[];
+async function galerieLaden(sudId){
+  galerieSudId=sudId;galeriePending=[];
+  const {data,error}=await sb.from("sud_bilder").select("id,pfad,bildunterschrift,angelegt").eq("sud_id",sudId).order("angelegt");
+  galerie=error?[]:(data||[]);
+  if(aktuellerSud&&aktuellerSud.id===sudId)galerieZeichnen();
+}
+function galerieZeichnen(){
+  const abschnitt=$("#sudGalerieSec"),el=$("#sudGalerie");
+  if(!abschnitt||!el)return;
+  const bm=isBM();
+  if(!galerie.length&&!bm){abschnitt.hidden=true;return;}
+  abschnitt.hidden=false;
+  const addKachel=bm?`<button type="button" class="g-add" id="galerieAdd" aria-label="Fotos hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M8 6h2l1-2h2l1 2h2"/></svg>Fotos hinzufügen</button>`:"";
+  el.innerHTML=Bilder.galerieHtml(galerie,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel});
+  Bilder.galerieVerdrahten(el,galerie,bm?galerieLoeschenBestaetigen:null,bm?galerieBearbeiten:null);
+  const add=$("#galerieAdd");if(add)add.onclick=()=>$("#galerieFile").click();
+  galerieTrayZeichnen();
+}
+function galerieBearbeiten(i){
+  const g=galerie[i],items=$("#sudGalerie").querySelectorAll(".g-item"),item=items[i];
+  if(!item)return;
+  item.querySelector(".g-cap").outerHTML=`<div class="g-edit-row"><input type="text" value="${esc(g.bildunterschrift||"")}" placeholder="Bildunterschrift (optional)" maxlength="200" aria-label="Bildunterschrift"><button type="button" style="background:var(--hop)" data-save aria-label="Speichern">✓</button><button type="button" style="background:var(--muted)" data-cancel aria-label="Abbrechen">✕</button></div>`;
+  const row=item.querySelector(".g-edit-row"),input=row.querySelector("input");
+  input.focus();input.select();
+  const speichern=async()=>{
+    const wert=input.value.trim()||null;
+    row.querySelector("[data-save]").disabled=true;
+    const {error}=await sb.from("sud_bilder").update({bildunterschrift:wert}).eq("id",g.id);
+    if(error){toast(fehlertext(error));galerieZeichnen();return;}
+    g.bildunterschrift=wert;galerieZeichnen();toast("Bildunterschrift gespeichert");
+  };
+  row.querySelector("[data-save]").onclick=speichern;
+  row.querySelector("[data-cancel]").onclick=()=>galerieZeichnen();
+  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();speichern();}if(e.key==="Escape")galerieZeichnen();});
+}
+function galerieLoeschenBestaetigen(i){
+  const g=galerie[i];
+  sheet("Foto löschen?",`<p>Dieses Foto${g.bildunterschrift?` („${esc(g.bildunterschrift)}“)`:""} wird endgültig gelöscht.</p>`,
+    `<span class="spacer"></span><button class="btn" id="noDelFoto">Abbrechen</button><button class="btn danger" id="yesDelFoto">Ja, löschen</button>`);
+  $("#noDelFoto").onclick=closeSheet;
+  $("#yesDelFoto").onclick=async()=>{
+    $("#yesDelFoto").disabled=true;
+    const {error}=await sb.from("sud_bilder").delete().eq("id",g.id);
+    if(error){toast(fehlertext(error));closeSheet();return;}
+    Bilder.loeschen(g.pfad);
+    galerie=galerie.filter(x=>x.id!==g.id);
+    closeSheet();galerieZeichnen();toast("Foto gelöscht");
+  };
+}
+/* Dateiauswahl: jedes Bild sofort verkleinern (noch nicht hochladen), in die Ablage legen – dort je Bild eine optionale Bildunterschrift eintragen */
+async function galerieDateienGewaehlt(){
+  const dateien=[...$("#galerieFile").files];$("#galerieFile").value="";
+  for(const datei of dateien){
+    try{const bild=await Bilder.ladeBild(datei);const blobs=await Bilder.verkleinern(bild);galeriePending.push({url:URL.createObjectURL(datei),blobs,caption:""});}
+    catch(e){toast(e.message);}
+  }
+  galerieTrayZeichnen();
+}
+function galerieTrayZeichnen(){
+  const abschnitt=$("#sudGalerieSec");if(!abschnitt)return;
+  let tray=$("#galerieTray");
+  if(!galeriePending.length){if(tray)tray.remove();return;}
+  if(!tray){tray=document.createElement("div");tray.className="sg-tray";tray.id="galerieTray";abschnitt.appendChild(tray);}
+  tray.innerHTML=`<h4>${galeriePending.length} Foto${galeriePending.length===1?"":"s"} ausgewählt – Bildunterschrift optional</h4>
+    <div class="sg-pending">${galeriePending.map((p,i)=>`<div class="sg-pend-row"><img src="${p.url}" alt=""><input type="text" data-pend="${i}" placeholder="Bildunterschrift (optional)" value="${esc(p.caption)}" maxlength="200" aria-label="Bildunterschrift Foto ${i+1}"><button type="button" class="x" data-pendweg="${i}" aria-label="Dieses Foto nicht hochladen">✕</button></div>`).join("")}</div>
+    <div class="sg-tray-foot"><button type="button" class="btn" id="galerieTrayAbbrechen">Abbrechen</button><button type="button" class="btn primary" id="galerieTrayHochladen">Hochladen</button></div>`;
+  tray.querySelectorAll("[data-pend]").forEach(inp=>inp.oninput=()=>{galeriePending[+inp.dataset.pend].caption=inp.value;});
+  tray.querySelectorAll("[data-pendweg]").forEach(b=>b.onclick=()=>{galeriePending.splice(+b.dataset.pendweg,1);galerieTrayZeichnen();});
+  $("#galerieTrayAbbrechen").onclick=()=>{galeriePending.forEach(p=>URL.revokeObjectURL(p.url));galeriePending=[];galerieTrayZeichnen();};
+  $("#galerieTrayHochladen").onclick=galerieHochladen;
+}
+async function galerieHochladen(){
+  const btn=$("#galerieTrayHochladen");btn.disabled=true;btn.textContent="Wird hochgeladen …";
+  const basis=`sude/${galerieSudId}/galerie/foto`,anzahl=galeriePending.length;
+  const neu=[];
+  for(const p of galeriePending){
+    try{
+      const pfad=await Bilder.hochladen(basis,p.blobs);
+      const {data,error}=await sb.from("sud_bilder").insert({sud_id:galerieSudId,pfad,bildunterschrift:p.caption.trim()||null}).select().single();
+      if(error)throw error;
+      neu.push(data);
+    }catch(e){toast(fehlertext(e));}
+    URL.revokeObjectURL(p.url);
+  }
+  galerie=galerie.concat(neu);galeriePending=[];
+  galerieZeichnen();
+  if(neu.length)toast(`${neu.length} Foto${neu.length===1?"":"s"} hochgeladen`);
 }
 function confirmDelete(b){
   sheet("Sud löschen?",`<p>„${esc(title(b))}“ vom ${esc(fmtDate(b.datum))}${esc(b.datum?.slice(0,4)||"")} wird endgültig gelöscht.</p>`,

@@ -18,6 +18,7 @@ const db={
               {id:"w2",probe_id:"p1",teilnehmer_id:"t2",note:7,merkmale:{bitter:6},geruch:["malzig","Zitrus"],fehler:[],nochmal:false,kommentar:null,ausgeblendet:false},
               {id:"w3",probe_id:"p2",teilnehmer_id:"t1",note:9,merkmale:{},geruch:[],fehler:["Butter"],nochmal:true,kommentar:"Top",ausgeblendet:false}],
  verkostung_bilder:[{id:"g1",verkostung_id:"v1",pfad:"verkostungen/v1/galerie/a.jpg",teilnehmer_id:"t1",angelegt:"2026"}],
+ sud_bilder:[{id:"sb1",sud_id:"s1",pfad:"sude/s1/galerie/foto-a.jpg",bildunterschrift:"Einmaischen",angelegt:"2026-03-01T07:00:00Z"}],
  vorschlaege:[{id:"x1",verkostung_id:"v1",teilnehmer_id:"t2",name:"Mitbringsel",brauerei:"Br",stil:"IPA",status:"offen",angelegt:"2026"}],
  biere,
  anlagen:[{id:1,name:"Koldingbräu",sudhausausbeute:65,verdampfung:3,standard_menge:20,notiz:null}],
@@ -46,7 +47,7 @@ function q(t){
    log.push([t,op,payload]);
    let tab=db[t]||(db[t]=[]);
    if(rolle==="anon"&&t==="rezepte"&&op==="select"){tab=tab.filter(r=>r.oeffentlich);}
-   else if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);
+   else if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile"&&t!=="sud_bilder")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);
    let out;
    if(op==="select"){out=tab.filter(r=>filters.every(f=>f(r))).map(r=>embed(t,r));}
    else if(op==="insert"){const arr=(Array.isArray(payload)?payload:[payload]).map(p=>({id:t[0]+Math.random().toString(36).slice(2,7),code:"neucode234",status:"vorbereitung",...p}));tab.push(...arr);out=arr;}

@@ -42,9 +42,28 @@ Alte Werte alter Sude liegen nach der Migration in `..._alt`-Spalten (Hauptguss 
 
 ## Bilder
 
-Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder“, beides freiwillig). Das Foto steht oben in der Ansicht, das Etikett erscheint als Vorschaubild in der Liste – in Kronkorken-Form zugeschnitten (gezackter Kreis); ohne Bild zeichnet `lib/bilder.js` einen Kronkorken in der gewählten Kronkorken-Farbe (Feld „Kronkorken“), sonst in der aus der Schüttung berechneten Bierfarbe. „Als Vorlage nutzen“ übernimmt keine Bilder. Ein ersetztes oder entferntes Bild wird beim Speichern aus dem Speicher gelöscht. Pfade: `sude/<id>/foto-…jpg`, `sude/<id>/etikett-…jpg`.
+Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder”, beides freiwillig). Das Foto steht oben in der Ansicht, das Etikett erscheint als Vorschaubild in der Liste – in Kronkorken-Form zugeschnitten (gezackter Kreis); ohne Bild zeichnet `lib/bilder.js` einen Kronkorken in der gewählten Kronkorken-Farbe (Feld „Kronkorken”), sonst in der aus der Schüttung berechneten Bierfarbe. „Als Vorlage nutzen” übernimmt keine Bilder. Ein ersetztes oder entferntes Bild wird beim Speichern aus dem Speicher gelöscht. Pfade: `sude/<id>/foto-…jpg`, `sude/<id>/etikett-…jpg`.
+
+## Fotogalerie „Fotos vom Brautag” (seit 25.10.2026)
+
+Eigener Abschnitt auf der Sud-Detailseite, unterhalb der übrigen Werte. Tabelle `sud_bilder`
+(`features/brews/schema/02_sud_fotos.sql`): Pfad, optionale Bildunterschrift, wer hochgeladen hat.
+Anders als bei den Verkostungsfotos gibt es hier **keine Gäste-Uploads** – nur Braumeister/Admin laden
+hoch, bearbeiten die Bildunterschrift (✎) oder löschen (✕, mit Bestätigung). Gäste sehen die Galerie nur
+lesend und nur, wenn der Sud „Öffentlich zeigen” ist (RLS prüft das direkt gegen `sude.oeffentlich`).
+
+- **Hochladen:** Kachel „Fotos hinzufügen” am Ende des Rasters → Mehrfachauswahl (auch Kamera am Handy) →
+  jedes Foto landet zuerst in einer Ablage mit eigenem, optionalem Bildunterschrift-Feld; erst „Hochladen”
+  verkleinert (`Bilder.verkleinern`) und lädt tatsächlich hoch (`Bilder.hochladen`, Pfad
+  `sude/<id>/galerie/foto-…jpg`) und legt je Foto eine Zeile in `sud_bilder` an.
+- **Anzeige:** Raster mit Bild + Bildunterschrift (`Bilder.galerieHtml(…, {beschriftet:true})`), Antippen
+  öffnet die Großansicht zum Durchklicken (`Bilder.zeigen`, zeigt die Bildunterschrift mit an). Sortierung
+  nach `angelegt` aufsteigend (älteste zuerst, wie der Brauverlauf).
+- `lib/bilder.js`s `galerieHtml`/`galerieVerdrahten`/`zeigen` wurden dafür erweitert: Einträge dürfen jetzt
+  `{pfad, bildunterschrift}` statt nur ein Pfad-String sein; neue Optionen `bearbeitbar` (✎-Knopf) und
+  `extra` (zusätzliches Raster-Element, hier die „Hinzufügen”-Kachel). Abwärtskompatibel – Verkostungen
+  übergeben weiterhin reine Pfad-Arrays ohne Bildunterschrift.
 
 ## Offene Punkte
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)
-- Brautagebuch je Sud; Fotos und Etiketten
