@@ -19,6 +19,7 @@
 | `brews.js` | Kennzahlen, Notenverlauf, Liste nach Jahrgang, Suche/Filter, Details, Editor, CSV-Export |
 | `brews.css` | Gestaltung nur dieses Bereichs |
 | `schema.sql` | Tabelle `sude` mit Rechten (Stand); `rezept_id` kommt aus `features/recipes/schema.sql` |
+| `schema/01_messwerte_einheiten.sql` | Messwerte von Freitext auf Zahl + Einheit umstellen (noch nicht angewendet, siehe Offene Punkte) |
 
 ## Verbindung zu Rezepten
 
@@ -27,6 +28,17 @@
   Alte Einträge („22 g Magnum · 60 min“) werden beim Bearbeiten in Felder zerlegt, der alte Text bleibt als Hinweis sichtbar.
 - **Als Rezept speichern** im Sud macht daraus ein Rezept (Rückweg, mit errechneter Sudhausausbeute).
 - Jeder Sud hat eine eigene Seite (wie bei den Rezepten): `index.html?sud=<uuid>`, mit Zurück-Link zur Liste statt Seitenblatt. Bearbeiten, Löschen-Bestätigung und „Neuer Sud“ laufen weiterhin über das Seitenblatt.
+
+## Messwerte (seit 25.10.2026)
+
+Hauptguss, Nachguss, Kochzeit, Würzemenge, Stammwürze, Restextrakt, Ausschlagwürze und Alkohol sind Zahl + Einheit
+(gleicher Spaltenname/Typ wie beim entsprechenden Rezept-Feld), „Abgefüllt am“ ein echtes Datum. Der Maischplan ist
+wie bei den Rezepten strukturiert: Einmaisch-/Abmaischtemperatur plus `rasten` als `[{temperatur, zeit}]` statt
+freier Textzeilen. Die Detailseite folgt jetzt dem Brautag: Schüttung → Brauwasser → Maischplan → Läutern & Kochen
+(inkl. Hopfengaben) → Gärung → Abfüllung → Notizen. Freitext bleiben bewusst Wasserbehandlung, Läutern-Beschreibung,
+Hefemenge, Messungs-Verlauf, Speise/Zucker und Notizen – das sind Beschreibungen bzw. ein Verlauf, keine Einzelwerte.
+Alte Werte alter Sude liegen nach der Migration in `..._alt`-Spalten (Hauptguss etc.) bzw. `maischplan_alt`
+(kompletter alter Maischplan) und werden beim Bearbeiten als Hinweis gezeigt, bis sie geprüft/nachgetragen sind.
 
 ## Bilder
 
