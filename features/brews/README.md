@@ -81,6 +81,28 @@ Jedes Vorschaubild zeigt klein unten rechts das Datum im Format `DD.MM.JJ` (nich
   JPEG+Exif-Puffer selbst), da das Playwright-Testfoto `tests/data/foto.jpg` kein EXIF enthält und daher
   nur den Fallback-Pfad abdeckt.
 
+### Fotos per Drag & Drop hinzufügen (seit 25.10.2026)
+
+Zusätzlich zur Kachel „Fotos hinzufügen” (Klick → Dateiauswahl, nötig fürs Handy) kann man am Computer Fotos
+auch direkt per Drag & Drop auf die Galerie ziehen – z. B. aus der Mac-Fotos-Mediathek.
+
+- **Drop-Fläche** ist die ganze Galerie-Sektion (`#sudGalerieSec`), nicht nur die Kachel – leichter zu
+  treffen. Beim Drüberziehen hebt sich die Fläche hervor (`.sg-dragover`, gestrichelter Rahmen). Nur für
+  Braumeister/Admin wirksam; bei Gästen passiert nichts (RLS verbietet den Upload ohnehin, aber schon die
+  Oberfläche reagiert gar nicht erst).
+- Gezogene Dateien landen genau wie ausgewählte in der Ablage (gemeinsame Funktion
+  `galerieDateienHinzufuegen` in `brews.js`) – gleiche Bildunterschrift-Eingabe, gleicher „Hochladen”-Knopf.
+- **HEIC/HEIF:** macOS Fotos liefert je nach Einstellung („Originale beibehalten”) beim Herausziehen HEIC
+  statt JPEG – das kann kein Browser direkt in ein `<img>` laden. `Bilder.alsJpegDatei(datei)` in
+  `lib/bilder.js` erkennt das (Dateityp/-endung) und lädt bei Bedarf einmalig `heic2any` von cdnjs nach, um
+  nach JPEG zu wandeln (einzige CDN-Abhängigkeit im sonst komplett lokal eingebundenen Code – ein
+  selbst gehosteter HEIC-Decoder bräuchte ein größeres WASM-Binary, das nur für diesen Randfall ständig
+  mitgeladen würde). Das Exif-Aufnahmedatum wird vor der Umwandlung vom Original gelesen; falls die
+  HEIC-Datei doch keins enthält, greift wie gehabt der Fallback auf das Hochlade-Datum.
+- Playwright-Test simuliert Drag & Drop per selbst gebautem `DataTransfer` (`foto_dragdrop()` in
+  `tests/run_tests.py`) – echtes Browser-Drag lässt sich darüber nicht testen, wohl aber die Events, die ein
+  echter Drop auslöst.
+
 ## Offene Punkte
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)
