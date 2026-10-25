@@ -44,6 +44,18 @@ async def foto_dragdrop(pg, selector, dateiname="gezogen.jpg"):
     }""", [selector, FOTO_B64, dateiname])
     return hover
 
+async def wische(pg, selector, dx):
+    """Simuliert eine Wischgeste mit dem Finger (touchstart→touchend) um dx Pixel auf `selector` –
+    negativ = nach links (nächstes Foto), positiv = nach rechts (voriges Foto)."""
+    await pg.evaluate("""([sel, dx]) => {
+        const el = document.querySelector(sel), r = el.getBoundingClientRect();
+        const y = r.top + r.height / 2, x1 = r.left + r.width / 2, x2 = x1 + dx;
+        const touch = (typ, x) => el.dispatchEvent(new TouchEvent(typ, {bubbles: true, cancelable: true,
+            touches: typ === "touchend" ? [] : [new Touch({identifier: 1, target: el, clientX: x, clientY: y})],
+            changedTouches: [new Touch({identifier: 1, target: el, clientX: x, clientY: y})]}));
+        touch("touchstart", x1); touch("touchend", x2);
+    }""", [selector, dx])
+
 async def bild_waehlen(pg, ausloeser, zuschneiden=False):
     """Öffnet den Bild-Dialog, wählt tests/data/foto.jpg und übernimmt (bei rund/hoch nach dem Zuschneiden)."""
     await pg.click(ausloeser); await pg.wait_for_selector(".bilddialog")
@@ -60,7 +72,7 @@ async def main():
     async with async_playwright() as p:
         br = await p.chromium.launch()
         async def seite(rolle, url, name, aktion=None, w=1200, h=900):
-            ctx = await br.new_context(viewport={"width": w, "height": h})
+            ctx = await br.new_context(viewport={"width": w, "height": h}, has_touch=True)
             await ctx.route("**/vendor/supabase.js", lambda r: r.fulfill(body=FAKE, content_type="text/javascript"))
             await ctx.route("**/fonts/*.woff2", lambda r: r.fulfill(status=204, body=""))
             await ctx.route("**/storage/v1/object/public/**", lambda r: r.fulfill(body=FOTO_BYTES, content_type="image/jpeg"))
@@ -233,6 +245,14 @@ async def main():
             pruefe("Gezogenes Foto in der Ablage", await pg.locator(".sg-pend-row").count() == 1)
             await pg.click("#galerieTrayHochladen"); await pg.wait_for_timeout(500)
             pruefe("Per Drag & Drop hochgeladen, drei Fotos", await pg.locator("#sudGalerie .g-item").count() == 3)
+            await pg.click(".galerie .g-zeig >> nth=0"); await pg.wait_for_timeout(200)
+            await wische(pg, ".lightbox", -80); await pg.wait_for_timeout(150)
+            pruefe("Wisch nach links zeigt nächstes Foto", "2 / 3" in await pg.inner_text(".lightbox"))
+            await wische(pg, ".lightbox", 80); await pg.wait_for_timeout(150)
+            pruefe("Wisch nach rechts zeigt voriges Foto", "1 / 3" in await pg.inner_text(".lightbox"))
+            await wische(pg, ".lightbox", -20); await pg.wait_for_timeout(150)
+            pruefe("Zu kurzer Wisch wechselt das Foto nicht", "1 / 3" in await pg.inner_text(".lightbox"))
+            await pg.keyboard.press("Escape")
         await seite("bm", "index.html?sud=s1", "sud_galerie", sud_galerie)
         await br.close()
 
