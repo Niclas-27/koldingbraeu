@@ -58,6 +58,7 @@ function hopfenRechts(h){
 function chrome(){
   const bm=isBM();
   const istDetail=new URLSearchParams(location.search).has("sud");
+  $("#sudeActions").hidden=istDetail;
   $("#newBtn").hidden=!bm||istDetail;
   $("#exportBtn").hidden=!bm;
   $("#chartBox").hidden=!bm;
