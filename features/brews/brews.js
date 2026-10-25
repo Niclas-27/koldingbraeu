@@ -193,7 +193,24 @@ function zeigeDetail(b){
   if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
   if(b.rezept_id)sb.from("rezepte").select("id,name").eq("id",b.rezept_id).maybeSingle().then(({data})=>{const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
   $("#galerieFile").onchange=galerieDateienGewaehlt;
+  galerieDragDropVerdrahten($("#sudGalerieSec"));
   galerieLaden(b.id);
+}
+/* Drag & Drop auf die ganze Galerie-Fläche, z. B. direkt aus der Mac-Fotos-Mediathek. Nur für Braumeister/Admin;
+   Zähler statt einfachem Ein/Aus, weil dragenter/dragleave beim Überqueren von Kind-Elementen sonst flackert. */
+function galerieDragDropVerdrahten(abschnitt){
+  if(!abschnitt)return;
+  let tiefe=0;
+  abschnitt.ondragenter=e=>{if(!isBM())return;e.preventDefault();tiefe++;abschnitt.classList.add("sg-dragover");};
+  abschnitt.ondragover=e=>{if(!isBM())return;e.preventDefault();};
+  abschnitt.ondragleave=()=>{if(!isBM())return;tiefe=Math.max(0,tiefe-1);if(!tiefe)abschnitt.classList.remove("sg-dragover");};
+  abschnitt.ondrop=e=>{
+    e.preventDefault();tiefe=0;abschnitt.classList.remove("sg-dragover");
+    if(!isBM())return;
+    const dateien=[...e.dataTransfer.files].filter(f=>/^image\//i.test(f.type)||/\.hei[cf]$/i.test(f.name));
+    if(dateien.length)galerieDateienHinzufuegen(dateien);
+    else if(e.dataTransfer.files.length)toast("Das sind keine Bilddateien.");
+  };
 }
 
 /* --- Fotos vom Brautag: eigene Galerie je Sud, mit optionaler Bildunterschrift.
@@ -220,7 +237,7 @@ function galerieZeichnen(){
   abschnitt.hidden=false;
   const addKachel=bm?`<button type="button" class="g-add" id="galerieAdd" aria-label="Fotos hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M8 6h2l1-2h2l1 2h2"/></svg>Fotos hinzufügen</button>`:"";
   const items=galerie.map(g=>({...g,datum:fotoDatum(g)}));
-  el.innerHTML=Bilder.galerieHtml(items,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel});
+  el.innerHTML=Bilder.galerieHtml(items,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel})+(bm?`<p class="hint sg-drophint">oder Fotos direkt hierher ziehen</p>`:"");
   Bilder.galerieVerdrahten(el,items,bm?galerieLoeschenBestaetigen:null,bm?galerieBearbeiten:null);
   const add=$("#galerieAdd");if(add)add.onclick=()=>$("#galerieFile").click();
   galerieTrayZeichnen();
@@ -256,14 +273,24 @@ function galerieLoeschenBestaetigen(i){
     closeSheet();galerieZeichnen();toast("Foto gelöscht");
   };
 }
-/* Dateiauswahl: jedes Bild sofort verkleinern (noch nicht hochladen), in die Ablage legen – dort je Bild eine optionale Bildunterschrift eintragen */
-async function galerieDateienGewaehlt(){
-  const dateien=[...$("#galerieFile").files];$("#galerieFile").value="";
-  for(const datei of dateien){
-    try{const [bild,aufgenommen]=await Promise.all([Bilder.ladeBild(datei),Bilder.exifDatum(datei)]);const blobs=await Bilder.verkleinern(bild);galeriePending.push({url:URL.createObjectURL(datei),blobs,caption:"",aufgenommen});}
-    catch(e){toast(e.message);}
+/* Dateien hinzufügen (per Dateiauswahl ODER per Drag & Drop aus z. B. der Mac-Fotos-Mediathek): jedes Bild
+   sofort verkleinern (noch nicht hochladen), in die Ablage legen – dort je Bild eine optionale Bildunterschrift
+   eintragen. HEIC/HEIF wird dafür zuerst nach JPEG umgewandelt (Bilder.alsJpegDatei) – das Exif-Aufnahmedatum
+   wird aber vom Original gelesen, bevor die Umwandlung es verliert. */
+async function galerieDateienHinzufuegen(dateien){
+  for(const original of dateien){
+    try{
+      const [aufgenommen,datei]=await Promise.all([Bilder.exifDatum(original),Bilder.alsJpegDatei(original)]);
+      const bild=await Bilder.ladeBild(datei);
+      const blobs=await Bilder.verkleinern(bild);
+      galeriePending.push({url:URL.createObjectURL(datei),blobs,caption:"",aufgenommen});
+    }catch(e){toast(e.message);}
   }
   galerieTrayZeichnen();
+}
+async function galerieDateienGewaehlt(){
+  const dateien=[...$("#galerieFile").files];$("#galerieFile").value="";
+  await galerieDateienHinzufuegen(dateien);
 }
 function galerieTrayZeichnen(){
   const abschnitt=$("#sudGalerieSec");if(!abschnitt)return;

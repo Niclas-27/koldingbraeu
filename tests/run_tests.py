@@ -20,6 +20,30 @@ fehler = []
 
 FOTO = str(ROOT / "tests" / "data" / "foto.jpg"); FOTO_BYTES = Path(FOTO).read_bytes()
 
+FOTO_B64 = __import__("base64").b64encode(FOTO_BYTES).decode("ascii")
+
+async def foto_dragdrop(pg, selector, dateiname="gezogen.jpg"):
+    """Simuliert das Ziehen von tests/data/foto.jpg (z. B. aus der Mac-Fotos-Mediathek) auf `selector`:
+    dragenter (Hervorhebung prüfbar) → drop. Playwright kann kein echtes OS-Drag, daher per DataTransfer
+    im Browser selbst gebaut."""
+    await pg.evaluate("""([sel, b64, name]) => {
+        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        const datei = new File([bytes], name, {type: "image/jpeg"});
+        const dt = new DataTransfer(); dt.items.add(datei);
+        const el = document.querySelector(sel);
+        const feuern = (typ) => el.dispatchEvent(new DragEvent(typ, {bubbles: true, cancelable: true, dataTransfer: dt}));
+        feuern("dragenter"); feuern("dragover");
+    }""", [selector, FOTO_B64, dateiname])
+    await pg.wait_for_timeout(100)
+    hover = await pg.evaluate("sel => document.querySelector(sel).classList.contains('sg-dragover')", selector)
+    await pg.evaluate("""([sel, b64, name]) => {
+        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        const datei = new File([bytes], name, {type: "image/jpeg"});
+        const dt = new DataTransfer(); dt.items.add(datei);
+        document.querySelector(sel).dispatchEvent(new DragEvent("drop", {bubbles: true, cancelable: true, dataTransfer: dt}));
+    }""", [selector, FOTO_B64, dateiname])
+    return hover
+
 async def bild_waehlen(pg, ausloeser, zuschneiden=False):
     """Öffnet den Bild-Dialog, wählt tests/data/foto.jpg und übernimmt (bei rund/hoch nach dem Zuschneiden)."""
     await pg.click(ausloeser); await pg.wait_for_selector(".bilddialog")
@@ -181,6 +205,9 @@ async def main():
             pruefe("Foto ohne Aufnahmedatum zeigt Hochlade-Datum", await pg.inner_text("#sudGalerie .g-item .g-datum") == "01.03.26")
             await pg.click(".galerie .g-zeig >> nth=0"); await pg.wait_for_timeout(200)
             pruefe("Datum erscheint nicht in der Großansicht", await pg.locator(".lightbox .g-datum").count() == 0)
+            hover=await foto_dragdrop(pg, "#sudGalerieSec"); await pg.wait_for_timeout(200)
+            pruefe("Gast: keine Hervorhebung beim Drüberziehen", hover is False)
+            pruefe("Gast: Drag & Drop auf die Galerie lädt nichts hoch", await pg.locator("#galerieTray").count() == 0)
         await seite("anon", "index.html?sud=s1", "sud_galerie_gast", sud_galerie_gast)
         async def sud_galerie(pg):
             pruefe("Braumeister sieht bestehendes Foto mit Bildunterschrift", "Einmaischen" in await pg.inner_text("#sudGalerieSec"))
@@ -199,6 +226,12 @@ async def main():
             await pg.click('#sudGalerie .g-item:nth-child(3) .g-weg'); await pg.wait_for_selector("#yesDelFoto")
             await pg.click("#yesDelFoto"); await pg.wait_for_timeout(300)
             pruefe("Foto gelöscht, zwei übrig", await pg.locator("#sudGalerie .g-item").count() == 2)
+            hover=await foto_dragdrop(pg, "#sudGalerieSec")
+            pruefe("Hervorhebung beim Drüberziehen", hover is True)
+            await pg.wait_for_selector("#galerieTray")
+            pruefe("Gezogenes Foto in der Ablage", await pg.locator(".sg-pend-row").count() == 1)
+            await pg.click("#galerieTrayHochladen"); await pg.wait_for_timeout(500)
+            pruefe("Per Drag & Drop hochgeladen, drei Fotos", await pg.locator("#sudGalerie .g-item").count() == 3)
         await seite("bm", "index.html?sud=s1", "sud_galerie", sud_galerie)
         await br.close()
 
