@@ -246,22 +246,31 @@ function galerieZeichnen(){
   const add=$("#galerieAdd");if(add)add.onclick=()=>$("#galerieFile").click();
   galerieTrayZeichnen();
 }
+/* Bildunterschrift UND Aufnahmedatum bearbeiten (z. B. wenn ein Foto kein/ein falsches Exif-Datum hat).
+   Leeres Datum = wieder automatisch (Exif, sonst Hochlade-Datum wie bisher). */
 function galerieBearbeiten(i){
   const g=galerie[i],items=$("#sudGalerie").querySelectorAll(".g-item"),item=items[i];
   if(!item)return;
-  item.querySelector(".g-cap").outerHTML=`<div class="g-edit-row"><input type="text" value="${esc(g.bildunterschrift||"")}" placeholder="Bildunterschrift (optional)" maxlength="200" aria-label="Bildunterschrift"><button type="button" style="background:var(--hop)" data-save aria-label="Speichern">✓</button><button type="button" style="background:var(--muted)" data-cancel aria-label="Abbrechen">✕</button></div>`;
-  const row=item.querySelector(".g-edit-row"),input=row.querySelector("input");
+  item.querySelector(".g-cap").outerHTML=`<div class="g-edit-row">
+    <input type="text" value="${esc(g.bildunterschrift||"")}" placeholder="Bildunterschrift (optional)" maxlength="200" aria-label="Bildunterschrift">
+    <div class="g-edit-foot">
+      <input type="date" value="${esc(g.aufgenommen||"")}" aria-label="Aufnahmedatum (leer = automatisch)">
+      <button type="button" style="background:var(--hop)" data-save aria-label="Speichern">✓</button>
+      <button type="button" style="background:var(--muted)" data-cancel aria-label="Abbrechen">✕</button>
+    </div></div>`;
+  const row=item.querySelector(".g-edit-row"),input=row.querySelector('input[type=text]'),datumInput=row.querySelector('input[type=date]');
   input.focus();input.select();
   const speichern=async()=>{
-    const wert=input.value.trim()||null;
+    const wert=input.value.trim()||null,aufgenommen=datumInput.value||null;
     row.querySelector("[data-save]").disabled=true;
-    const {error}=await sb.from("sud_bilder").update({bildunterschrift:wert}).eq("id",g.id);
+    const {error}=await sb.from("sud_bilder").update({bildunterschrift:wert,aufgenommen}).eq("id",g.id);
     if(error){toast(fehlertext(error));galerieZeichnen();return;}
-    g.bildunterschrift=wert;galerieZeichnen();toast("Bildunterschrift gespeichert");
+    g.bildunterschrift=wert;g.aufgenommen=aufgenommen;galerieZeichnen();toast("Gespeichert");
   };
   row.querySelector("[data-save]").onclick=speichern;
   row.querySelector("[data-cancel]").onclick=()=>galerieZeichnen();
   input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();speichern();}if(e.key==="Escape")galerieZeichnen();});
+  datumInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();speichern();}if(e.key==="Escape")galerieZeichnen();});
 }
 function galerieLoeschenBestaetigen(i){
   const g=galerie[i];
