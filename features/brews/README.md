@@ -82,6 +82,12 @@ Jedes Vorschaubild zeigt klein unten rechts das Datum im Format `DD.MM.JJ` (nich
 - Neue Spalte `sud_bilder.aufgenommen` (date, nullable) – `schema/03_sud_fotos_datum.sql`.
 - `galerieHtml`-Einträge dürfen zusätzlich `datum` (fertig formatierter String) tragen → rendert
   `<span class="g-datum">` unten rechts im Vorschaubild; ohne `datum` bleibt alles wie zuvor.
+- **Von Hand nachtragen/korrigieren (seit 26.10.2026):** Der ✎-Knopf bearbeitet jetzt Bildunterschrift UND
+  Aufnahmedatum zusammen (`galerieBearbeiten()` in `brews.js`, zweizeilige Eingabe: Bildunterschrift oben,
+  Datum + Knöpfe darunter, `<input type="date">` für die native Datumsauswahl auch am Handy). Nicht nur für
+  Fotos ohne Exif-Datum gedacht, sondern für alle – so lässt sich auch ein falsches Exif-Datum korrigieren
+  (z. B. Kamera-Uhr nicht gestellt). Leer gelassen/gelöscht fällt die Anzeige wieder automatisch auf Exif
+  bzw. Hochlade-Datum zurück, wie zuvor.
 - Unit-Test für den Exif-Parser: `tests/exif_test.js` (reiner Node, baut sich einen minimalen
   JPEG+Exif-Puffer selbst), da das Playwright-Testfoto `tests/data/foto.jpg` kein EXIF enthält und daher
   nur den Fallback-Pfad abdeckt.
