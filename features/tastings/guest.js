@@ -73,9 +73,11 @@ function gastZeigen(){
   }
   if(v.status === "abgeschlossen" && !ich) h += `<p class="hint">Diese Verkostung ist abgeschlossen.</p>`;
   const darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < 3;
+  const kannLoeschen = ich && v.status !== "abgeschlossen" && (ich.bilder||0) > 0;
   if(ich && v.status !== "abgeschlossen") h += sec("Fotos vom Abend", (darf
       ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von 3)</button><span class="err" id="fotoErr"></span><p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sie sind nur für die Braumeister sichtbar.</p>`
-      : `<p class="hint">Du hast deine drei Fotos hochgeladen – danke! Sie sind nur für die Braumeister sichtbar.</p>`));
+      : `<p class="hint">Du hast deine drei Fotos hochgeladen – danke! Sie sind nur für die Braumeister sichtbar.</p>`)
+      + (kannLoeschen ? `<button type="button" class="linkbtn" id="fotoLoeschBtn">Zuletzt hochgeladenes Foto entfernen</button><span class="err" id="fotoLoeschErr"></span>` : ""));
   main().innerHTML = h;
 
   const jf = $("#joinForm");
@@ -106,6 +108,7 @@ function gastZeigen(){
   main().querySelectorAll(".probe[data-p]").forEach(b => b.onclick = () => bogen(b.dataset.p));
   const tb = main().querySelector(".titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
   const fb = $("#fotoBtn"); if(fb) fb.onclick = gastFoto;
+  const flb = $("#fotoLoeschBtn"); if(flb) flb.onclick = gastFotoLoeschen;
 }
 
 function bogen(probeId){
@@ -140,4 +143,16 @@ async function gastFoto(){
     btn.disabled = false; btn.textContent = "+ Foto hinzufügen"; err.textContent = msg; return;
   }
   toast("Foto hochgeladen"); gastLaden();
+}
+
+/* Gast entfernt sein zuletzt hochgeladenes Foto wieder – über die Edge Function „galerie-loeschen“ */
+async function gastFotoLoeschen(){
+  const btn = $("#fotoLoeschBtn"), err = $("#fotoLoeschErr");
+  btn.disabled = true; err.textContent = "";
+  const {error} = await sb.functions.invoke("galerie-loeschen", {body: {code, token: gast().token}});
+  if(error){
+    let msg = "Löschen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}
+    btn.disabled = false; err.textContent = msg; return;
+  }
+  toast("Foto entfernt"); gastLaden();
 }
