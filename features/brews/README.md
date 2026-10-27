@@ -127,6 +127,28 @@ Seite genutzt wird (Sud-Fotos, Verkostungs-Galerie, Liga-Bilder), profitieren au
 - Playwright-Test löst dafür eigene `TouchEvent`/`Touch`-Objekte aus (`wische()` in `tests/run_tests.py`);
   der Browser-Kontext braucht dafür `has_touch=True` beim `new_context(...)`.
 
+## Checkliste zum Brautag (seit 27.10.2026)
+
+Eigener Modus auf der Sud-Detailseite (Knopf „Checkliste“, nur Braumeister/Admin – reines Arbeitswerkzeug wie
+die Fotogalerie, keine Gäste-Sicht). Gedacht, um während des Brauens Schritt für Schritt abzuhaken, ohne etwas
+zu vergessen.
+
+- **Schritte kommen aus den Sud-Daten, nicht aus einem eigenen Formular:** `schritteAbleiten()` in `brews.js`
+  baut aus Maischplan (Einmaischen/Rasten/Abmaischen), Hopfengaben (nach Art und Kochzeit sortiert: Vorderwürze
+  beim Läutern, Kochgaben absteigend nach Kochzeit, Whirlpool nach Kochende, Stopfhopfen bei der Gärung) und
+  Kochzeit automatisch sechs Phasen: Schüttung, Maischen, Läutern, Kochen, Kühlen & Anstellen, Gärung. Nichts
+  davon wird doppelt gepflegt – ändert sich der Maischplan, ändert sich beim nächsten Öffnen auch die Checkliste.
+- **Fortschritt** liegt in `sud_schritte` (`features/brews/schema/05_sud_schritte.sql`): ein abgeleiteter Schritt
+  existiert als Zeile nur, solange er abgehakt ist (Abhaken = anlegen, Abwählen = löschen, mit `erledigt_von`/
+  `erledigt_am`); überlebt Neuladen und Gerätewechsel, anders als ein rein lokaler Zustand im Browser.
+- **Eigene Zusatzschritte** (z. B. „Milchsäure zugeben“) lassen sich je Phase über „+ Eigener Schritt“ frei
+  ergänzen, abhaken und wieder entfernen (mit Lösch-Bestätigung) – für alles, was nicht aus den strukturierten
+  Feldern kommt.
+- **Bewusst nicht enthalten (Stand jetzt):** Timer/Erinnerungen für Rasten oder Hopfengaben – war explizit
+  zurückgestellt, kann bei Bedarf nachträglich ergänzt werden.
+- Playwright-Test `sud_checkliste` in `tests/run_tests.py` deckt Ableitung, Abhaken/Abwählen, eigene
+  Zusatzschritte und Persistenz über einen Seitenwechsel ab.
+
 ## Offene Punkte
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)

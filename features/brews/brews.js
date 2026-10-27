@@ -186,9 +186,9 @@ function zeigeDetail(b){
       <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div><input type="file" id="galerieFile" accept="image/*" multiple hidden></section>
       ${changed}
     </article>
-    ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn primary" id="editBtn">Bearbeiten</button></div>`:""}`;
+    ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn" id="checklisteBtn">Checkliste</button><button class="btn primary" id="editBtn">Bearbeiten</button></div>`:""}`;
   $("#list").innerHTML=body;
-  if(bm){$("#editBtn").onclick=()=>editInline(b);$("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);}
+  if(bm){$("#editBtn").onclick=()=>editInline(b);$("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);$("#checklisteBtn").onclick=()=>zeigeChecklist(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);}
   const bp=[b.bild_foto,b.bild_etikett].filter(Boolean);
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
   if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
@@ -334,6 +334,121 @@ async function galerieHochladen(){
   galerie=galerie.concat(neu);galeriePending=[];
   galerieZeichnen();
   if(neu.length)toast(`${neu.length} Foto${neu.length===1?"":"s"} hochgeladen`);
+}
+/* --- Checkliste zum Brautag ---
+   Schritte werden aus den Sud-Daten abgeleitet (Rasten, Hopfengaben, Kochzeit) – schritteAbleiten(), kein
+   eigenes Datenmodell dafür. sud_schritte hält nur den Fortschritt: ein abgeleiteter Schritt (schluessel
+   gesetzt) existiert als Zeile nur, solange er abgehakt ist (Abhaken=anlegen, Abwählen=löschen); ein eigener
+   Zusatzschritt (schluessel NULL, text gesetzt) existiert dauerhaft ab dem Anlegen, mit eigenem erledigt-
+   Status zum Umschalten. Nur Braumeister/Admin – reines Arbeitswerkzeug, wie die Fotogalerie. */
+const PHASEN=[["schuettung","Schüttung"],["maischen","Maischen"],["laeutern","Läutern"],["kochen","Kochen"],["kuehlen","Kühlen & Anstellen"],["gaerung","Gärung"]];
+function hopfenLabel(h){return[h.gramm!=null?Bz.fmtGramm(h.gramm):"",h.sorte].filter(Boolean).join(" ")||"Hopfengabe";}
+function schritteAbleiten(b){
+  const g={schuettung:[],maischen:[],laeutern:[],kochen:[],kuehlen:[],gaerung:[]};
+  const total=malzSum(b);
+  if(total)g.schuettung.push({schluessel:"schuettung",label:`Schüttung abwiegen (${fmtKg(total)})`});
+  if(b.einmaischtemperatur!=null)g.maischen.push({schluessel:"einmaischen",label:`Einmaischen auf ${Bz.fmtZahl(b.einmaischtemperatur)} °C`});
+  (b.rasten||[]).forEach((r,i)=>{if(r.temperatur==null&&r.zeit==null)return;
+    g.maischen.push({schluessel:`rast-${i}`,label:`Rast ${i+1}${r.temperatur!=null?": "+Bz.fmtZahl(r.temperatur)+" °C":""}${r.zeit!=null?" · "+Bz.fmtZahl(r.zeit,0)+" min":""}`});});
+  if(b.abmaischtemperatur!=null)g.maischen.push({schluessel:"abmaischen",label:`Abmaischen auf ${Bz.fmtZahl(b.abmaischtemperatur)} °C`});
+  const hopfen=(b.hopfen||[]).map((h,i)=>({...hopfenNeu(h),i})).filter(h=>h.sorte||h.gramm);
+  g.laeutern.push({schluessel:"laeutern",label:"Läutern"+(b.laeutern?" – "+b.laeutern:"")});
+  hopfen.filter(h=>h.typ==="Vorderwuerze").forEach(h=>g.laeutern.push({schluessel:`hopfen-${h.i}`,label:`Vorderwürze zugeben: ${hopfenLabel(h)}`}));
+  g.kochen.push({schluessel:"kochbeginn",label:"Kochbeginn"+(b.kochzeit!=null?` (${Bz.fmtZahl(b.kochzeit,0)} min)`:"")});
+  hopfen.filter(h=>h.typ==="Kochen").sort((a,c)=>(c.zeit??-1)-(a.zeit??-1))
+    .forEach(h=>g.kochen.push({schluessel:`hopfen-${h.i}`,label:`${hopfenLabel(h)} zugeben${h.zeit!=null?` (kocht noch ${Bz.fmtZahl(h.zeit,0)} min mit)`:""}`}));
+  g.kochen.push({schluessel:"kochende",label:"Kochende"});
+  hopfen.filter(h=>h.typ==="Whirlpool").forEach(h=>g.kochen.push({schluessel:`hopfen-${h.i}`,label:`Whirlpool: ${hopfenLabel(h)} zugeben`}));
+  g.kuehlen.push({schluessel:"kuehlen",label:"Kühlen & Ausschlagen"+(b.wuerze!=null?` auf ${Bz.fmtZahl(b.wuerze)} l`:"")});
+  g.kuehlen.push({schluessel:"hefe",label:"Hefe anstellen"+(b.hefe?": "+b.hefe:"")});
+  hopfen.filter(h=>h.typ==="Stopfen").forEach(h=>g.gaerung.push({schluessel:`hopfen-${h.i}`,label:`Stopfhopfen zugeben: ${hopfenLabel(h)}`}));
+  return PHASEN.map(([k,titel])=>({k,titel,schritte:g[k]})).filter(p=>p.schritte.length);
+}
+let checklisteSud=null,checklisteSchritte=[],checklisteGruppen=[];
+async function zeigeChecklist(b){
+  checklisteSud=b;checklisteGruppen=schritteAbleiten(b);
+  $("#overview").hidden=true;$("#filter").hidden=true;
+  $("#list").innerHTML=`<p class="noprint"><a class="back" id="checklisteZurueck" href="index.html?sud=${esc(b.id)}">← ${esc(title(b))}</a></p>
+    <article class="sud-blatt">
+      <h2>Checkliste: ${esc(title(b))}</h2>
+      <p class="hint" id="checklisteFortschritt"></p>
+      <div id="checklisteBody"></div>
+    </article>`;
+  $("#checklisteZurueck").onclick=e=>{e.preventDefault();zeigeDetail(b);};
+  const {data,error}=await sb.from("sud_schritte").select("*").eq("sud_id",b.id).order("angelegt");
+  if(error)toast(fehlertext(error));
+  checklisteSchritte=error?[]:(data||[]);
+  checklisteZeichnen();
+}
+function checklisteZeichnen(){
+  if(!checklisteGruppen.length){$("#checklisteFortschritt").textContent="";$("#checklisteBody").innerHTML=`<p class="empty">Für diesen Sud ergeben sich noch keine Schritte – trag zuerst Maischplan und/oder Hopfengaben ein.</p>`;return;}
+  const erledigteSchluessel=new Set(checklisteSchritte.filter(s=>s.schluessel).map(s=>s.schluessel));
+  const eigeneNachGruppe={};
+  checklisteSchritte.filter(s=>!s.schluessel).forEach(c=>{(eigeneNachGruppe[c.gruppe]=eigeneNachGruppe[c.gruppe]||[]).push(c);});
+  let gesamt=0,offen=0;
+  const item=(schluessel,id,label,erl)=>{gesamt++;if(!erl)offen++;
+    return`<div class="chk-item"><label class="chk-row${erl?" done":""}"><input type="checkbox" data-schluessel="${esc(schluessel||"")}" data-id="${esc(id||"")}"${erl?" checked":""}><span>${esc(label)}</span></label>${schluessel?"":`<button type="button" class="x" data-del-eigen="${esc(id)}" aria-label="Schritt entfernen">✕</button>`}</div>`;};
+  const body=checklisteGruppen.map(p=>{
+    const rows=p.schritte.map(s=>item(s.schluessel,null,s.label,erledigteSchluessel.has(s.schluessel)))
+      .concat((eigeneNachGruppe[p.k]||[]).map(c=>item(null,c.id,c.text,c.erledigt)))
+      .join("");
+    return`<fieldset class="chk-gruppe" data-gruppe="${esc(p.k)}"><legend>${esc(p.titel)}</legend>${rows}<button type="button" class="add" data-eigen="${esc(p.k)}">+ Eigener Schritt</button></fieldset>`;
+  }).join("");
+  $("#checklisteBody").innerHTML=body;
+  $("#checklisteFortschritt").textContent=`${gesamt-offen} von ${gesamt} erledigt`;
+  $("#checklisteBody").querySelectorAll("input[type=checkbox]").forEach(cb=>cb.onchange=()=>checklisteUmschalten(cb));
+  $("#checklisteBody").querySelectorAll("[data-del-eigen]").forEach(btn=>btn.onclick=()=>eigenenSchrittLoeschen(btn.dataset.delEigen));
+  $("#checklisteBody").querySelectorAll("[data-eigen]").forEach(btn=>btn.onclick=()=>eigenerSchrittEingabe(btn));
+}
+async function checklisteUmschalten(cb){
+  cb.disabled=true;
+  const schluessel=cb.dataset.schluessel,id=cb.dataset.id,erl=cb.checked;
+  if(schluessel){
+    if(erl){
+      const{data,error}=await sb.from("sud_schritte").insert({sud_id:checklisteSud.id,schluessel,erledigt:true,erledigt_am:new Date().toISOString(),erledigt_von:state.profile?.id}).select().single();
+      if(error){toast(fehlertext(error));cb.checked=false;cb.disabled=false;return;}
+      checklisteSchritte.push(data);
+    }else{
+      const{error}=await sb.from("sud_schritte").delete().eq("sud_id",checklisteSud.id).eq("schluessel",schluessel);
+      if(error){toast(fehlertext(error));cb.checked=true;cb.disabled=false;return;}
+      checklisteSchritte=checklisteSchritte.filter(s=>s.schluessel!==schluessel);
+    }
+  }else{
+    const{error}=await sb.from("sud_schritte").update({erledigt:erl,erledigt_am:erl?new Date().toISOString():null,erledigt_von:erl?state.profile?.id:null}).eq("id",id);
+    if(error){toast(fehlertext(error));cb.checked=!erl;cb.disabled=false;return;}
+    const c=checklisteSchritte.find(s=>s.id===id);if(c)c.erledigt=erl;
+  }
+  checklisteZeichnen();
+}
+function eigenerSchrittEingabe(btn){
+  const gruppe=btn.dataset.eigen,wrap=btn.closest("fieldset");
+  btn.outerHTML=`<div class="chk-eigen-eingabe"><input type="text" placeholder="Eigener Schritt" maxlength="200" aria-label="Eigener Schritt"><button type="button" class="btn" data-abbrechen-eigen>Abbrechen</button><button type="button" class="btn primary" data-speichern-eigen>Hinzufügen</button></div>`;
+  const row=wrap.querySelector(".chk-eigen-eingabe"),input=row.querySelector("input");
+  input.focus();
+  const abbrechen=()=>checklisteZeichnen();
+  const speichern=async()=>{
+    const text=input.value.trim();if(!text)return;
+    row.querySelector("[data-speichern-eigen]").disabled=true;
+    const{data,error}=await sb.from("sud_schritte").insert({sud_id:checklisteSud.id,text,gruppe,erledigt:false}).select().single();
+    if(error){toast(fehlertext(error));abbrechen();return;}
+    checklisteSchritte.push(data);checklisteZeichnen();
+  };
+  row.querySelector("[data-abbrechen-eigen]").onclick=abbrechen;
+  row.querySelector("[data-speichern-eigen]").onclick=speichern;
+  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();speichern();}if(e.key==="Escape")abbrechen();});
+}
+function eigenenSchrittLoeschen(id){
+  const c=checklisteSchritte.find(s=>s.id===id);if(!c)return;
+  sheet("Schritt entfernen?",`<p>„${esc(c.text)}“ wird aus der Checkliste entfernt.</p>`,
+    `<span class="spacer"></span><button class="btn" id="noDelSchritt">Abbrechen</button><button class="btn danger" id="yesDelSchritt">Ja, entfernen</button>`);
+  $("#noDelSchritt").onclick=closeSheet;
+  $("#yesDelSchritt").onclick=async()=>{
+    $("#yesDelSchritt").disabled=true;
+    const{error}=await sb.from("sud_schritte").delete().eq("id",id);
+    if(error){toast(fehlertext(error));closeSheet();return;}
+    checklisteSchritte=checklisteSchritte.filter(s=>s.id!==id);
+    closeSheet();checklisteZeichnen();
+  };
 }
 function confirmDelete(b){
   sheet("Sud löschen?",`<p>„${esc(title(b))}“ vom ${esc(fmtDate(b.datum))}${esc(b.datum?.slice(0,4)||"")} wird endgültig gelöscht.</p>`,
