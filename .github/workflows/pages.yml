@@ -1,10 +1,13 @@
 # Veröffentlicht das Braubuch auf GitHub Pages.
 # Holt dabei Supabase-Bibliothek und Schriften, damit die Seite nichts von fremden Servern lädt.
+# Läuft nur auf dem production-Branch: main ist der Arbeits-Branch, production das,
+# was tatsächlich live auf kolding.de steht. main geht erst per Pull Request nach
+# production, wenn etwas veröffentlicht werden soll.
 name: Veröffentlichen
 
 on:
   push:
-    branches: [main]
+    branches: [production]
   workflow_dispatch:
 
 permissions:
