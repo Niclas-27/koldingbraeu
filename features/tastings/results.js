@@ -47,10 +47,8 @@ async function ergebnisLaden(){
         <p><a href="liga.html?bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>
       </div></details></li>`;}).join("")}</ol>
       <p class="hint">Antippen zeigt Einzelnoten, Kommentare und Geschmacksprofil.</p></section>`;
-  if(data.galerie.length) h += sec(`Fotos vom Abend (${data.galerie.length})`, Bilder.galerieHtml(data.galerie));
   main().innerHTML = h;
   Bilder.bierFotosVerdrahten(main());
-  Bilder.galerieVerdrahten(main(), data.galerie);
   const tb = $("#titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
 }
 

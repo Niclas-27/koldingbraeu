@@ -85,8 +85,8 @@ function detailZeigen(){
   const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:`${p.nummer}. ${p.bier.name}`, unter:bierZeile(p.bier), bild:Bilder.bier(p.bier), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
   h += sec(v.status==="abgeschlossen" ? "Ergebnis" : v.status==="laeuft" ? "Zwischenstand (live)" : "Auswertung", (bewertungen.length ? rangTabelle(zeilen,{klick:true}) + `<p class="hint">Antippen zeigt alle Bewertungen und das Geschmacksprofil.${v.status==="laeuft"?" Aktualisiert sich alle 15 Sekunden.":""}</p>` : `<p class="hint">Noch keine Bewertungen.</p>`));
   h += sec("Fotos", `<div class="fotos-admin">${Bilder.feldHtml("titelFeld", v.bild_titel, {art:"frei", beschriftung:"Titelbild"})}</div>
-    <h4 class="sub">Galerie (${D.galerie.length})</h4>
-    ${D.galerie.length ? Bilder.galerieHtml(D.galerie.map(g=>g.pfad), {loeschbar:true}) : `<p class="hint">Noch keine Fotos. Gäste können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.</p>`}
+    <h4 class="sub">Galerie (${D.galerie.length}) <small class="hint">nur für Braumeister/Admin sichtbar</small></h4>
+    <div id="galerieBox">${D.galerie.length ? `<p class="hint">Fotos werden geladen …</p>` : `<p class="hint">Noch keine Fotos. Teilnehmer können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.</p>`}</div>
     <button type="button" class="add" id="fotoAdd">+ Foto hinzufügen</button>`);
   if(teilnehmer.length) h += sec("Teilnehmer", `<div class="tn">${teilnehmer.map(t=>{const n=bewertungen.filter(b=>b.teilnehmer_id===t.id).length;
     return `<span class="tag tn-tag">${esc(t.name)} · ${n}/${proben.length}${isAdmin()?`<button type="button" class="tn-x" data-tn-del="${esc(t.id)}" aria-label="${esc(t.name)} entfernen">✕</button>`:""}</span>`;}).join("")}</div>`);
@@ -100,7 +100,8 @@ function detailZeigen(){
   $("#vkDel") && ($("#vkDel").onclick = () => bestaetigen("Verkostung löschen?", `„${v.titel}“ mit allen ${bewertungen.length} Bewertungen wird endgültig gelöscht. Die Biere selbst bleiben erhalten.`, "Endgültig löschen", async () => {
     const {data, error} = await sb.from("verkostungen").delete().eq("id", v.id).select("id");
     if(error || !data?.length){ toast(error ? fehlertext(error) : "Löschen ist nur dem Admin erlaubt."); return; }
-    await Promise.all([v.bild_titel, ...D.galerie.map(g=>g.pfad)].filter(Boolean).map(p => Bilder.loeschen(p)));
+    await Promise.all([v.bild_titel].filter(Boolean).map(p => Bilder.loeschen(p)));
+    await Promise.all(D.galerie.map(g => Bilder.galerieLoeschen(g.pfad)));
     location.href = "verkostung.html";
   }, true));
   $("#qrGross").onclick = () => {
@@ -115,19 +116,11 @@ function detailZeigen(){
     if(v.bild_titel && v.bild_titel !== p) Bilder.loeschen(v.bild_titel);
     v.bild_titel = p; toast(p ? "Titelbild gespeichert" : "Titelbild entfernt");
   }});
-  const gal = main().querySelector(".galerie");
-  if(gal) Bilder.galerieVerdrahten(gal, D.galerie.map(g=>g.pfad), i => {
-    const g = D.galerie[i];
-    bestaetigen("Foto löschen?", "Das Foto wird endgültig gelöscht.", "Löschen", async () => {
-      const {error} = await sb.from("verkostung_bilder").delete().eq("id", g.id);
-      if(error){ toast(fehlertext(error)); return; }
-      await Bilder.loeschen(g.pfad); toast("Foto gelöscht"); detailLaden();
-    }, true);
-  });
+  galerieZeigen();
   $("#fotoAdd").onclick = async () => {
     const erg = await Bilder.waehlen({form:"frei", titel:"Foto hinzufügen"}); if(!erg) return;
     try{
-      const pfad = await Bilder.hochladen(`verkostungen/${v.id}/galerie/${crypto.randomUUID()}`, erg);
+      const pfad = await Bilder.galerieHochladen(`verkostungen/${v.id}/galerie/${crypto.randomUUID()}`, erg);
       const {error} = await sb.from("verkostung_bilder").insert({verkostung_id: v.id, pfad});
       if(error) throw error;
       toast("Foto hinzugefügt"); detailLaden();
@@ -154,6 +147,23 @@ function detailZeigen(){
   main().querySelectorAll("[data-vs-ok]").forEach(b => b.onclick = () => { const x = vorschlaege.find(y=>y.id===b.dataset.vsOk); bierForm(null, {name:x.name, brauerei:x.brauerei, stilName:x.stil, vorschlag:x.id}); });
   main().querySelectorAll("[data-vs-no]").forEach(b => b.onclick = async () => { const {error} = await sb.from("vorschlaege").update({status:"abgelehnt"}).eq("id", b.dataset.vsNo); if(error) toast(fehlertext(error)); detailLaden(); });
   main().querySelectorAll(".rank li[data-id]").forEach(li => { const f = () => probeDetail(li.dataset.id); li.onclick = f; li.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); f(); } }; });
+}
+
+/* Galerie (privater Bucket): signierte URLs nachladen und erst dann zeichnen/verdrahten */
+async function galerieZeigen(){
+  const box = $("#galerieBox"); if(!box || !D.galerie.length) return;
+  const pfade = D.galerie.map(g=>g.pfad);
+  const urls = await Bilder.galerieSignierteUrls(pfade);
+  box.innerHTML = Bilder.galerieHtmlSigniert(pfade, urls, {loeschbar:true});
+  Bilder.galerieVerdrahten(box.querySelector(".galerie"), null, i => {
+    const g = D.galerie[i];
+    bestaetigen("Foto löschen?", "Das Foto wird endgültig gelöscht.", "Löschen", async () => {
+      const {error} = await sb.from("verkostung_bilder").delete().eq("id", g.id);
+      if(error){ toast(fehlertext(error)); return; }
+      await Bilder.galerieLoeschen(g.pfad); toast("Foto gelöscht"); detailLaden();
+    }, true);
+  });
+  box.querySelectorAll(".g-zeig").forEach(b => b.onclick = () => Bilder.zeigenSigniert(pfade, urls, +b.dataset.i));
 }
 
 function bestaetigen(titel, text, knopf, ok, gefahr){

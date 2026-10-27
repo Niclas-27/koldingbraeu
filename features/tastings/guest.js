@@ -72,10 +72,10 @@ function gastZeigen(){
       + (v.status==="laeuft" ? `<p class="hint">Aktualisiert sich alle 15 Sekunden.${v.blind?" Die Namen werden am Ende aufgedeckt.":""}</p>` : ""));
   }
   if(v.status === "abgeschlossen" && !ich) h += `<p class="hint">Diese Verkostung ist abgeschlossen.</p>`;
-  const gal = (d.galerie||[]).map(g=>g.pfad), darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < 3;
-  if(gal.length || darf) h += sec(`Fotos vom Abend${gal.length?` (${gal.length})`:""}`, (gal.length ? Bilder.galerieHtml(gal) : "")
-    + (darf ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von 3)</button><span class="err" id="fotoErr"></span>` : (ich && v.status !== "abgeschlossen" ? `<p class="hint">Du hast deine drei Fotos hochgeladen.</p>` : ""))
-    + (darf ? `<p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sie erscheinen später öffentlich auf der Ergebnisseite.</p>` : ""));
+  const darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < 3;
+  if(ich && v.status !== "abgeschlossen") h += sec("Fotos vom Abend", (darf
+      ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von 3)</button><span class="err" id="fotoErr"></span><p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sie sind nur für die Braumeister sichtbar.</p>`
+      : `<p class="hint">Du hast deine drei Fotos hochgeladen – danke! Sie sind nur für die Braumeister sichtbar.</p>`));
   main().innerHTML = h;
 
   const jf = $("#joinForm");
@@ -104,7 +104,6 @@ function gastZeigen(){
     toast("Danke, ist vorgeschlagen"); gastLaden();
   };
   main().querySelectorAll(".probe[data-p]").forEach(b => b.onclick = () => bogen(b.dataset.p));
-  Bilder.galerieVerdrahten(main(), gal);
   const tb = main().querySelector(".titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
   const fb = $("#fotoBtn"); if(fb) fb.onclick = gastFoto;
 }

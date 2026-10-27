@@ -2,6 +2,8 @@
 // Bereitgestellt mit verify_jwt = false: Gäste haben kein Konto. Geprüft werden stattdessen der Code der Verkostung
 // und der persönliche Schlüssel (token) des Gastes – genau wie bei den vk_*-Datenbankfunktionen.
 // Erwartet multipart/form-data mit: code, token, gross (JPEG, max. 1,5 MB), klein (JPEG, max. 200 KB).
+// Seit 27.10.2026: landet im privaten Bucket "verkostung-galerie" (nicht mehr im öffentlichen "bilder") –
+// nur Braumeister/Admin können die Fotos später sehen, siehe lib/bilder.js: galerieSignierteUrls().
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const cors = {
@@ -19,6 +21,7 @@ function geheimerSchluessel(): string {
   }
   return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 }
+const BUCKET = "verkostung-galerie";
 const MAX_BILDER = 3;
 const istJpeg = (b: Uint8Array) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
 
@@ -49,11 +52,11 @@ Deno.serve(async (req) => {
 
   const pfad = `verkostungen/${v.id}/galerie/${crypto.randomUUID()}.jpg`;
   const opt = { contentType: "image/jpeg", cacheControl: "31536000", upsert: false };
-  const a = await db.storage.from("bilder").upload(pfad, g, opt);
+  const a = await db.storage.from(BUCKET).upload(pfad, g, opt);
   if (a.error) return antwort(500, { fehler: "Hochladen fehlgeschlagen." });
-  const b = await db.storage.from("bilder").upload(pfad.replace(/\.jpg$/, "_t.jpg"), k, opt);
-  if (b.error) { await db.storage.from("bilder").remove([pfad]); return antwort(500, { fehler: "Hochladen fehlgeschlagen." }); }
+  const b = await db.storage.from(BUCKET).upload(pfad.replace(/\.jpg$/, "_t.jpg"), k, opt);
+  if (b.error) { await db.storage.from(BUCKET).remove([pfad]); return antwort(500, { fehler: "Hochladen fehlgeschlagen." }); }
   const { error } = await db.from("verkostung_bilder").insert({ verkostung_id: v.id, pfad, teilnehmer_id: t.id, hochgeladen_von: null });
-  if (error) { await db.storage.from("bilder").remove([pfad, pfad.replace(/\.jpg$/, "_t.jpg")]); return antwort(500, { fehler: "Speichern fehlgeschlagen." }); }
+  if (error) { await db.storage.from(BUCKET).remove([pfad, pfad.replace(/\.jpg$/, "_t.jpg")]); return antwort(500, { fehler: "Speichern fehlgeschlagen." }); }
   return antwort(200, { ok: true, pfad });
 });

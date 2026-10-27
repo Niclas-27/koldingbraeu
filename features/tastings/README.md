@@ -22,7 +22,7 @@ Ablauf: *In Vorbereitung* → *Läuft* → *Abgeschlossen*.
 | Braumeister | Verkostungen und Biere anlegen/bearbeiten, Status setzen, Vorschläge übernehmen, Bewertungen ausblenden; alle Namen und Kommentare sehen |
 | Admin | zusätzlich löschen (auch einzelne Teilnehmer samt ihrer Bewertungen), Bewertungen ändern und nachtragen (mit Vermerk und ursprünglicher Note), Bierstile ergänzen |
 
-Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **ohne** Zuordnung. Wer welche Note gab, sehen nur Braumeister.
+Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **ohne** Zuordnung. Wer welche Note gab, sehen nur Braumeister. Die von Teilnehmern hochgeladenen Galerie-Fotos sind nicht öffentlich (siehe „Bilder“ unten).
 
 ## Dateien
 
@@ -44,11 +44,11 @@ QR-Codes erzeugt `lib/qr.js` im Browser – ohne fremden Dienst.
 
 ## Bilder
 
-- **Titelbild** (optional) lädt ein Braumeister in der Verwaltung hoch (Abschnitt „Fotos“). Es erscheint auf der Karte in der Übersicht, beim Mitmachen und auf der Ergebnisseite.
-- **Galerie**: Gäste laden während der Verkostung bis zu drei Fotos hoch (Knopf „+ Foto hinzufügen“). Das läuft über die Edge Function `galerie-hochladen`, die Code, persönlichen Schlüssel, Status und das Limit prüft – Gäste haben keinen direkten Speicherzugriff. Braumeister können ebenfalls Fotos ergänzen.
-- **Bierbilder**: je Bier optional *Kronkorken* (rund zugeschnitten) und *Flasche* (hochkant). In Listen, Liga und Podest wird nur die Kronkorken-Form gezeigt: ein vorhandenes Kronkorken-Bild, sonst ersatzweise das Flaschenbild, in Kronkorken-Form zugeschnitten (gezackter Kreis); gibt es keins, zeichnet `lib/bilder.js` einen Platzhalter-Kronkorken in der typischen Farbe des Bierstils. In den aufgeklappten Bierdetails (Ergebnisseite, Liga, Admin-Probendetail) zeigt `Bilder.bierFotos` zusätzlich beide hochgeladenen Fotos größer nebeneinander, wenn vorhanden.
+- **Titelbild** (optional) lädt ein Braumeister in der Verwaltung hoch (Abschnitt „Fotos“). Es erscheint auf der Karte in der Übersicht, beim Mitmachen und auf der Ergebnisseite. Öffentlich sichtbar.
+- **Galerie** (seit 27.10.2026 **nur für Braumeister/Admin sichtbar**): Teilnehmer laden während der Verkostung bis zu drei Fotos hoch (Knopf „+ Foto hinzufügen“), bekommen aber keine Fotos – weder eigene noch fremde – zurückgezeigt, nur die Anzahl ihrer bereits hochgeladenen Fotos. Das läuft über die Edge Function `galerie-hochladen`, die Code, persönlichen Schlüssel, Status und das Limit prüft – Teilnehmer haben keinen direkten Speicherzugriff. Die öffentliche Ergebnisseite zeigt die Galerie nicht mehr. Braumeister sehen die Galerie in der Verwaltung über kurzlebige Signed URLs (`Bilder.galerieSignierteUrls`) und können ebenfalls Fotos ergänzen/löschen.
+- **Bierbilder**: je Bier optional *Kronkorken* (rund zugeschnitten) und *Flasche* (hochkant). In Listen, Liga und Podest wird nur die Kronkorken-Form gezeigt: ein vorhandenes Kronkorken-Bild, sonst ersatzweise das Flaschenbild, in Kronkorken-Form zugeschnitten (gezackter Kreis); gibt es keins, zeichnet `lib/bilder.js` einen Platzhalter-Kronkorken in der typischen Farbe des Bierstils. In den aufgeklappten Bierdetails (Ergebnisseite, Liga, Admin-Probendetail) zeigt `Bilder.bierFotos` zusätzlich beide hochgeladenen Fotos größer nebeneinander, wenn vorhanden. Öffentlich sichtbar.
 - **Löschen** dürfen nur Braumeister (Bildfeld „Entfernen“, ✕ in der Galerie). Beim Löschen einer Verkostung gehen Titelbild und Galerie mit.
-- Speicher: Bucket `bilder` (öffentlich lesbar), Pfade `verkostungen/<id>/titel-…jpg`, `verkostungen/<id>/galerie/<uuid>-…jpg`, `biere/<id>/kronkorken-…jpg`; zu jedem Bild gibt es `…_t.jpg` als Vorschau. Schema: `schema/04_images.sql`.
+- Speicher: Titelbild/Bierbilder im öffentlich lesbaren Bucket `bilder` (Pfade `verkostungen/<id>/titel-…jpg`, `biere/<id>/kronkorken-…jpg`); Teilnehmer-Galerie im **privaten** Bucket `verkostung-galerie` (Pfade `verkostungen/<id>/galerie/<uuid>-…jpg`), lesbar nur für Braumeister/Admin per RLS-Policy. Zu jedem Bild gibt es `…_t.jpg` als Vorschau. Schema: `schema/04_images.sql` (öffentlicher Bucket), `schema/08_galerie_privater_bucket.sql` (privater Bucket + `vk_laden`/`vk_ergebnis` ohne Galerie-Pfade).
 
 ## Datenbank in Kürze
 
