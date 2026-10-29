@@ -70,11 +70,15 @@ button,input,select,textarea{font:inherit;color:inherit}
   .site-header .brand-mini{position:absolute;left:16px;top:29px;transform:translateY(-50%)}
   .site-header .brand-logo{height:28px}
   .site-header .menu{display:none;width:100%}
-  /* top/bottom statt top+transform:translateY(-50%) zum Zentrieren: ein transform auf
+  /* top+height statt top+transform:translateY(-50%) zum Zentrieren: ein transform auf
      diesem Element würde einen eigenen Bezugsrahmen für fixed-positionierte Kindelemente
      aufspannen (hier .account-panel, siehe dort) und sie so an diese schmale Box statt an
-     den echten Viewport binden. */
-  .site-header .header-actions{position:absolute;right:16px;top:9px;bottom:9px;display:flex;align-items:center;flex:none}
+     den echten Viewport binden. Eine feste height statt bottom, weil .inner bei
+     aufgeklapptem Menü (.site-header.open) viel höher wird – mit bottom statt height
+     würde diese Leiste über die ganze (dann sehr hohe) .inner-Box gestreckt und ihr
+     Inhalt dadurch mittig ins aufgeklappte Menü hinein verrutschen, statt oben stehen
+     zu bleiben. */
+  .site-header .header-actions{position:absolute;right:16px;top:9px;height:40px;display:flex;align-items:center;flex:none}
   /* account-wrap darf hier NICHT selbst positioniert sein: sonst verankert sich
      .account-panel (right:0) am Login-Button statt am rechten Rand der Kopfzeile,
      weil rechts davon noch der Hamburger-Button sitzt. Das lässt das Panel links
