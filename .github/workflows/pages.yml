@@ -3,11 +3,18 @@
 # Läuft nur auf dem production-Branch: main ist der Arbeits-Branch, production das,
 # was tatsächlich live auf kolding.de steht. main geht erst per Pull Request nach
 # production, wenn etwas veröffentlicht werden soll.
+# Läuft außerdem mehrmals täglich nach Zeitplan (ohne dass sich am Code etwas ändert): das erzeugt die
+# Vorschauseiten für geteilte Links (scripts/build-previews.mjs) neu, damit neue Sude/Rezepte/Verkostungen/
+# Biere zeitnah eine Vorschau bekommen, auch wenn niemand extra etwas veröffentlicht. Der Checkout ist
+# deshalb fest auf production gepinnt – bei einem Zeitplan-Lauf würde sonst der Standard-Branch (main)
+# ausgecheckt, der nicht zwingend das ist, was live steht.
 name: Veröffentlichen
 
 on:
   push:
     branches: [production]
+  schedule:
+    - cron: "17 */4 * * *"
   workflow_dispatch:
 
 permissions:
@@ -24,6 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: production
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -38,6 +47,8 @@ jobs:
           find _site/core _site/features -type f ! -name '*.js' ! -name '*.css' -delete
           find _site -type d -empty -delete
           [ -f CNAME ] && cp CNAME _site/ || true
+      - name: Vorschauseiten für geteilte Links erzeugen
+        run: node scripts/build-previews.mjs _site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
