@@ -9,7 +9,7 @@ const stile=[{id:1,name:"Pils",reihenfolge:10},{id:2,name:"Helles",reihenfolge:2
 const biere=[{id:"b1",name:"Kolding Kölsch",brauerei:"Koldingbräu",eigen:true,alkohol:4.9,stil_id:1,sud_id:null,notiz:null,bild_kronkorken:"biere/b1/kronkorken-a.jpg",bild_flasche:null},{id:"b2",name:"Augustiner Hell",brauerei:"Augustiner",eigen:false,alkohol:5.2,stil_id:2,sud_id:null,notiz:null},{id:"b3",name:"Hazy Hops",brauerei:"Kehrwieder",eigen:false,alkohol:6.5,stil_id:15}];
 const db={
  profile:[{id:uid,name:"Niels",email:"n@x.de",rolle:rolle==="admin"?"admin":"braumeister"}],
- sude:[{id:"s1",nr:1,datum:"2024-03-01",stil:"Kölsch",malz:[{sorte:"Pils",gramm:4000}],hopfen:[],maischplan:[],oeffentlich:true,bewertung:"2+"},{id:"s2",nr:2,datum:"2025-05-01",stil:"IPA",malz:[],hopfen:[],maischplan:[],oeffentlich:false,bewertung:"1-"}],
+ sude:[{id:"s1",nr:1,datum:"2024-03-01",stil:"Kölsch",malz:[{sorte:"Pils",gramm:4000}],hopfen:[],maischplan:[],oeffentlich:true,bewertung:8.6},{id:"s2",nr:2,datum:"2025-05-01",stil:"IPA",malz:[],hopfen:[],maischplan:[],oeffentlich:false,bewertung:9.4}],
  bierstile:stile,
  verkostungen:[{id:"v1",titel:"Herbstrunde",datum:"2026-10-17",ort:"Hamburg",blind:false,status:"laeuft",code:"abc234defg",proben:[{count:3}],teilnehmer:[{count:2}]}],
  proben:[{id:"p1",verkostung_id:"v1",bier_id:"b1",nummer:1},{id:"p2",verkostung_id:"v1",bier_id:"b2",nummer:2},{id:"p3",verkostung_id:"v1",bier_id:"b3",nummer:3}],
