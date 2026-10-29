@@ -6,6 +6,17 @@
 <title>Koldingbräu Braubuch</title>
 <meta name="description" content="Das Braubuch von Koldingbräu – unsere Sude mit Schüttung, Hopfen, Hefe und Messwerten.">
 <meta name="theme-color" content="#1f1a14">
+<!-- Allgemeine Vorschau beim Linkteilen (WhatsApp & Co.): für einen einzelnen Sud (?sud=<id>) gibt es, wenn
+     er öffentlich ist und ein Etikett hat, eine eigene, bildstarke Vorschauseite unter /sud/<id>/ – siehe
+     scripts/build-previews.mjs. Diese Tags hier sind nur der Rückfall für alles andere (Übersicht, interne
+     Sude): WhatsApp führt beim Linkversand kein JavaScript aus und sieht bei einer URL mit Query-String
+     immer dasselbe statische HTML dieser Datei. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Koldingbräu">
+<meta property="og:title" content="Koldingbräu Braubuch">
+<meta property="og:description" content="Das Braubuch von Koldingbräu – unsere Sude mit Schüttung, Hopfen, Hefe und Messwerten.">
+<meta property="og:image" content="https://kolding.de/assets/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="stylesheet" href="core/base.css">
