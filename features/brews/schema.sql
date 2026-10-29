@@ -1,10 +1,14 @@
--- Koldingbräu – Bereich Sude: Tabelle sude und ihre Rechte (Stand 17.10.2026)
+-- Koldingbräu – Bereich Sude: Tabelle sude und ihre Rechte (Stand 29.10.2026, siehe schema/06 für die
+-- Umstellung von bewertung auf eine 0–10-Skala)
 -- Setzt supabase/core.sql voraus (private.ist_braumeister, private.ist_admin).
 
 create table public.sude (
   id uuid primary key default gen_random_uuid(),
   nr integer unique, datum date, datum_geschaetzt boolean not null default false,
-  stil text, etikett text, bewertung text, hauptguss text, nachguss text, wasser text,
+  stil text, etikett text,
+  bewertung numeric(3,1) check (bewertung is null or bewertung between 0 and 10), -- 10 = beste Note
+  bewertung_schulnote_alt text, -- alte Schulnote (Freitext), nur zur Nachvollziehbarkeit
+  hauptguss text, nachguss text, wasser text,
   malz jsonb not null default '[]', maischplan jsonb not null default '[]',
   laeutern text, kochzeit text, wuerze text, stammwuerze text, hopfensorten text,
   hopfen jsonb not null default '[]', hefe text, hefemenge text, messungen text, restextrakt text, ausschlag text,

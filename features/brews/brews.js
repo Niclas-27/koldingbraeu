@@ -13,8 +13,9 @@ const CAP_LABEL = {rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"
 Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
 
 /* --- Helfer --- */
-function gradeVal(g){const m=String(g||"").match(/(\d)\s*([+-])?/);if(!m)return null;let v=+m[1];if(m[2]==="+")v-=.3;if(m[2]==="-")v+=.3;return v;}
-function gradeCls(v){if(v==null)return"";return v<=1.7?"g1":v<=2.7?"g2":"g3";}
+/* Bewertung: Note von 0–10 (10 = beste Note), wie bei den Verkostungs-Gesamtnoten – bis 25.10.2026 noch
+   eine Schulnote als Freitext (z. B. "2+"), siehe Migration 06 für die Umrechnung der Altdaten. */
+function gradeCls(v){if(v==null)return"";return v>=8.6?"g1":v>=6.6?"g2":"g3";}
 function ageText(iso){if(!iso)return"";const days=Math.floor((Date.now()-new Date(iso+"T12:00:00").getTime())/864e5);
   if(days<0)return"geplant";if(days<1)return"heute";if(days<14)return`vor ${days} Tag${days===1?"":"en"}`;if(days<60)return`vor ${Math.round(days/7)} Wochen`;
   const months=Math.round(days/30.44);if(months<24)return`vor ${months} Monaten`;return`vor ${(days/365.25).toFixed(1).replace(".",",")} Jahren`;}
@@ -75,7 +76,7 @@ function renderStats(){
   const fl=b.reduce((a,x)=>a+(+x.flaschen||0),0);
   $("#subtitle").textContent=years.length?`Das Braubuch · ${years[0]}–${years[years.length-1]}`:"Das Braubuch";
   let last;
-  if(isBM()){const gv=b.map(x=>gradeVal(x.bewertung)).filter(v=>v!=null);const avg=gv.length?gv.reduce((a,v)=>a+v,0)/gv.length:null;
+  if(isBM()){const gv=b.map(x=>x.bewertung).filter(v=>v!=null).map(Number);const avg=gv.length?gv.reduce((a,v)=>a+v,0)/gv.length:null;
     last=`<div class="stat"><b class="num">${avg==null?"–":avg.toFixed(1).replace(".",",")}</b><span>Ø Note</span></div>`;}
   else{const hopfen=b.reduce((a,x)=>a+hopfenSum(x),0);
     last=`<div class="stat"><b class="num">${Math.round(hopfen).toLocaleString("de-DE")}</b><span>g Hopfen verbraut</span></div>`;}
@@ -86,16 +87,17 @@ function renderStats(){
   if(isBM())renderChart();
 }
 function renderChart(){
-  const pts=state.brews.filter(b=>b.datum&&gradeVal(b.bewertung)!=null).map(b=>({b,t:new Date(b.datum+"T12:00:00").getTime(),v:gradeVal(b.bewertung)})).sort((a,c)=>a.t-c.t);
+  const pts=state.brews.filter(b=>b.datum&&b.bewertung!=null).map(b=>({b,t:new Date(b.datum+"T12:00:00").getTime(),v:+b.bewertung})).sort((a,c)=>a.t-c.t);
   if(pts.length<2){$("#chart").innerHTML=`<p class="empty">Ab zwei bewerteten Suden erscheint hier der Verlauf.</p>`;return;}
   const W=600,H=170,L=26,R=12,T=12,B=26;const t0=pts[0].t,t1=pts[pts.length-1].t;
-  const x=t=>L+(t-t0)/(t1-t0||1)*(W-L-R);const y=v=>T+(Math.min(Math.max(v,0.7),5.3)-0.7)/(5.3-0.7)*(H-T-B);
+  // 0 unten, 10 (beste Note) oben – wie bei den Verkostungs-Gesamtnoten
+  const x=t=>L+(t-t0)/(t1-t0||1)*(W-L-R);const y=v=>T+(10-Math.min(Math.max(v,0),10))/10*(H-T-B);
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Noten aller Sude im Zeitverlauf">`;
-  [1,2,3,4,5].forEach(g=>{s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(g)+4}" text-anchor="end">${g}</text>`;});
+  [0,2,4,6,8,10].forEach(g=>{s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(g)+4}" text-anchor="end">${g}</text>`;});
   const y0=new Date(t0).getFullYear(),y1=new Date(t1).getFullYear();
   for(let yr=y0+1;yr<=y1;yr++){const tx=x(new Date(yr,0,1).getTime());s+=`<text x="${tx}" y="${H-6}" text-anchor="middle">${yr}</text><line x1="${tx}" x2="${tx}" y1="${T}" y2="${H-B}" stroke="var(--line)" stroke-dasharray="2 4"/>`;}
   s+=`<polyline fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-opacity=".5" points="${pts.map(p=>x(p.t)+","+y(p.v)).join(" ")}"/>`;
-  pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${x(p.t)}" cy="${y(p.v)}" r="${last?6:4.5}" fill="${p.v<=1.7?"var(--hop)":p.v<=2.7?"var(--amber)":"var(--warn)"}" stroke="var(--bg)" stroke-width="1.5" style="cursor:pointer" data-id="${esc(p.b.id)}"><title>${esc(title(p.b))} · ${esc(fmtDate(p.b.datum))}${esc(p.b.datum.slice(0,4))} · Note ${esc(p.b.bewertung)}</title></circle>`;});
+  pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${x(p.t)}" cy="${y(p.v)}" r="${last?6:4.5}" fill="${p.v>=8.6?"var(--hop)":p.v>=6.6?"var(--amber)":"var(--warn)"}" stroke="var(--bg)" stroke-width="1.5" style="cursor:pointer" data-id="${esc(p.b.id)}"><title>${esc(title(p.b))} · ${esc(fmtDate(p.b.datum))}${esc(p.b.datum.slice(0,4))} · Note ${esc(Bz.fmtZahl(p.b.bewertung,1))}</title></circle>`;});
   s+=`</svg>`;$("#chart").innerHTML=s;
   $("#chart").querySelectorAll("circle[data-id]").forEach(c=>c.addEventListener("click",()=>{location.href="index.html?sud="+encodeURIComponent(c.dataset.id);}));
 }
@@ -109,7 +111,7 @@ function renderList(){
   let b=state.brews.slice();
   if(state.style)b=b.filter(x=>x.stil===state.style);
   const q=state.q.trim().toLowerCase();if(q)b=b.filter(x=>haystack(x).includes(q));
-  if(state.sort==="note")b.sort((a,c)=>(gradeVal(a.bewertung)??9)-(gradeVal(c.bewertung)??9)||(c.datum||"").localeCompare(a.datum||""));
+  if(state.sort==="note")b.sort((a,c)=>(c.bewertung??-1)-(a.bewertung??-1)||(c.datum||"").localeCompare(a.datum||""));
   else b.sort((a,c)=>state.sort==="alt"?(a.datum||"").localeCompare(c.datum||""):(c.datum||"").localeCompare(a.datum||""));
   if(!state.brews.length){$("#list").innerHTML=`<p class="empty">${isBM()?"Noch keine Sude eingetragen. Leg mit „Neuer Sud“ den ersten Braugang an.":"Hier sind noch keine Sude freigegeben."}</p>`;return;}
   if(!b.length){$("#list").innerHTML=`<p class="empty">Kein Sud passt zu dieser Suche.</p>`;return;}
@@ -118,14 +120,14 @@ function renderList(){
   $("#list").innerHTML=groups.map(g=>`<section class="year"><div class="year-head"><h2>${esc(g.k)}</h2><span>${g.items.length} Sud${g.items.length===1?"":"e"}</span></div>${g.items.map(rowHTML).join("")}</section>`).join("");
 }
 function rowHTML(b){
-  const bm=isBM();const gv=gradeVal(b.bewertung);const malz=(b.malz||[]).map(m=>m.sorte).filter(Boolean).join(", ");
+  const bm=isBM();const malz=(b.malz||[]).map(m=>m.sorte).filter(Boolean).join(", ");
   const cap=b.etikett?`<i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}" title="Kronkorken ${esc(CAP_LABEL[b.etikett]||b.etikett)}"></i>`:"";
   const lock=bm&&!b.oeffentlich?`<span class="lock" title="Nur für angemeldete Braumeister sichtbar">intern</span>`:"";
   const sub=[malz,b.hopfensorten,b.hefe].filter(Boolean).join(" · ");
   return `<a class="brew" href="index.html?sud=${esc(b.id)}">
     ${sudBild(b)}<div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
     <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span>${lock}</div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
-    <div class="facts"><div class="num">${b.stammwuerze!=null?esc(fmtNum(b.stammwuerze,"°P"))+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(gv)}" title="Bewertung">${esc(b.bewertung||"–")}</span>`:""}</div>
+    <div class="facts"><div class="num">${b.stammwuerze!=null?esc(fmtNum(b.stammwuerze,"°P"))+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(b.bewertung)}" title="Bewertung">${esc(Bz.fmtZahl(b.bewertung,1))}</span>`:""}</div>
   </a>`;
 }
 function renderAll(){renderStats();renderChips();renderList();}
@@ -151,7 +153,7 @@ function zeigeDetail(b){
     :`<span class="sud-bild gross ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;
   const kw=(label,wert,einheit)=>`<div class="kw"><span>${esc(label)}</span><b class="num">${wert==null||wert===""?"–":esc(wert)}</b>${einheit?`<small>${esc(einheit)}</small>`:""}</div>`;
   const posten=[["Stammwürze",b.stammwuerze!=null?Bz.fmtZahl(b.stammwuerze):null,"°P"],["Alkohol",b.alkohol!=null?Bz.fmtZahl(b.alkohol):null,"% Vol."]];
-  if(bm)posten.push(["Bewertung",b.bewertung]);
+  if(bm)posten.push(["Bewertung",b.bewertung!=null?Bz.fmtZahl(b.bewertung,1):null,"/ 10"]);
   posten.push(["Ausschlagwürze",b.ausschlag!=null?Bz.fmtZahl(b.ausschlag):null,"l"]);
   const kennzahlen=`<div class="kws" style="grid-template-columns:repeat(${posten.length},minmax(0,1fr))">${posten.map(p=>kw(...p)).join("")}</div>`;
   const header=`<header class="sud-kopf">
@@ -464,7 +466,7 @@ function confirmDelete(b){
 }
 /* --- Editor --- */
 const FIELDS=[
- ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (Schulnote, z. B. 2+)"]]],
+ ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (0–10, 10 = beste Note)","note"]]],
  ["Brauwasser",[["hauptguss","Hauptguss in Litern","number"],["nachguss","Nachguss in Litern","number"],["wasser","Wasserbehandlung (Milchsäure, pH)"]]],
  ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["stammwuerze","Stammwürze in °P","number"]]],
  ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge"],["messungen","Messungen"],["restextrakt","Restextrakt in °P","number"]]],
@@ -474,6 +476,7 @@ const FIELDS=[
 function field([k,label,type],v){
   const id="f_"+k;
   if(type==="cap")return`<label class="f" for="${id}">${label}<select id="${id}" name="${k}"><option value="">Keiner</option>${Object.keys(CAPS).map(c=>`<option value="${c}"${v===c?" selected":""}>${CAP_LABEL[c]}</option>`).join("")}</select></label>`;
+  if(type==="note")return`<label class="f" for="${id}">${label}<input id="${id}" name="${k}" type="number" min="0" max="10" step="0.1" inputmode="decimal" value="${esc(v??"")}"></label>`;
   const num=type==="number"||type==="integer";
   return`<label class="f" for="${id}">${label}<input id="${id}" name="${k}" type="${num?"number":(type||"text")}"${type==="number"?' step="any" inputmode="decimal"':""}${type==="integer"?' step="1" min="0" inputmode="numeric"':""} value="${esc(v??"")}"></label>`;
 }
@@ -567,6 +570,7 @@ async function save(){
   const err=$("#formErr");
   if(!draft.datum){err.textContent="Bitte ein Braudatum eintragen.";$("#f_datum")?.focus();return;}
   if(draft.flaschen!=null&&!Number.isInteger(draft.flaschen)){err.textContent="Flaschen bitte als ganze Zahl eintragen.";$("#f_flaschen")?.focus();return;}
+  if(draft.bewertung!=null&&(draft.bewertung<0||draft.bewertung>10)){err.textContent="Bitte eine Bewertung zwischen 0 und 10 eintragen.";$("#f_bewertung")?.focus();return;}
   const out={};WRITE_COLS.forEach(k=>{let v=draft[k];if(v==="")v=null;if(v!==undefined)out[k]=v;});
   out.malz=(draft.malz||[]).filter(m=>m.sorte||m.gramm);out.hopfen=(draft.hopfen||[]).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>({...h,zeit:h.typ==="Stopfen"?null:h.zeit}));out.rasten=(draft.rasten||[]).filter(r=>r.temperatur!=null||r.zeit!=null);
   out.oeffentlich=!!draft.oeffentlich;out.datum_geschaetzt=!!draft.datum_geschaetzt;
