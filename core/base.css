@@ -171,7 +171,11 @@ legend{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
 @media (max-width:480px){.grid2{grid-template-columns:1fr}}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);min-width:0}
-label.f input,label.f select,label.f textarea,.rowlist input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:.95rem;color:var(--ink);width:100%;min-width:0}
+/* font-size mindestens 16px (1rem): iOS Safari zoomt sonst beim Fokussieren eines
+   Eingabefelds automatisch in die Seite hinein (u. a. beim Antippen von E-Mail/
+   Passwort im Konto-Panel) – sichtbar als „Panel wird breiter“/seitliches Scrollen,
+   bis man wieder manuell herauszoomt. */
+label.f input,label.f select,label.f textarea,.rowlist input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:1rem;color:var(--ink);width:100%;min-width:0}
 textarea{resize:vertical;min-height:70px}
 .rowlist{display:flex;flex-direction:column;gap:6px}
 .rowlist .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.6fr) 36px;gap:6px}
