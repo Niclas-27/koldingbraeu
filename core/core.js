@@ -393,19 +393,3 @@ const KB = window.KB = {
 };
 document.addEventListener("DOMContentLoaded", boot);
 })();
-
-// Logo-Animation (Flasche vibriert, Kronkorken springt ab): auf Touch-Geräten reagiert
-// das :hover im CSS nicht, daher hier zusätzlich per touchstart/click eine Klasse togglen.
-document.addEventListener("DOMContentLoaded",()=>{
-  document.querySelectorAll(".brand-mini").forEach(link=>{
-    function play(){
-      link.classList.remove("kb-playing");
-      void link.offsetWidth; // Reflow, damit ein erneutes Antippen die Animation neu startet
-      link.classList.add("kb-playing");
-      clearTimeout(link._kbTimer);
-      link._kbTimer=setTimeout(()=>link.classList.remove("kb-playing"),3700);
-    }
-    link.addEventListener("touchstart",play,{passive:true});
-    link.addEventListener("click",play);
-  });
-});
