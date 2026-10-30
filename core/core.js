@@ -396,7 +396,7 @@ document.addEventListener("DOMContentLoaded", boot);
 // Logo-Animation: einmal beim Laden der Seite abspielen, danach erneut bei jedem
 // Hover mit der Maus (nicht bei Touch, da es dort kein echtes Hover gibt).
 function kbPlayLogoAnim(){
-  const teile = document.querySelectorAll(".kb-bottle, .kb-cap");
+  const teile = document.querySelectorAll(".kb-bottle, .kb-cap, .kb-liquid-rect");
   if(!teile.length) return;
   teile.forEach(el=>el.classList.remove("kb-run"));
   void document.body.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
