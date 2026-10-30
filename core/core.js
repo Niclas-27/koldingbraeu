@@ -392,4 +392,22 @@ const KB = window.KB = {
   sheet, openSheet, closeSheet, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
 };
 document.addEventListener("DOMContentLoaded", boot);
+
+// Logo-Animation: einmal beim Laden der Seite abspielen, danach erneut bei jedem
+// Hover mit der Maus (nicht bei Touch, da es dort kein echtes Hover gibt).
+function kbPlayLogoAnim(){
+  const teile = document.querySelectorAll(".kb-bottle, .kb-cap");
+  if(!teile.length) return;
+  teile.forEach(el=>el.classList.remove("kb-run"));
+  void document.body.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
+  teile.forEach(el=>el.classList.add("kb-run"));
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+  setTimeout(kbPlayLogoAnim, 150);
+  document.querySelectorAll(".brand-mini").forEach(el=>{
+    el.addEventListener("pointerenter", e=>{
+      if(e.pointerType==="mouse") kbPlayLogoAnim();
+    });
+  });
+});
 })();
