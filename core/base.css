@@ -54,36 +54,33 @@ button,input,select,textarea{font:inherit;color:inherit}
 .kb-cap{fill:var(--amber)}
 .brand-mini .sub{display:none}
 
-/* Logo-Animation: Flasche vibriert, Kronkorken springt ab - nur beim Hover mit der Maus */
+/* Logo-Animation: Flasche staucht sich und schnellt hoch, Kronkorken schießt heraus -
+   beim Laden der Seite und erneut bei Maus-Hover (core.js, Klasse .kb-run) */
 .kb-bottle,.kb-cap{transform-box:fill-box;transform-origin:50% 100%}
-@media (hover:hover){
-  .brand-mini:hover .kb-bottle{animation:kbVibrate 3.6s ease-in-out 1}
-  .brand-mini:hover .kb-cap{animation:kbCapPop 3.6s ease-in-out 1}
+.kb-bottle.kb-run{animation:kbSquashLaunch 3.4s cubic-bezier(.3,0,.2,1) 1}
+.kb-cap.kb-run{animation:kbCapRecoil 3.4s cubic-bezier(.3,0,.2,1) 1}
+@keyframes kbSquashLaunch{
+  0%,8%{transform:scale(1,1) translateY(0)}
+  11%{transform:scale(1.03,0.94) translateY(1%)}
+  15%{transform:scale(1.1,0.8) translateY(3%)}
+  18%{transform:scale(1.13,0.76) translateY(3.6%)}
+  22%{transform:scale(0.86,1.28) translateY(-4.5%)}
+  26%{transform:scale(0.92,1.16) translateY(-2%)}
+  30%{transform:scale(1.05,0.95) translateY(0.6%)}
+  34%{transform:scale(0.97,1.04) translateY(-0.3%)}
+  38%{transform:scale(1.015,0.99) translateY(0.1%)}
+  42%,100%{transform:scale(1,1) translateY(0)}
 }
-@keyframes kbVibrate{
-  0%,13%{transform:translate(0,0) rotate(0deg)}
-  14%{transform:translate(-4.5px,.5px) rotate(-3deg)}
-  15%{transform:translate(4.5px,0) rotate(3deg)}
-  16%{transform:translate(-5px,.5px) rotate(-3.5deg)}
-  17%{transform:translate(5px,0) rotate(3.5deg)}
-  18%{transform:translate(-4.5px,.5px) rotate(-3deg)}
-  19%{transform:translate(4.5px,0) rotate(3deg)}
-  20%{transform:translate(-3px,.3px) rotate(-2deg)}
-  21%{transform:translate(3px,0) rotate(2deg)}
-  22%{transform:translate(-1.5px,0) rotate(-1deg)}
-  23%,100%{transform:translate(0,0) rotate(0deg)}
-}
-@keyframes kbCapPop{
-  0%,13%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
-  14%{transform:translate(-2px,.5px) rotate(-6deg) scale(1);opacity:1}
-  16%{transform:translate(2px,0) rotate(6deg) scale(1);opacity:1}
-  18%{transform:translate(-2px,.5px) rotate(-6deg) scale(1);opacity:1}
-  20%{transform:translate(2px,0) rotate(6deg) scale(1);opacity:1}
-  23%{transform:translate(0,-2px) rotate(0deg) scale(.95);opacity:1}
-  27%{transform:translate(4px,-22px) rotate(110deg) scale(1.08);opacity:1}
-  33%{transform:translate(8px,-52px) rotate(230deg) scale(1);opacity:1}
-  40%{transform:translate(11px,-82px) rotate(340deg) scale(.8);opacity:0}
-  95%{transform:translate(0,-82px) rotate(340deg) scale(.8);opacity:0}
+@keyframes kbCapRecoil{
+  0%,8%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
+  11%{transform:translate(0,1px) rotate(-2deg) scale(1,0.96);opacity:1}
+  15%{transform:translate(-1px,3px) rotate(-4deg) scale(1.02,0.9);opacity:1}
+  18%{transform:translate(-1px,3.5px) rotate(-5deg) scale(1.03,0.88);opacity:1}
+  21%{transform:translate(1px,-16px) rotate(55deg) scale(1.08);opacity:1}
+  25%{transform:translate(3px,-78px) rotate(240deg) scale(1.02);opacity:1}
+  29%{transform:translate(5px,-140px) rotate(430deg) scale(.92);opacity:1}
+  33%{transform:translate(6px,-195px) rotate(610deg) scale(.8);opacity:.6}
+  37%,96%{transform:translate(7px,-230px) rotate(610deg) scale(.7);opacity:0}
   100%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
 }
 @media (prefers-reduced-motion: reduce){
