@@ -57,7 +57,7 @@ button,input,select,textarea{font:inherit;color:inherit}
    Bier läuft aus und wird wieder aufgefüllt, neuer Korken landet -
    beim Laden der Seite und erneut bei Maus-Hover (core.js, Klasse .kb-run) */
 .kb-bottle,.kb-cap{transform-box:fill-box;transform-origin:50% 100%}
-.kb-bottle-glass{fill:var(--ink);opacity:.22;stroke:var(--amber);stroke-width:2.2;stroke-opacity:.65;paint-order:stroke}
+.kb-bottle-glass{fill:var(--ink);opacity:.22}
 .kb-bottle-liquid{fill:var(--amber)}
 .kb-bottle.kb-run{animation:kbSquashLaunch 6.8s cubic-bezier(.3,0,.2,1) 1}
 .kb-cap.kb-run{animation:kbCapRecoil 6.8s cubic-bezier(.3,0,.2,1) 1}
@@ -95,10 +95,10 @@ button,input,select,textarea{font:inherit;color:inherit}
   71.5%,100%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
 }
 @keyframes kbLiquidLevel{
-  0%,19%{y:0px;height:246px}
-  28%{y:123px;height:123px}
-  36%,40%{y:246px;height:0px}
-  58%,100%{y:0px;height:246px}
+  0%,19%{y:0px;height:248px}
+  28%{y:124px;height:124px}
+  36%,40%{y:248px;height:0px}
+  58%,100%{y:0px;height:248px}
 }
 @media (prefers-reduced-motion: reduce){
   .kb-bottle,.kb-cap,.kb-liquid-rect{animation:none!important}
