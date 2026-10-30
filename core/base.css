@@ -50,41 +50,53 @@ button,input,select,textarea{font:inherit;color:inherit}
 .brand-mini{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:1 1 0%;min-width:0}
 .brand-logo{height:35px;width:auto;display:block;flex:none;overflow:visible}
 .kb-logo-ink{fill:var(--ink)}
-.kb-logo-amber{fill:var(--amber)}
 .kb-cap{fill:var(--amber)}
 .brand-mini .sub{display:none}
 
-/* Logo-Animation: Flasche staucht sich und schnellt hoch, Kronkorken schießt heraus -
+/* Logo-Animation: Flasche staucht sich, schnellt hoch, Kronkorken schießt heraus,
+   Bier läuft aus und wird wieder aufgefüllt, neuer Korken landet -
    beim Laden der Seite und erneut bei Maus-Hover (core.js, Klasse .kb-run) */
 .kb-bottle,.kb-cap{transform-box:fill-box;transform-origin:50% 100%}
-.kb-bottle.kb-run{animation:kbSquashLaunch 3.4s cubic-bezier(.3,0,.2,1) 1}
-.kb-cap.kb-run{animation:kbCapRecoil 3.4s cubic-bezier(.3,0,.2,1) 1}
+.kb-bottle-glass{fill:var(--ink);opacity:.22;stroke:var(--amber);stroke-width:2.2;stroke-opacity:.65;paint-order:stroke}
+.kb-bottle-liquid{fill:var(--amber)}
+.kb-bottle.kb-run{animation:kbSquashLaunch 6.8s cubic-bezier(.3,0,.2,1) 1}
+.kb-cap.kb-run{animation:kbCapRecoil 6.8s cubic-bezier(.3,0,.2,1) 1}
+.kb-liquid-rect.kb-run{animation:kbLiquidLevel 6.8s cubic-bezier(.3,0,.2,1) 1}
 @keyframes kbSquashLaunch{
-  0%,8%{transform:scale(1,1) translateY(0)}
-  11%{transform:scale(1.03,0.94) translateY(1%)}
-  15%{transform:scale(1.1,0.8) translateY(3%)}
-  18%{transform:scale(1.13,0.76) translateY(3.6%)}
-  22%{transform:scale(0.86,1.28) translateY(-4.5%)}
-  26%{transform:scale(0.92,1.16) translateY(-2%)}
-  30%{transform:scale(1.05,0.95) translateY(0.6%)}
-  34%{transform:scale(0.97,1.04) translateY(-0.3%)}
-  38%{transform:scale(1.015,0.99) translateY(0.1%)}
-  42%,100%{transform:scale(1,1) translateY(0)}
+  0%,4%{transform:scale(1,1) translateY(0)}
+  5.5%{transform:scale(1.03,0.94) translateY(1%)}
+  7.5%{transform:scale(1.1,0.8) translateY(3%)}
+  9%{transform:scale(1.13,0.76) translateY(3.6%)}
+  11%{transform:scale(0.86,1.28) translateY(-4.5%)}
+  13%{transform:scale(0.92,1.16) translateY(-2%)}
+  15%{transform:scale(1.05,0.95) translateY(0.6%)}
+  17%{transform:scale(0.97,1.04) translateY(-0.3%)}
+  19%,100%{transform:scale(1,1) translateY(0)}
 }
 @keyframes kbCapRecoil{
-  0%,8%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
-  11%{transform:translate(0,1px) rotate(-2deg) scale(1,0.96);opacity:1}
-  15%{transform:translate(-1px,3px) rotate(-4deg) scale(1.02,0.9);opacity:1}
-  18%{transform:translate(-1px,3.5px) rotate(-5deg) scale(1.03,0.88);opacity:1}
-  21%{transform:translate(1px,-16px) rotate(55deg) scale(1.08);opacity:1}
-  25%{transform:translate(3px,-78px) rotate(240deg) scale(1.02);opacity:1}
-  29%{transform:translate(5px,-140px) rotate(430deg) scale(.92);opacity:1}
-  33%{transform:translate(6px,-195px) rotate(610deg) scale(.8);opacity:.6}
-  37%,96%{transform:translate(7px,-230px) rotate(610deg) scale(.7);opacity:0}
-  100%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
+  0%,4%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
+  5.5%{transform:translate(0,1px) rotate(-2deg) scale(1,0.96);opacity:1}
+  7.5%{transform:translate(-1px,3px) rotate(-4deg) scale(1.02,0.9);opacity:1}
+  9%{transform:translate(-1px,3.5px) rotate(-5deg) scale(1.03,0.88);opacity:1}
+  10.5%{transform:translate(1px,-16px) rotate(55deg) scale(1.08);opacity:1}
+  12.5%{transform:translate(3px,-78px) rotate(240deg) scale(1.02);opacity:1}
+  14.5%{transform:translate(5px,-140px) rotate(430deg) scale(.92);opacity:1}
+  16.5%{transform:translate(6px,-195px) rotate(610deg) scale(.8);opacity:.6}
+  18.5%,63%{transform:translate(7px,-230px) rotate(610deg) scale(.7);opacity:0}
+  64.5%{transform:translate(0,-70px) rotate(0deg) scale(.9);opacity:0}
+  66.5%{transform:translate(0,-18px) rotate(0deg) scale(1.05);opacity:1}
+  68.5%{transform:translate(0,4px) rotate(0deg) scale(1.05,0.85);opacity:1}
+  71%,100%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
+}
+@keyframes kbLiquidLevel{
+  0%,19%{y:0px;height:246px}
+  28%{y:123px;height:123px}
+  36%,40%{y:246px;height:0px}
+  49%{y:123px;height:123px}
+  58%,100%{y:0px;height:246px}
 }
 @media (prefers-reduced-motion: reduce){
-  .kb-bottle,.kb-cap{animation:none!important}
+  .kb-bottle,.kb-cap,.kb-liquid-rect{animation:none!important}
 }
 .site-header .menu{flex:0 0 auto}
 .site-header .header-actions{flex:1 1 0%;display:flex;align-items:center;justify-content:flex-end;gap:8px}
