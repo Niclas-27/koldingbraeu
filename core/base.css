@@ -198,6 +198,10 @@ select.sort{border:1px solid var(--line);background:var(--surface);border-radius
 .grade.g1{background:var(--hop-soft);color:var(--hop)}
 .grade.g2{background:var(--amber-soft);color:var(--amber)}
 .grade.g3{background:var(--warn-soft);color:var(--warn)}
+/* Einheitliche Farbcodierung für Noten/Bewertungen (gradeCls in core/core.js), über Sude, Liga und Verkostungen hinweg */
+.g1{color:var(--hop)}
+.g2{color:var(--amber)}
+.g3{color:var(--warn)}
 .empty{padding:40px 0;color:var(--muted);text-align:center}
 .notice{padding:12px 16px;border-radius:var(--radius);background:var(--amber-soft);font-size:.9rem}
 /* Seitenblatt */

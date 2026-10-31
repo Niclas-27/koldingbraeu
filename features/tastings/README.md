@@ -61,6 +61,22 @@ Nur Admin: `vk_admin_bewerten`, `vk_admin_teilnehmer`, `vk_admin_teilnehmer_loes
 („In Vorbereitung“ und „Läuft“) als Ankündigung – Titel, Datum, Ort und, wenn nicht blind, die Biere. Keinen
 Code und keine Teilnehmernamen; bei blinden Verkostungen bleiben auch die Biernamen verborgen (nur die Anzahl).
 
+## Farbcodierung der Noten (seit 31.10.2026)
+
+Jede angezeigte Note/Schnitt (0–10) – in der Übersicht, der Gäste-Ansicht, der Verwaltung, der Ergebnisseite und
+in der Liga – ist farbcodiert: Grün ab 7,0, Gelb 4,0–6,9, Rot darunter. Gemeinsame Funktion `gradeCls()` in
+`core/core.js`, Farben in `core/base.css` (`.grade`, `.kw b`, generische `.g1`/`.g2`/`.g3`); dieselben Grenzen
+wie bei den Suden.
+
+## Wirkung auf die Sud-Bewertung (seit 31.10.2026)
+
+Ist ein Bier über `biere.sud_id` mit einem Sud verknüpft, übernimmt dessen Sud-Bewertung automatisch den Schnitt
+aus den Bewertungen dieses Biers in abgeschlossenen Verkostungen (ersetzt die bisherige Bewertung, sobald
+mindestens eine vorliegt; keine Markierung auf der Sud-Seite). Das übernehmen Datenbank-Trigger –
+`schema/10_sud_bewertung_aus_verkostung.sql` – bei jeder Änderung an Bewertungen (neu, geändert, ausgeblendet,
+gelöscht), beim Abschließen/Wiedereröffnen einer Verkostung und beim (Neu-)Verknüpfen eines Biers mit einem Sud.
+Siehe auch `features/brews/README.md`.
+
 Der Beitritts-Code (Spalte `code`) wird beim Anlegen per Trigger `vk_code_setzen` aus einem Titel-Kürzel und
 einem kurzen Zufallsteil gebildet (z. B. `craftbier-q7x2pmz4`), damit der Mitmach-Link lesbarer ist, ohne
 erratbar zu werden. Ein späteres Umbenennen ändert den Code nicht mehr.

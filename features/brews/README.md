@@ -45,6 +45,20 @@ errechnet (ohne Alkoholkorrektur, daher eher die Untergrenze). Solche Werte sind
 und zeigen auf der Detailseite den Hinweis „Alkohol geschätzt“. Wird der Alkoholwert im Editor von Hand geändert,
 setzt `save()` die Markierung automatisch zurück (gleiches Muster wie `datum_geschaetzt`/„Jahr ergänzt“).
 
+## Bewertung: Farbe und Verkostungen (seit 31.10.2026)
+
+Die Bewertung (0–10) ist überall, wo sie angezeigt wird, farbcodiert: Grün ab 7,0, Gelb 4,0–6,9, Rot darunter
+(`gradeCls()` in `core/core.js`, gemeinsam genutzt von Suden, Liga und Verkostungen; Farben/Grenzen siehe
+`.grade`/`.kw b` in `core/base.css`).
+
+Ist ein Sud über `biere.sud_id` mit einem (eigenen) Bier aus dem Bereich „Verkostungen“ verknüpft, übernimmt die
+Sud-Bewertung automatisch den Schnitt aus dessen Bewertungen in abgeschlossenen Verkostungen, sobald mindestens
+eine vorliegt (ohne Markierung – anders als `alkohol_geschaetzt`). Das läuft über Datenbank-Trigger in
+`features/tastings/schema/10_sud_bewertung_aus_verkostung.sql`, die bei jeder Änderung an Bewertungen, beim
+Abschließen/Wiedereröffnen einer Verkostung und beim (Neu-)Verknüpfen eines Biers neu rechnen. Gibt es (noch)
+keine abgeschlossene Verkostung mit Bewertungen, bleibt die zuletzt eingetragene bzw. übernommene Bewertung
+unverändert – sie wird also nicht automatisch wieder gelöscht.
+
 ## Bilder
 
 Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder”, beides freiwillig). Das Foto steht oben in der Ansicht, das Etikett erscheint als Vorschaubild in der Liste – in Kronkorken-Form zugeschnitten (gezackter Kreis); ohne Bild zeichnet `lib/bilder.js` einen Kronkorken in der gewählten Kronkorken-Farbe (Feld „Kronkorken”), sonst in der aus der Schüttung berechneten Bierfarbe. „Als Vorlage nutzen” übernimmt keine Bilder. Ein ersetztes oder entferntes Bild wird beim Speichern aus dem Speicher gelöscht. Pfade: `sude/<id>/foto-…jpg`, `sude/<id>/etikett-…jpg`.
