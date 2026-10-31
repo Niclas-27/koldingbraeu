@@ -769,6 +769,10 @@ function wizardWireFields(felder){
       if(k==="restextrakt")wizardAlkoholAutoberechnen(wizard.sud.stammwuerze,v);
       if(k==="stammwuerze")wizardAlkoholAutoberechnen(v,wizard.sud.restextrakt);
     });
+    // Beim Alkohol-Feld zusätzlich beim Verlassen (nicht bei jedem Tastendruck, sonst verliert das Feld
+    // mitten im Tippen den Fokus) den Schritt neu zeichnen, damit der Abweichungs-Hinweis/Zurücksetzen-Knopf
+    // erscheint bzw. wieder verschwindet.
+    if(k==="alkohol")el.addEventListener("change",()=>wizardRenderStep());
   });
 }
 /* "Eigene Angabe" je Schritt: offenes Zusatzfeld für alles, was in keine feste Spalte passt (wizard_notizen). */
@@ -907,13 +911,16 @@ function wizardRenderStep(){
   } else if(key==="abfuellung"){
     const refAlk=Bz.alkoholAusRefraktometer(d.refraktometer_anstellen,d.refraktometer_restextrakt);
     const zuckerG=Bz.primingZucker(d.biermenge,d.karbonisierung);
+    const alkBerechnet=Bz.alkoholAusMessung(d.stammwuerze,d.restextrakt);
+    const alkAbweichend=d.alkohol_geschaetzt===false&&alkBerechnet!=null&&Math.abs((d.alkohol??0)-alkBerechnet)>0.05;
     body=`<div class="grid2">${WIZARD_FIELDS.abfuellung.map(f=>field(f,d[f[0]])).join("")}</div>
       <div class="kws" style="grid-template-columns:1fr;max-width:260px;margin:4px 0">
         <div class="kw"><span>Zucker-Empfehlung</span><b id="wzRecZucker">${zuckerG!=null?esc(Bz.fmtZahl(zuckerG,0))+" g":"–"}</b></div>
       </div>
       <button type="button" class="btn ghost" id="wzZuckerUebernehmen">Empfehlung ins Speise/Zucker-Feld übernehmen</button>
       <p class="hint">Rechnet mit einer angenommenen Restkohlensäure von ca. ${esc(Bz.fmtZahl(Bz.REST_CO2_STANDARD_GL))} g/l (Richtwert für ca. 18–20 °C Gärtemperatur) – bei deutlich wärmer oder kälter vergorenem Bier von Hand anpassen. Für Speise (unvergorene Würze statt Zucker) gibt es bewusst keine automatische Berechnung – die dafür übliche Formel ließ sich nicht zuverlässig gegenprüfen.</p>
-      ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt (Spindel) berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`:""}
+      ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt (Spindel) berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`
+        :alkAbweichend?`<p class="hint" style="color:var(--warn)">Von Hand geändert – weicht von der Berechnung (${esc(Bz.fmtZahl(Bz.runde(alkBerechnet,1)))} % vol) ab. <button type="button" class="linkbtn" id="wzAlkoholZuruecksetzen">↺ Auf Berechnung zurücksetzen</button></p>`:""}
       ${refAlk!=null?`<p class="hint">Zum Vergleich aus den Refraktometer-Werten geschätzt (korrigiert nach der verbreiteten „Sean-Terrill“-Näherungsformel, da Alkohol das Refraktometer sonst verfälscht): ${esc(Bz.fmtZahl(Bz.runde(refAlk,1)))} % vol. Auch das ist nur eine Orientierung, kein Laborwert.</p>`:""}
       <button type="button" class="btn primary" id="wzAbschliessen" style="margin-top:18px">Sud abschließen ✓</button>
       <p class="hint">Erst wenn wirklich abgefüllt wurde – bis dahin bleibt der Sud auf „Gärung läuft“.</p>`;
@@ -929,7 +936,11 @@ function wizardRenderStep(){
   else if(key==="maischen"){wizardWireFields([["einmaischtemperatur",0,"number"],["abmaischtemperatur",0,"number"]]);wizardWireRowlist("rasten","#rl_rasten");}
   else if(key==="kochen"){wizardWireFields(WIZARD_FIELDS.kochen);wizardWireRowlist("hopfen","#rl_hopfen");}
   else if(key==="gaerung"){wizardWireFields(WIZARD_FIELDS.gaerung);wizardWireMessungen();}
-  else if(key==="abfuellung"){wizardWireFields(WIZARD_FIELDS.abfuellung);wizardZuckerRechner();$("#wzAbschliessen").onclick=wizardAbschliessen;}
+  else if(key==="abfuellung"){
+    wizardWireFields(WIZARD_FIELDS.abfuellung);wizardZuckerRechner();$("#wzAbschliessen").onclick=wizardAbschliessen;
+    const zur=$("#wzAlkoholZuruecksetzen");
+    if(zur)zur.onclick=()=>{const w=Bz.alkoholAusMessung(d.stammwuerze,d.restextrakt);wizardQueueSave({alkohol:Bz.runde(w,1),alkohol_geschaetzt:true});wizardRenderStep();};
+  }
   else if(key==="wasser"){wizardWireFields(WIZARD_FIELDS.wasser);wizardWasserRechner();}
   else if(key==="uebersicht")wizardWireFields([["datum",0,"date"]]);
   else wizardWireFields(WIZARD_FIELDS[key]); // laeutern, anstellen: reine Feldschritte ohne Rowlist/Rechner
