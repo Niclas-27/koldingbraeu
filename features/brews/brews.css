@@ -104,3 +104,24 @@ button.wahl-k:hover{border-color:var(--muted)}
 /* font-size mindestens 16px: sonst zoomt iOS Safari beim Antippen automatisch hinein */
 .chk-eigen-eingabe input{flex:1;min-width:140px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:1rem}
 #checklisteFortschritt{font-weight:600}
+
+/* Braugang-Assistent: Schritt-Navigation (horizontal scrollbar wie .menu auf dem Handy), Fortschrittsbalken,
+   Speicher-Anzeige, offenes "eigene Angabe"-Zusatzfeld je Schritt. Formularfelder/Rowlists selbst nutzen
+   dieselben Klassen (.grid2, .rowlist, .add, .x) wie der normale Sud-Editor. */
+.wz-kopf{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wz-kopf .num{color:var(--muted);font-size:.8rem}
+.wz-kopf .num.speichert{color:var(--amber)}
+.wz-steps{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.wz-step{flex:1 0 auto;min-width:72px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;cursor:pointer;padding:6px 4px;border-radius:10px;font-size:.7rem;color:var(--muted);text-align:center}
+.wz-step .wz-num{width:24px;height:24px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:600;color:var(--muted);flex:none}
+.wz-step.current{color:var(--ink);font-weight:600}
+.wz-step.current .wz-num{background:var(--amber);border-color:var(--amber);color:#fff}
+.wz-step.done .wz-num{background:var(--hop);border-color:var(--hop);color:#fff}
+.wz-bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin:6px 0 16px}
+.wz-bar i{display:block;height:100%;background:var(--amber);transition:width .2s}
+.wz-extra{margin-top:16px;border-top:1px dashed var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
+.wz .nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
+.wz .nav-row .btn{min-height:44px}
+/* Status-Badge für laufende Braugänge (Liste + Detailseite), analog zu .tag.intern/.tag.pub */
+.tag.entwurf{border-color:var(--amber);color:var(--amber)}
+.tag.gaerung{border-color:var(--hop);color:var(--hop)}
