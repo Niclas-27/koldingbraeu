@@ -106,7 +106,7 @@ async def main():
         async def gast(pg):
             await pg.fill("#j_name", "Clara"); await pg.click("#joinBtn"); await pg.wait_for_timeout(400)
             await pg.click(".probe >> nth=2")
-            for _ in range(5): await pg.click("#bWeiter")  # Aussehen…Fehlaromen überspringen, bis „Was fällt dir auf?“
+            for _ in range(4): await pg.click("#bWeiter")  # Aussehen…Mundgefühl überspringen, bis „Was fällt dir auf?“
             await pg.fill("#b_kom", "fruchtig"); await pg.click("#bWeiter")  # -> Nochmal trinken?
             await pg.click("#bWeiter")  # überspringen -> Benotung
             await pg.click("#bWeiter")
@@ -123,11 +123,11 @@ async def main():
             pruefe("QR-Code wird gezeichnet", await pg.locator(".qr svg").count() > 0)
             await pg.click(".rank li[data-id] >> nth=1"); await pg.wait_for_timeout(300)
             await pg.click("[data-ed] >> nth=0")
-            for _ in range(7): await pg.click("#bWeiter")  # alle Schritte bis Benotung überspringen
+            for _ in range(6): await pg.click("#bWeiter")  # alle Schritte bis Benotung überspringen
             await pg.click(".scale button[data-n='4']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(500)
             pruefe("Admin ändert Bewertung", '"p_note":4' in await pg.evaluate("JSON.stringify(window.__admin)"))
             await pg.click("#nachtragen"); await pg.select_option("#nt_wer", "neu"); await pg.fill("#nt_name", "Manu")
-            for _ in range(7): await pg.click("#bWeiter")
+            for _ in range(6): await pg.click("#bWeiter")
             await pg.click(".scale button[data-n='6']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(500)
             pruefe("Admin trägt Bewertung nach", "vom Admin nachgetragen" in await pg.inner_text("#sheetBody"))
             await pg.click("#bAbbr") if await pg.locator("#bAbbr").count() else None
