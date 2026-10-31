@@ -15,7 +15,7 @@ Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
 /* --- Helfer --- */
 /* Bewertung: Note von 0–10 (10 = beste Note), wie bei den Verkostungs-Gesamtnoten – bis 25.10.2026 noch
    eine Schulnote als Freitext (z. B. "2+"), siehe Migration 06 für die Umrechnung der Altdaten. */
-function gradeCls(v){if(v==null)return"";return v>=8.6?"g1":v>=6.6?"g2":"g3";}
+function gradeCls(v){if(v==null)return"";return v>=7?"g1":v>=4?"g2":"g3";}
 function ageText(iso){if(!iso)return"";const days=Math.floor((Date.now()-new Date(iso+"T12:00:00").getTime())/864e5);
   if(days<0)return"geplant";if(days<1)return"heute";if(days<14)return`vor ${days} Tag${days===1?"":"en"}`;if(days<60)return`vor ${Math.round(days/7)} Wochen`;
   const months=Math.round(days/30.44);if(months<24)return`vor ${months} Monaten`;return`vor ${(days/365.25).toFixed(1).replace(".",",")} Jahren`;}
@@ -97,7 +97,7 @@ function renderChart(){
   const y0=new Date(t0).getFullYear(),y1=new Date(t1).getFullYear();
   for(let yr=y0+1;yr<=y1;yr++){const tx=x(new Date(yr,0,1).getTime());s+=`<text x="${tx}" y="${H-6}" text-anchor="middle">${yr}</text><line x1="${tx}" x2="${tx}" y1="${T}" y2="${H-B}" stroke="var(--line)" stroke-dasharray="2 4"/>`;}
   s+=`<polyline fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-opacity=".5" points="${pts.map(p=>x(p.t)+","+y(p.v)).join(" ")}"/>`;
-  pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${x(p.t)}" cy="${y(p.v)}" r="${last?6:4.5}" fill="${p.v>=8.6?"var(--hop)":p.v>=6.6?"var(--amber)":"var(--warn)"}" stroke="var(--bg)" stroke-width="1.5" style="cursor:pointer" data-id="${esc(p.b.id)}"><title>${esc(title(p.b))} · ${esc(fmtDate(p.b.datum))}${esc(p.b.datum.slice(0,4))} · Note ${esc(Bz.fmtZahl(p.b.bewertung,1))}</title></circle>`;});
+  pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${x(p.t)}" cy="${y(p.v)}" r="${last?6:4.5}" fill="${p.v>=7?"var(--hop)":p.v>=4?"var(--amber)":"var(--warn)"}" stroke="var(--bg)" stroke-width="1.5" style="cursor:pointer" data-id="${esc(p.b.id)}"><title>${esc(title(p.b))} · ${esc(fmtDate(p.b.datum))}${esc(p.b.datum.slice(0,4))} · Note ${esc(Bz.fmtZahl(p.b.bewertung,1))}</title></circle>`;});
   s+=`</svg>`;$("#chart").innerHTML=s;
   $("#chart").querySelectorAll("circle[data-id]").forEach(c=>c.addEventListener("click",()=>{location.href="index.html?sud="+encodeURIComponent(c.dataset.id);}));
 }
@@ -151,9 +151,9 @@ function zeigeDetail(b){
     ?`<button type="button" class="sud-etikett" id="sudEtikett"><img class="sud-bild gross kb-zack" src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`
     :b.bild_foto?""
     :`<span class="sud-bild gross ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;
-  const kw=(label,wert,einheit)=>`<div class="kw"><span>${esc(label)}</span><b class="num">${wert==null||wert===""?"–":esc(wert)}</b>${einheit?`<small>${esc(einheit)}</small>`:""}</div>`;
+  const kw=(label,wert,einheit,cls)=>`<div class="kw"><span>${esc(label)}</span><b class="num${cls?" "+cls:""}">${wert==null||wert===""?"–":esc(wert)}</b>${einheit?`<small>${esc(einheit)}</small>`:""}</div>`;
   const posten=[["Stammwürze",b.stammwuerze!=null?Bz.fmtZahl(b.stammwuerze):null,"°P"],["Alkohol",b.alkohol!=null?Bz.fmtZahl(b.alkohol):null,"% Vol."]];
-  if(bm)posten.push(["Bewertung",b.bewertung!=null?Bz.fmtZahl(b.bewertung,1):null,"/ 10"]);
+  if(bm)posten.push(["Bewertung",b.bewertung!=null?Bz.fmtZahl(b.bewertung,1):null,"/ 10",gradeCls(b.bewertung)]);
   posten.push(["Ausschlagwürze",b.ausschlag!=null?Bz.fmtZahl(b.ausschlag):null,"l"]);
   const kennzahlen=`<div class="kws" style="grid-template-columns:repeat(${posten.length},minmax(0,1fr))">${posten.map(p=>kw(...p)).join("")}</div>`;
   const header=`<header class="sud-kopf">
