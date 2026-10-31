@@ -230,14 +230,20 @@ direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort is
   überflüssig – die Spalte und das Feld im normalen Editor bleiben für ältere Sude bestehen, tauchen im
   Gärung-Schritt des Assistenten aber nicht mehr auf.
 - **Zucker-Rechner im Abfüllung-Schritt:** neues Feld `karbonisierung` (g/l CO2, analog zu `rezepte.karbonisierung`,
-  siehe `schema/09_karbonisierung.sql`) plus `Brau.primingZucker(biermengeLiter, zielGl, restGl)` in `lib/brau.js`
-  – errechnet aus Biermenge und gewünschter Karbonisierung die nötige Menge Haushaltszucker, mit „Übernehmen“ in
-  das freie „Speise / Zucker“-Feld. Nimmt ohne eigenen Messwert eine Restkohlensäure von ca. 1,7 g/l an
-  (Richtwert für ca. 18–20 °C Gärtemperatur, `Brau.REST_CO2_STANDARD_GL`) – wie beim Wasserhärte-Rechner eine
-  Näherung, kein Laborwert. **Für Speise (unvergorene Würze statt Zucker) gibt es bewusst keinen Rechner:** die
-  dafür in der Fachliteratur übliche Formel (nach Ludwig Narziss) ergab bei einer Gegenprobe mit Beispielwerten
-  ein unplausibles Ergebnis (~46 % der Biermenge als Speise statt der in der Praxis üblichen wenigen Prozent) –
-  bevor die nicht zuverlässig verifiziert werden kann, lieber kein Wert als ein möglicherweise falscher.
+  siehe `schema/09_karbonisierung.sql`) plus `Brau.primingZucker(zielGl, restGl)` in `lib/brau.js` – errechnet aus
+  der gewünschten Karbonisierung die nötige Menge Haushaltszucker **je Liter Bier** (nicht als Gesamtmenge für die
+  ganze Biermenge), mit „Übernehmen“ in das freie „Speise / Zucker“-Feld. Braucht dafür bewusst keine Biermenge
+  als Eingabe – die Dosierung pro Liter ist unabhängig von der Gesamtmenge. Nimmt ohne eigenen Messwert eine
+  Restkohlensäure von ca. 1,7 g/l an (Richtwert für ca. 18–20 °C Gärtemperatur, `Brau.REST_CO2_STANDARD_GL`) – wie
+  beim Wasserhärte-Rechner eine Näherung, kein Laborwert.
+  Geprüft, ob die Formel mit Stammwürze/Restextrakt zusammenhängt: **nein** – die Restkohlensäure beim Abfüllen
+  ist rein temperaturabhängig (gelöstes CO2 aus der Gärung), nicht von der Stammwürze oder dem erreichten
+  Restextrakt. Die Formel braucht nur das Karbonisierungsziel und die angenommene/gemessene Restkohlensäure.
+  **Für Speise (unvergorene Würze statt Zucker) gibt es bewusst keinen Rechner:** die dafür in der Fachliteratur
+  übliche Formel (nach Ludwig Narziss) hängt tatsächlich von Stammwürze und Restextrakt (bzw. Vergärungsgrad) ab
+  – ergab bei einer Gegenprobe mit Beispielwerten aber ein unplausibles Ergebnis (~46 % der Biermenge als Speise
+  statt der in der Praxis üblichen wenigen Prozent) – bevor die nicht zuverlässig verifiziert werden kann, lieber
+  kein Wert als ein möglicherweise falscher.
 - **Resume:** `index.html?sud=<id>` öffnet für Braumeister/Admin automatisch den Assistenten (statt der
   normalen Detailansicht), solange der Status nicht `dokumentiert` ist – bei `gaerung` direkt beim
   Gärung-Schritt, sonst beim ersten.
