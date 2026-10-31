@@ -330,9 +330,11 @@ a{color:var(--amber)}
 .rank .sc b{display:block;font-size:1.35rem;font-weight:500}
 .rank .bar{grid-area:bar;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
 .rank .bar i{display:block;height:100%;background:var(--amber)}
+.rank .bar i.g1{background:var(--hop)}
+.rank .bar i.g2{background:var(--amber)}
+.rank .bar i.g3{background:var(--warn)}
 .rank li.top .pl{color:var(--ink);font-weight:500}
 .rank li.p1 .nm b{font-size:1.2rem}
-.rank li.p1 .bar i{background:var(--hop)}
 .rank li.wenig{opacity:.7}
 @media (max-width:560px){.rank li{grid-template-areas:"pl nm sc" "pl mt mt" "pl bar bar"}.rank .mt{text-align:left}}
 .btn.ghost.danger{color:var(--warn)}
