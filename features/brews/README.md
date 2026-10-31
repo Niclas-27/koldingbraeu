@@ -185,7 +185,13 @@ als beim Bewertungsbogen ist die Fußleiste `#wzFuss` hier `position:fixed` am u
 damit Zurück/Weiter bei unterschiedlich hohen Schritten nicht auf der Seite herumspringen und immer ohne
 Scrollen erreichbar sind – `.sud-blatt.wz` reserviert dafür unten entsprechend Platz. (`position:sticky` wäre
 die naheliegendere Lösung gewesen, scheitert aber an `overflow-x:hidden` auf html/body – siehe Kommentar in
-`brews.css`.)
+`brews.css`.) Zurück/Weiter (`#wzBack`/`#wzNext`) sind zusätzlich exakt wie `#bWeiter`/`#bZurueck` im
+Bewertungsbogen gleich breit (`flex:1`), statt Zurück als kleiner Kreis und Weiter als großer Pill-Button.
+
+Die Abschnitte auf der fertigen Sud-Seite (`zeigeDetail()`) folgen seit Kurzem derselben Reihenfolge wie die
+Schritte des Assistenten (Brauwasser vor Schüttung, davor war es umgekehrt) – Läutern/Kochen bzw.
+Anstellen/Gärung bleiben weiterhin zu je einem Abschnitt zusammengefasst wie schon vorher, weil sie inhaltlich
+ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt war.
 
 - **Kein eigenes Datenmodell für die Werte selbst** – jedes Feld schreibt direkt in dieselbe Spalte von
   `public.sude`, die auch der normale Editor benutzt (`hauptguss`, `malz`, `rasten`, `hopfen`, `kochzeit`,

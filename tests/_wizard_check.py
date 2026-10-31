@@ -139,6 +139,8 @@ async def main():
         pruefe("Eigene Angabe (Testfeld/42) erscheint auf der fertigen Sudseite", "Testfeld" in html2 and ">42<" in html2)
         t = await pg.inner_text("body")
         pruefe("Kein 'Entwurf'/'Gärung läuft'-Badge mehr auf der Detailseite", "Gärung läuft" not in t and "Entwurf" not in t)
+        list_html = await pg.eval_on_selector("#list", "el => el.innerHTML")
+        pruefe("Abschnitt-Reihenfolge auf der Sudseite wie im Assistenten (Brauwasser vor Schüttung)", list_html.index("Brauwasser") < list_html.index("Schüttung"))
 
         await pg.screenshot(path=str(ROOT / "tests" / "screenshots" / "wizard_check.png"), full_page=True)
         await ctx.close()

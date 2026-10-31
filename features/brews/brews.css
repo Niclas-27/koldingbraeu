@@ -116,7 +116,9 @@ button.wahl-k:hover{border-color:var(--muted)}
 .wz-extra{margin-top:16px;border-top:1px dashed var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
 .bogen-fuss{display:flex;flex-direction:column;gap:10px;margin-top:18px}
 .bogen-knoepfe{display:flex;gap:10px}
-.bogen-knoepfe .btn{min-height:44px}
+/* Exakt wie #bWeiter/#bZurueck im Verkostungs-Bewertungsbogen (tastings.css): beide Knöpfe gleich breit
+   (flex:1) statt Zurück als kleiner Kreis und Weiter als großer Pill-Button. */
+#wzBack,#wzNext{min-height:48px;font-size:1rem;flex:1;justify-content:center}
 .fortschritt{display:flex;align-items:center;gap:10px}
 .fortschritt .punkte{display:flex;gap:5px;flex:1}
 .fortschritt .punkte .punkt{flex:1;border:0;background:transparent;padding:8px 0;cursor:pointer}

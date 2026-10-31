@@ -187,10 +187,10 @@ function zeigeDetail(b){
     <article class="sud-blatt">
       ${bilder}
       ${header}
-      ${sec("Schüttung",grist)}
       ${sec("Brauwasser",kv([["Hauptguss",fmtNum(b.hauptguss,"l")],["Nachguss",fmtNum(b.nachguss,"l")],["Wasserhärte",fmtNum(b.wasserhaerte,"°dH")],
         ["pH vorher",b.ph_vorher],["pH nachher",b.ph_nachher],["Milchsäure Hauptguss",fmtNum(b.milchsaeure_hauptguss,"ml")],
         ["Milchsäure Nachguss",fmtNum(b.milchsaeure_nachguss,"ml")],["Wasserbehandlung",b.wasser]]))}
+      ${sec("Schüttung",grist)}
       ${sec("Maischplan",steps)}
       ${sec("Läutern & Kochen"+(b.kochzeit!=null?` · ${Bz.fmtZahl(b.kochzeit,0)} min`:""),
         kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Stammwürze (Refraktometer)",fmtNum(b.refraktometer_anstellen,"°Brix")]])
