@@ -194,7 +194,7 @@ function zeigeDetail(b){
     ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn" id="checklisteBtn">Checkliste</button>${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}</div>`:""}`;
   $("#list").innerHTML=body;
   if(bm){
-    if(b.status!=="dokumentiert")$("#wzFortBtn").onclick=async()=>{wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.length-1:0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();};
+    if(b.status!=="dokumentiert")$("#wzFortBtn").onclick=async()=>{wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.findIndex(s=>s[0]==="gaerung"):0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();};
     else $("#editBtn").onclick=()=>editInline(b);
     $("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);$("#checklisteBtn").onclick=()=>zeigeChecklist(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
   }
@@ -668,7 +668,7 @@ async function rezeptAusSud(b){
 const WIZARD_STEPS=[
   ["uebersicht","Rezept & Start"],["wasser","Wasser & Milchsäure"],["schuettung","Schüttung"],
   ["maischen","Maischen"],["laeutern","Läutern"],["kochen","Kochen"],["anstellen","Kühlen & Anstellen"],
-  ["gaerung","Gärung & Abfüllen"],
+  ["gaerung","Gärung"],["abfuellung","Abfüllung"],
 ];
 // [Spalte, Beschriftung, Typ] je Schritt – dieselbe Form wie FIELDS oben, darum auch dieselbe field()-Funktion
 const WIZARD_FIELDS={
@@ -680,8 +680,9 @@ const WIZARD_FIELDS={
   anstellen:[["stammwuerze","Stammwürze gemessen in °P – Spindel","number"],["refraktometer_anstellen","Refraktometer-Wert in °Brix","number"],
     ["hefe","Hefesorte"],["hefemenge","Hefemenge"]],
   gaerung:[["restextrakt","Restextrakt, endgültig in °P – Spindel","number"],["refraktometer_restextrakt","Refraktometer, endgültig in °Brix","number"],
-    ["messungen","Messungs-Verlauf (frei)"],["abgefuellt","Abfülldatum","date"],["ausschlag","Ausschlagwürze in Litern","number"],
-    ["biermenge","Biermenge in Litern","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],["alkohol","Alkohol in % vol","number"]],
+    ["messungen","Messungs-Verlauf (frei)"]],
+  abfuellung:[["abgefuellt","Abfülldatum","date"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],
+    ["biermenge","Biermenge in Litern","number"],["ausschlag","Ausschlagwürze in Litern","number"],["alkohol","Alkohol in % vol","number"]],
 };
 let wizard=null; // {sud, step, rezept, anlage, messungen}
 let wizardTimer=null,wizardSaving=0,wizardPending={};
@@ -741,6 +742,18 @@ function wizardWireRowlist(kind,selector){
     wizardSaveRows(kind,wizard.sud[kind]);wizardRenderStep();
   };
 }
+/* Alkohol automatisch aus Stammwürze (Anstellen-Schritt) + Restextrakt (Gärung-Schritt) berechnen, sobald
+   beide vorliegen – genauer als die Rezept-Schätzung über einen angenommenen Endvergärungsgrad, weil hier
+   zwei echte Messwerte verrechnet werden (Bz.alkoholAusMessung). Überschreibt NICHT, wenn schon ein von Hand
+   eingetragener/gemessener Wert steht (alkohol_geschaetzt === false) – das wäre sonst ein versehentliches
+   Zurücksetzen einer echten Messung. Beim Abfüllen bleibt das Feld ohnehin frei überschreibbar; eine manuelle
+   Änderung dort setzt die Markierung zurück (siehe wizardWireFields unten), wie beim normalen Editor/save().*/
+function wizardAlkoholAutoberechnen(stammwuerze,restextrakt){
+  if(stammwuerze==null||restextrakt==null)return;
+  if(wizard.sud.alkohol!=null&&wizard.sud.alkohol_geschaetzt===false)return;
+  const berechnet=Bz.runde(Bz.alkoholAusMessung(stammwuerze,restextrakt),1);
+  wizardQueueSave({alkohol:berechnet,alkohol_geschaetzt:true});
+}
 function wizardWireFields(felder){
   felder.forEach(([k,,type])=>{
     const el=$("#f_"+k);if(!el)return;
@@ -750,7 +763,11 @@ function wizardWireFields(felder){
       else if(type==="integer")v=el.value===""?null:parseInt(el.value,10)||null;
       else if(type==="date")v=el.value||null;
       else v=el.value;
-      wizardQueueSave({[k]:v});
+      const patch={[k]:v};
+      if(k==="alkohol")patch.alkohol_geschaetzt=false; // von Hand eingetragen/korrigiert: nicht mehr automatisch überschreiben
+      wizardQueueSave(patch);
+      if(k==="restextrakt")wizardAlkoholAutoberechnen(wizard.sud.stammwuerze,v);
+      if(k==="stammwuerze")wizardAlkoholAutoberechnen(v,wizard.sud.restextrakt);
     });
   });
 }
@@ -825,9 +842,18 @@ function wizardWasserRechner(){
   [hInp,hgInp,ngInp].forEach(el=>el.addEventListener("input",rechne));
   $("#wzUebernehmen").onclick=()=>{const rGes=rechne();$("#f_milchsaeure").value=Bz.fmtZahl(rGes,1);wizardQueueSave({milchsaeure:rGes});};
 }
-function wizardStepsNavHtml(){
-  return `<div class="wz-steps">${WIZARD_STEPS.map(([k,titel],i)=>`<button type="button" class="wz-step${i===wizard.step?" current":""}${i<wizard.step?" done":""}" data-wz-goto="${i}"><span class="wz-num">${i<wizard.step?"✓":i+1}</span>${esc(titel)}</button>`).join("")}</div>
-    <div class="wz-bar"><i style="width:${wizard.step/(WIZARD_STEPS.length-1)*100}%"></i></div>`;
+/* Fußleiste wie beim Verkostungs-Bewertungsbogen: ganz kleine Punkte + "n / total", Zurück/Weiter. Die Punkte
+   sind zusätzlich (anders als beim Bewertungsbogen) anklickbar, um direkt zu einem Schritt zu springen – im
+   Braugang-Assistenten ausdrücklich gewünscht (frei zwischen den Schritten wechseln). */
+function wizardFussHtml(){
+  const n=wizard.step+1,total=WIZARD_STEPS.length,letzte=wizard.step===total-1;
+  return `<div class="bogen-fuss noprint">
+    <div class="fortschritt">
+      <span class="punkte">${WIZARD_STEPS.map(([,titel],i)=>`<button type="button" class="punkt" data-wz-goto="${i}" aria-label="Schritt ${i+1}: ${esc(titel)}"><i class="${i<=wizard.step?"ab":""}"></i></button>`).join("")}</span>
+      <span class="zahl num">${n} / ${total}</span>
+    </div>
+    <div class="bogen-knoepfe">${wizard.step>0?`<button type="button" class="btn" id="wzBack" aria-label="Zurück">←</button>`:""}${letzte?"":`<button type="button" class="btn primary" id="wzNext">Weiter</button>`}</div>
+  </div>`;
 }
 function wizardPlanHinweis(){
   if(!wizard.rezept)return"";
@@ -851,11 +877,15 @@ function wizardRenderStep(){
     body=`<div class="grid2">${WIZARD_FIELDS.kochen.map(f=>field(f,d[f[0]])).join("")}</div>
       <div class="rowlist h5" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-wz-add="hopfen">+ Hopfengabe</button>`;
   } else if(key==="gaerung"){
-    body=`<div class="grid2">${WIZARD_FIELDS.gaerung.map(f=>field(f,d[f[0]])).join("")}</div>
+    body=`<p class="hint">Dieser Schritt lässt sich beliebig oft erneut besuchen, solange die Gärung läuft – für weitere Zwischenmessungen über Tage/Wochen.</p>
+      <div class="grid2">${WIZARD_FIELDS.gaerung.map(f=>field(f,d[f[0]])).join("")}</div>
       <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin:18px 0 10px">Zwischenmessungen</h3>
-      ${wizardMessungenHtml()}
+      ${wizardMessungenHtml()}`;
+  } else if(key==="abfuellung"){
+    body=`<div class="grid2">${WIZARD_FIELDS.abfuellung.map(f=>field(f,d[f[0]])).join("")}</div>
+      ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`:""}
       <button type="button" class="btn primary" id="wzAbschliessen" style="margin-top:18px">Sud abschließen ✓</button>
-      <p class="hint">Erst wenn Restextrakt und Abfülldatum feststehen und wirklich abgefüllt wurde – bis dahin lässt sich dieser Schritt beliebig oft erneut besuchen.</p>`;
+      <p class="hint">Erst wenn wirklich abgefüllt wurde – bis dahin bleibt der Sud auf „Gärung läuft“.</p>`;
   } else {
     body=`<div class="grid2">${WIZARD_FIELDS[key].map(f=>field(f,d[f[0]])).join("")}</div>`;
     if(key==="wasser")body=`<p class="hint">Richtwert pH 5,2–5,6 im Hauptguss. Die Empfehlung ist eine vereinfachte Beispielrechnung – als grobe Orientierung, kein geprüfter Brauwert.</p>${body}
@@ -867,35 +897,31 @@ function wizardRenderStep(){
   if(key==="schuettung")wizardWireRowlist("malz","#rl_malz");
   else if(key==="maischen"){wizardWireFields([["einmaischtemperatur",0,"number"],["abmaischtemperatur",0,"number"]]);wizardWireRowlist("rasten","#rl_rasten");}
   else if(key==="kochen"){wizardWireFields(WIZARD_FIELDS.kochen);wizardWireRowlist("hopfen","#rl_hopfen");}
-  else if(key==="gaerung"){wizardWireFields(WIZARD_FIELDS.gaerung);wizardWireMessungen();$("#wzAbschliessen").onclick=wizardAbschliessen;}
+  else if(key==="gaerung"){wizardWireFields(WIZARD_FIELDS.gaerung);wizardWireMessungen();}
+  else if(key==="abfuellung"){wizardWireFields(WIZARD_FIELDS.abfuellung);$("#wzAbschliessen").onclick=wizardAbschliessen;}
   else if(key==="wasser"){wizardWireFields(WIZARD_FIELDS.wasser);wizardWasserRechner();}
   else if(key==="uebersicht")wizardWireFields([["datum",0,"date"]]);
   else wizardWireFields(WIZARD_FIELDS[key]); // laeutern, anstellen: reine Feldschritte ohne Rowlist/Rechner
   wizardWireExtra(key);
-  $("#wzStepTitel").textContent=`${wizard.step+1}. ${titel}`;
-  $("#wzBack").disabled=wizard.step===0;
-  $("#wzNext").hidden=wizard.step===WIZARD_STEPS.length-1;
+  $("#wzStepTitel").textContent=titel;
+  $("#wzFuss").innerHTML=wizardFussHtml();
+  const backBtn=$("#wzBack");if(backBtn)backBtn.onclick=()=>{if(wizard.step>0){wizard.step--;wizardRenderStep();}};
+  const nextBtn=$("#wzNext");if(nextBtn)nextBtn.onclick=()=>{
+    if(WIZARD_STEPS[wizard.step][0]==="anstellen"&&wizard.sud.status==="entwurf")wizardQueueSave({status:"gaerung"});
+    if(wizard.step<WIZARD_STEPS.length-1){wizard.step++;wizardRenderStep();}
+  };
   document.querySelectorAll("[data-wz-goto]").forEach(b=>b.onclick=()=>{wizard.step=+b.dataset.wzGoto;wizardRenderStep();});
 }
 function wizardAnzeigen(){
   $("#overview").hidden=true;$("#filter").hidden=true;
   $("#list").innerHTML=`<p class="noprint"><a class="back" id="wzZurueck" href="index.html?sud=${esc(wizard.sud.id)}">← ${esc(title(wizard.sud))}</a></p>
     <article class="sud-blatt wz">
-      <div class="wz-kopf"><h2>Braugang-Assistent</h2><span class="num" id="wzStatus">gespeichert</span></div>
-      ${wizardStepsNavHtml()}
-      <h3 id="wzStepTitel" style="font-size:1.1rem;margin:4px 0 10px"></h3>
+      <div class="wz-kopf"><p class="kicker">${esc(title(wizard.sud))}</p><span class="num" id="wzStatus">gespeichert</span></div>
+      <h2 id="wzStepTitel" class="wz-schritt-titel"></h2>
       <div id="wzBody"></div>
-      <div class="nav-row noprint">
-        <button type="button" class="btn" id="wzBack">← Zurück</button>
-        <button type="button" class="btn primary" id="wzNext">Weiter →</button>
-      </div>
+      <div id="wzFuss"></div>
     </article>`;
   $("#wzZurueck").onclick=e=>{e.preventDefault();zeigeDetail(wizard.sud);};
-  $("#wzBack").onclick=()=>{if(wizard.step>0){wizard.step--;wizardRenderStep();}};
-  $("#wzNext").onclick=()=>{
-    if(WIZARD_STEPS[wizard.step][0]==="anstellen"&&wizard.sud.status==="entwurf")wizardQueueSave({status:"gaerung"});
-    if(wizard.step<WIZARD_STEPS.length-1){wizard.step++;wizardRenderStep();}
-  };
   wizardRenderStep();
 }
 async function wizardAbschliessen(){
@@ -978,7 +1004,7 @@ KB.seite = {
     if(sudId){
       const b=state.brews.find(x=>x.id===sudId);
       if(b&&isBM()&&b.status!=="dokumentiert"){
-        wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.length-1:0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};
+        wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.findIndex(s=>s[0]==="gaerung"):0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};
         await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();
       }
       else if(b)zeigeDetail(b);
