@@ -52,7 +52,7 @@ function zeigen(){
       <span class="nm mit-bild">${Bilder.bier(b)}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
       <span class="sc"><b class="num ${gradeCls(b.schnitt)}">${fmtZahl(b.schnitt, 1)}</b></span>
       <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"} · ${Math.round(b.nochmal / b.anzahl * 100)} % nochmal</small>
-      <span class="bar"><i style="width:${Math.round(b.schnitt * 10)}%"></i></span>
+      <span class="bar"><i class="${gradeCls(b.schnitt)}" style="width:${Math.round(b.schnitt * 10)}%"></i></span>
       </a>
     </li>`;
   let platz = 0, vorher = null;

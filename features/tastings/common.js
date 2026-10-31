@@ -47,7 +47,7 @@ function rangTabelle(zeilen, opts){
       <span class="nm${z.bild?" mit-bild":""}">${z.bild||""}<span><b>${esc(z.titel)}</b>${z.unter?`<small>${esc(z.unter)}</small>`:""}</span></span>
       <span class="sc"><b class="num ${gradeCls(z.schnitt)}">${note(z.schnitt)}</b></span>
       <small class="mt">${z.anzahl||0} Bew.${z.anzahl?` · ${Math.round((z.nochmal||0)/z.anzahl*100)} % nochmal`:""}</small>
-      <span class="bar"><i style="width:${w}%"></i></span>
+      <span class="bar"><i class="${gradeCls(z.schnitt)}" style="width:${w}%"></i></span>
     </li>`;}).join("")}</ol>`;
 }
 function stopTimer(){ if(timer){clearInterval(timer);timer=null;} }

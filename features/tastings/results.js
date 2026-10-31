@@ -35,7 +35,7 @@ async function ergebnisLaden(){
         <span class="nm mit-bild">${Bilder.bier(p)}<span><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span></span>
         <span class="sc"><b class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</b></span>
         <small class="mt">${p.anzahl} Bew.${p.anzahl?` · ${Math.round(p.nochmal/p.anzahl*100)} % nochmal`:""}</small>
-        <span class="bar"><i style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
+        <span class="bar"><i class="${gradeCls(p.schnitt)}" style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
       </summary>
       <div class="erg-detail">
         ${Bilder.bierFotos(p)}
