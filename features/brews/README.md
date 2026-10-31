@@ -40,6 +40,11 @@ Hefemenge, Messungs-Verlauf, Speise/Zucker und Notizen – das sind Beschreibung
 Alte Werte alter Sude liegen nach der Migration in `..._alt`-Spalten (Hauptguss etc.) bzw. `maischplan_alt`
 (kompletter alter Maischplan) und werden beim Bearbeiten als Hinweis gezeigt, bis sie geprüft/nachgetragen sind.
 
+Bei alten Suden ohne gemessenen Alkoholgehalt wurde teils ein grober Anhaltspunkt aus Stammwürze und Restextrakt
+errechnet (ohne Alkoholkorrektur, daher eher die Untergrenze). Solche Werte sind in `alkohol_geschaetzt` markiert
+und zeigen auf der Detailseite den Hinweis „Alkohol geschätzt“. Wird der Alkoholwert im Editor von Hand geändert,
+setzt `save()` die Markierung automatisch zurück (gleiches Muster wie `datum_geschaetzt`/„Jahr ergänzt“).
+
 ## Bilder
 
 Jeder Sud kann ein **Foto** und ein **Etikett** haben (Editor → „Bilder”, beides freiwillig). Das Foto steht oben in der Ansicht, das Etikett erscheint als Vorschaubild in der Liste – in Kronkorken-Form zugeschnitten (gezackter Kreis); ohne Bild zeichnet `lib/bilder.js` einen Kronkorken in der gewählten Kronkorken-Farbe (Feld „Kronkorken”), sonst in der aus der Schüttung berechneten Bierfarbe. „Als Vorlage nutzen” übernimmt keine Bilder. Ein ersetztes oder entferntes Bild wird beim Speichern aus dem Speicher gelöscht. Pfade: `sude/<id>/foto-…jpg`, `sude/<id>/etikett-…jpg`.
