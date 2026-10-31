@@ -135,7 +135,10 @@ function rowHTML(b){
    dort bleibt nur der kleine "← Zurück"-Link. Auf jeder anderen Ansicht wieder einblenden, da die Seite
    zwischen Liste/Detail/Assistent per history.replaceState ohne echtes Neuladen wechselt (sonst bliebe die
    Kopfzeile verschwunden, wenn man z. B. per Browser-Zurück von der Assistenten- auf die Listenansicht kommt). */
-function kopfzeileZeigen(zeigen){const h=document.querySelector(".site-header");if(h)h.hidden=!zeigen;}
+function kopfzeileZeigen(zeigen){
+  const h=document.querySelector(".site-header"),f=document.querySelector(".foot");
+  if(h)h.hidden=!zeigen;if(f)f.hidden=!zeigen;
+}
 function renderAll(){kopfzeileZeigen(true);renderStats();renderChips();renderList();}
 
 /* --- Details (eigene Seite index.html?sud=<id>, wie bei den Rezepten) --- */
@@ -185,14 +188,21 @@ function zeigeDetail(b){
       ${bilder}
       ${header}
       ${sec("Schüttung",grist)}
-      ${sec("Brauwasser",kv([["Hauptguss",fmtNum(b.hauptguss,"l")],["Nachguss",fmtNum(b.nachguss,"l")],["Wasserbehandlung",b.wasser]]))}
+      ${sec("Brauwasser",kv([["Hauptguss",fmtNum(b.hauptguss,"l")],["Nachguss",fmtNum(b.nachguss,"l")],["Wasserhärte",fmtNum(b.wasserhaerte,"°dH")],
+        ["pH vorher",b.ph_vorher],["pH nachher",b.ph_nachher],["Milchsäure Hauptguss",fmtNum(b.milchsaeure_hauptguss,"ml")],
+        ["Milchsäure Nachguss",fmtNum(b.milchsaeure_nachguss,"ml")],["Wasserbehandlung",b.wasser]]))}
       ${sec("Maischplan",steps)}
       ${sec("Läutern & Kochen"+(b.kochzeit!=null?` · ${Bz.fmtZahl(b.kochzeit,0)} min`:""),
-        kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")]])
+        kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Stammwürze (Refraktometer)",fmtNum(b.refraktometer_anstellen,"°Brix")]])
         +(b.hopfensorten?`<p style="margin:12px 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")
         +(hops?`<div style="margin-top:${b.hopfensorten?"0":"12px"}">${hops}</div>`:""))}
-      ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Restextrakt",fmtNum(b.restextrakt,"°P")]]))}
-      ${sec("Abfüllung",kv([["Ausschlagwürze",fmtNum(b.ausschlag,"l")],["Biermenge",fmtNum(b.biermenge,"l")],["Speise / Zucker",b.zucker],["Flaschen",b.flaschen],["Alkohol",fmtNum(b.alkohol,"% vol")],["Abgefüllt am",b.abgefuellt?fmtDate(b.abgefuellt)+b.abgefuellt.slice(0,4):null]]))}
+      ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Restextrakt",fmtNum(b.restextrakt,"°P")],
+        ["Restextrakt (Refraktometer)",fmtNum(b.refraktometer_restextrakt,"°Brix")]]))}
+      <section class="sec" id="sudMessungenSec" hidden><h3>Zwischenmessungen</h3><div id="sudMessungenListe"></div></section>
+      ${sec("Abfüllung",kv([["Ausschlagwürze",fmtNum(b.ausschlag,"l")],["Biermenge",fmtNum(b.biermenge,"l")],["Speise / Zucker",b.zucker],
+        ["Flaschen",b.flaschen],["Karbonisierung",fmtNum(b.karbonisierung,"g/l")],["Alkohol",fmtNum(b.alkohol,"% vol")],
+        ["Abgefüllt am",b.abgefuellt?fmtDate(b.abgefuellt)+b.abgefuellt.slice(0,4):null]]))}
+      ${sec("Eigene Angaben",(b.wizard_notizen||[]).length?kv(b.wizard_notizen.map(n=>[n.label||"(ohne Bezeichnung)",n.wert])):"")}
       ${sec("Notizen",b.notizen?`<div class="note">${esc(b.notizen)}</div>`:"")}
       <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div><input type="file" id="galerieFile" accept="image/*" multiple hidden></section>
       ${changed}
@@ -211,6 +221,19 @@ function zeigeDetail(b){
   $("#galerieFile").onchange=galerieDateienGewaehlt;
   galerieDragDropVerdrahten($("#sudGalerieSec"));
   galerieLaden(b.id);
+  messungenDetailLaden(b.id);
+}
+/* Zwischenmessungen auf der fertigen Sud-Seite anzeigen (reines Arbeitswerkzeug wie die Fotogalerie,
+   sud_messungen ist per RLS ohnehin nur für Braumeister/Admin lesbar – daher kein eigener isBM()-Check nötig,
+   die Abfrage liefert Gästen einfach nichts). */
+function messungenDetailLaden(sudId){
+  const el=$("#sudMessungenSec");if(!el)return;
+  if(!isBM()){el.hidden=true;return;}
+  sb.from("sud_messungen").select("*").eq("sud_id",sudId).order("angelegt").then(({data,error})=>{
+    if(error||!data||!data.length){el.hidden=true;return;}
+    el.hidden=false;
+    $("#sudMessungenListe").innerHTML=`<ul class="steps">${data.map(m=>`<li><b>${esc(m.bezeichnung)}</b><span class="num">${esc([m.plato!=null?Bz.fmtZahl(m.plato)+" °P":"",m.refraktometer!=null?Bz.fmtZahl(m.refraktometer)+" °Brix":""].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>`;
+  });
 }
 /* Drag & Drop auf die ganze Galerie-Fläche, z. B. direkt aus der Mac-Fotos-Mediathek. Nur für Braumeister/Admin;
    Zähler statt einfachem Ein/Aus, weil dragenter/dragleave beim Überqueren von Kind-Elementen sonst flackert. */
@@ -678,9 +701,10 @@ const WIZARD_STEPS=[
 ];
 // [Spalte, Beschriftung, Typ] je Schritt – dieselbe Form wie FIELDS oben, darum auch dieselbe field()-Funktion
 const WIZARD_FIELDS={
-  wasser:[["wasserhaerte","Wasserhärte in °dH","number"],["hauptguss","Hauptguss in Litern","number"],["nachguss","Nachguss in Litern","number"],
-    ["ph_vorher","pH-Wert vorher","number"],["milchsaeure","Milchsäure zugegeben in ml","number"],["ph_nachher","pH-Wert nachher","number"],
-    ["wasser","Weitere Hinweise zum Brauwasser (frei)"]],
+  wasser:[["wasserhaerte","Wasserhärte in °dH","number"],["hauptguss","Hauptguss in Litern","number"],
+    ["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],["nachguss","Nachguss in Litern","number"],
+    ["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],["ph_vorher","pH-Wert vorher","number"],
+    ["ph_nachher","pH-Wert nachher","number"],["wasser","Weitere Hinweise zum Brauwasser (frei)"]],
   laeutern:[["laeutern","Läutern"],["wuerze","Würzemenge vor dem Ausschlagen in Litern","number"]],
   kochen:[["kochzeit","Kochzeit in Minuten","integer"],["hopfensorten","Hopfensorten mit Alphasäure"]],
   anstellen:[["stammwuerze","Stammwürze gemessen in °P – Spindel","number"],["refraktometer_anstellen","Refraktometer-Wert in °Brix","number"],
@@ -846,14 +870,19 @@ function wizardWasserRechner(){
   const FAKTOR=0.09;
   const rechne=()=>{
     const h=Bz.zahl(hInp.value)||0,hg=Bz.zahl(hgInp.value)||0,ng=Bz.zahl(ngInp.value)||0;
-    const rHg=h*hg*FAKTOR,rNg=h*ng*FAKTOR,rGes=rHg+rNg;
+    const rHg=h*hg*FAKTOR,rNg=h*ng*FAKTOR;
     $("#wzRecHg").textContent=h&&hg?Bz.fmtZahl(rHg,1)+" ml":"–";
     $("#wzRecNg").textContent=h&&ng?Bz.fmtZahl(rNg,1)+" ml":"–";
-    $("#wzRecGes").textContent=h&&(hg||ng)?Bz.fmtZahl(rGes,1)+" ml":"–";
-    return rGes;
+    return {rHg,rNg};
   };
   [hInp,hgInp,ngInp].forEach(el=>el.addEventListener("input",rechne));
-  $("#wzUebernehmen").onclick=()=>{const rGes=rechne();$("#f_milchsaeure").value=Bz.fmtZahl(rGes,1);wizardQueueSave({milchsaeure:rGes});};
+  // Wichtig: .value bei einem <input type="number"> braucht einen Punkt als Dezimaltrennzeichen (HTML-Vorgabe,
+  // unabhängig von der Spracheinstellung) – Bz.fmtZahl() liefert ein Komma (deutsches Format) und wurde hier
+  // früher versehentlich direkt als .value gesetzt; der Browser verwirft das dann stillschweigend, ohne
+  // Fehlermeldung, nur beim erneuten Rendern (z. B. nach Zurück/Vor) erschien der – korrekt gespeicherte –
+  // Wert dann wieder, weil field() den rohen Zahlenwert nutzt statt der formatierten Anzeige.
+  $("#wzUebernehmenHg").onclick=()=>{const {rHg}=rechne();const g=Bz.runde(rHg,1);$("#f_milchsaeure_hauptguss").value=g;wizardQueueSave({milchsaeure_hauptguss:g});};
+  $("#wzUebernehmenNg").onclick=()=>{const {rNg}=rechne();const g=Bz.runde(rNg,1);$("#f_milchsaeure_nachguss").value=g;wizardQueueSave({milchsaeure_nachguss:g});};
 }
 /* Zucker-Rechner im Abfüllung-Schritt: wie viel Haushaltszucker für die gewünschte Karbonisierung nötig ist
    (Brau.primingZucker, siehe lib/brau.js). Für "Speise" gibt es bewusst KEINEN Rechner – die dafür übliche
@@ -906,6 +935,14 @@ function wizardRenderStep(){
   } else if(key==="maischen"){
     body=`<div class="grid2">${field(["einmaischtemperatur","Einmaischtemperatur in °C","number"],d.einmaischtemperatur)}${field(["abmaischtemperatur","Abmaischtemperatur in °C","number"],d.abmaischtemperatur)}</div>
       <div class="rowlist" id="rl_rasten">${rowsHTML("rasten",d.rasten)}</div><button type="button" class="add" data-wz-add="rasten">+ Rast</button>`;
+  } else if(key==="wasser"){
+    body=`<p class="hint">Richtwert pH 5,2–5,6 im Hauptguss. Die Empfehlung ist eine vereinfachte Beispielrechnung – als grobe Orientierung, kein geprüfter Brauwert.</p>
+      <div class="grid2">${field(["wasserhaerte","Wasserhärte in °dH","number"],d.wasserhaerte)}${field(["ph_vorher","pH-Wert vorher","number"],d.ph_vorher)}</div>
+      <div class="grid2">${field(["hauptguss","Hauptguss in Litern","number"],d.hauptguss)}${field(["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],d.milchsaeure_hauptguss)}</div>
+      <p class="hint" style="margin:-8px 0 14px">Empfehlung Hauptguss: <b id="wzRecHg">–</b> <button type="button" class="linkbtn" id="wzUebernehmenHg">übernehmen</button></p>
+      <div class="grid2">${field(["nachguss","Nachguss in Litern","number"],d.nachguss)}${field(["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],d.milchsaeure_nachguss)}</div>
+      <p class="hint" style="margin:-8px 0 14px">Empfehlung Nachguss: <b id="wzRecNg">–</b> <button type="button" class="linkbtn" id="wzUebernehmenNg">übernehmen</button></p>
+      <div class="grid2">${field(["ph_nachher","pH-Wert nachher","number"],d.ph_nachher)}${field(["wasser","Weitere Hinweise zum Brauwasser (frei)"],d.wasser)}</div>`;
   } else if(key==="kochen"){
     body=`<div class="grid2">${WIZARD_FIELDS.kochen.map(f=>field(f,d[f[0]])).join("")}</div>
       <div class="rowlist h5" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-wz-add="hopfen">+ Hopfengabe</button>`;
@@ -932,10 +969,6 @@ function wizardRenderStep(){
       <p class="hint">Erst wenn wirklich abgefüllt wurde – bis dahin bleibt der Sud auf „Gärung läuft“.</p>`;
   } else {
     body=`<div class="grid2">${WIZARD_FIELDS[key].map(f=>field(f,d[f[0]])).join("")}</div>`;
-    if(key==="wasser")body=`<p class="hint">Richtwert pH 5,2–5,6 im Hauptguss. Die Empfehlung ist eine vereinfachte Beispielrechnung – als grobe Orientierung, kein geprüfter Brauwert.</p>${body}
-      <div class="kws" style="grid-template-columns:repeat(3,minmax(0,1fr));max-width:420px;margin-top:4px">
-        <div class="kw"><span>Empf. Hauptguss</span><b id="wzRecHg">–</b></div><div class="kw"><span>Empf. Nachguss</span><b id="wzRecNg">–</b></div><div class="kw"><span>Gesamt</span><b id="wzRecGes">–</b></div>
-      </div><button type="button" class="btn ghost" id="wzUebernehmen" style="margin-top:8px">Empfehlung in Milchsäure-Feld übernehmen</button>`;
   }
   $("#wzBody").innerHTML=fs(body)+wizardExtraHtml(key);
   if(key==="schuettung")wizardWireRowlist("malz","#rl_malz");
