@@ -516,10 +516,29 @@ function field([k,label,type],v){
   const num=type==="number"||type==="integer";
   return`<label class="f" for="${id}">${label}<input id="${id}" name="${k}" type="${num?"number":(type||"text")}"${type==="number"?' step="any" inputmode="decimal"':""}${type==="integer"?' step="1" min="0" inputmode="numeric"':""} value="${esc(v??"")}"></label>`;
 }
+/* rf() bettet jedes Eingabefeld einer rowsHTML-Zeile in eine eigene kleine, dauerhaft sichtbare
+   Beschriftung ein (anders als der Platzhaltertext im <input>, der nach dem Ausfüllen verschwindet
+   und die Zeile dann zu nackten, nicht mehr zuordenbaren Zahlen macht – siehe Rückmeldung zum
+   Hopfengabe-Screenshot). Gilt für Schüttung/Maischplan/Hopfen, sowohl im normalen Editor als auch
+   im Braugang-Assistenten (beide rufen rowsHTML auf). */
+function rf(label,inputHtml){return`<div class="rf"><span>${esc(label)}</span>${inputHtml}</div>`;}
 function rowsHTML(kind,items){
-  if(kind==="malz")return items.map((m,i)=>`<div class="r"><input id="malz_s_${i}" placeholder="Malzsorte" value="${esc(m.sorte)}" aria-label="Malzsorte"><input id="malz_g_${i}" type="number" step="any" inputmode="decimal" placeholder="Gramm" value="${esc(m.gramm??"")}" aria-label="Menge in Gramm"><input id="malz_e_${i}" type="number" step="any" inputmode="decimal" placeholder="EBC" value="${esc(m.ebc??"")}" aria-label="Farbe in EBC"><button type="button" class="x" data-del="malz" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
-  if(kind==="hopfen")return items.map((h,i)=>`<div class="r"><input id="hop_s_${i}" placeholder="Sorte" value="${esc(h.sorte)}" aria-label="Hopfensorte"><input id="hop_g_${i}" type="number" step="any" inputmode="decimal" placeholder="Gramm" value="${esc(h.gramm??"")}" aria-label="Menge in Gramm"><input id="hop_a_${i}" type="number" step="any" inputmode="decimal" placeholder="% α" value="${esc(h.alpha??"")}" aria-label="Alphasäure in Prozent"><input id="hop_z_${i}" type="number" step="any" inputmode="numeric" placeholder="min" value="${esc(h.zeit??"")}" aria-label="Kochzeit der Gabe in Minuten"><select id="hop_t_${i}" aria-label="Art der Hopfengabe">${Object.entries(TYP).map(([k,l])=>`<option value="${k}"${h.typ===k?" selected":""}>${l}</option>`).join("")}</select><button type="button" class="x" data-del="hopfen" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>${h.alt?`<small class="hint">vorher: ${esc(h.alt)}</small>`:""}`).join("");
-  return items.map((r,i)=>`<div class="r"><input id="rast_t_${i}" type="number" step="any" inputmode="decimal" placeholder="°C" value="${esc(r.temperatur??"")}" aria-label="Temperatur der ${i+1}. Rast"><input id="rast_z_${i}" type="number" step="1" min="0" inputmode="numeric" placeholder="min" value="${esc(r.zeit??"")}" aria-label="Dauer der ${i+1}. Rast in Minuten"><button type="button" class="x" data-del="rasten" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
+  if(kind==="malz")return items.map((m,i)=>`<div class="r">${
+    rf("Sorte",`<input id="malz_s_${i}" placeholder="z. B. Pilsner Malz" value="${esc(m.sorte)}" aria-label="Malzsorte">`)}${
+    rf("Gramm",`<input id="malz_g_${i}" type="number" step="any" inputmode="decimal" value="${esc(m.gramm??"")}" aria-label="Menge in Gramm">`)}${
+    rf("EBC",`<input id="malz_e_${i}" type="number" step="any" inputmode="decimal" value="${esc(m.ebc??"")}" aria-label="Farbe in EBC">`)
+    }<button type="button" class="x" data-del="malz" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
+  if(kind==="hopfen")return items.map((h,i)=>`<div class="r">${
+    rf("Sorte",`<input id="hop_s_${i}" placeholder="z. B. Saazer" value="${esc(h.sorte)}" aria-label="Hopfensorte">`)}${
+    rf("Gramm",`<input id="hop_g_${i}" type="number" step="any" inputmode="decimal" value="${esc(h.gramm??"")}" aria-label="Menge in Gramm">`)}${
+    rf("% Alpha",`<input id="hop_a_${i}" type="number" step="any" inputmode="decimal" value="${esc(h.alpha??"")}" aria-label="Alphasäure in Prozent">`)}${
+    rf("Minuten",`<input id="hop_z_${i}" type="number" step="any" inputmode="numeric" value="${esc(h.zeit??"")}" aria-label="Kochzeit der Gabe in Minuten">`)}${
+    rf("Art",`<select id="hop_t_${i}" aria-label="Art der Hopfengabe">${Object.entries(TYP).map(([k,l])=>`<option value="${k}"${h.typ===k?" selected":""}>${l}</option>`).join("")}</select>`)
+    }<button type="button" class="x" data-del="hopfen" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>${h.alt?`<small class="hint">vorher: ${esc(h.alt)}</small>`:""}`).join("");
+  return items.map((r,i)=>`<div class="r">${
+    rf("°C",`<input id="rast_t_${i}" type="number" step="any" inputmode="decimal" value="${esc(r.temperatur??"")}" aria-label="Temperatur der ${i+1}. Rast">`)}${
+    rf("Minuten",`<input id="rast_z_${i}" type="number" step="1" min="0" inputmode="numeric" value="${esc(r.zeit??"")}" aria-label="Dauer der ${i+1}. Rast in Minuten">`)
+    }<button type="button" class="x" data-del="rasten" data-i="${i}" aria-label="Zeile entfernen">✕</button></div>`).join("");
 }
 let draft=null,editingId=null,bildBasis="",bearbeitenInline=false;
 function openEditor(src,asCopy){
