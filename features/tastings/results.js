@@ -11,7 +11,7 @@ async function ergebnisLaden(){
   proben.forEach((p,i) => { const k = p.schnitt==null ? null : `${p.schnitt}|${p.nochmal}`; if(k!==vorher){ platz = i+1; vorher = k; } p.platz = p.schnitt==null ? null : platz; });
   const podium = proben.filter(p => p.platz && p.platz <= 3).slice(0,3);
   const stufe = p => `<div class="stufe s${p.platz}"><span class="medaille" aria-hidden="true">${["🥇","🥈","🥉"][p.platz-1]}</span>${Bilder.bier(p,"gross")}
-      <b>${esc(p.name)}</b><small>${esc([p.brauerei, p.stil].filter(Boolean).join(" · "))}</small><span class="num">${note(p.schnitt)}</span></div>`;
+      <b>${esc(p.name)}</b><small>${esc([p.brauerei, p.stil].filter(Boolean).join(" · "))}</small><span class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</span></div>`;
   const ordnung = podium.length === 3 ? [podium[1], podium[0], podium[2]] : podium;
 
   const noten = p => `<div class="dots" aria-label="Einzelnoten: ${esc(p.noten.join(", "))}">${Array.from({length:11},(_,i)=>`<span class="tick${i%5===0?" lab":""}">${i%5===0?i:""}</span>`).join("")}
@@ -33,7 +33,7 @@ async function ergebnisLaden(){
       <details${offen?"":" class=\"leer\""}><summary>
         <span class="pl num">${p.platz?p.platz+".":"–"}</span>
         <span class="nm mit-bild">${Bilder.bier(p)}<span><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span></span>
-        <span class="sc"><b class="num">${note(p.schnitt)}</b></span>
+        <span class="sc"><b class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</b></span>
         <small class="mt">${p.anzahl} Bew.${p.anzahl?` · ${Math.round(p.nochmal/p.anzahl*100)} % nochmal`:""}</small>
         <span class="bar"><i style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
       </summary>

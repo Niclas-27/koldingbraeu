@@ -5,7 +5,7 @@
    Kommentaren und Bildern aus allen Verkostungen, bei denen es dabei war. */
 (function () {
 "use strict";
-const {$, esc, fmtZahl, fehlertext, lsGet, lsSet, sec} = KB;
+const {$, esc, fmtZahl, fehlertext, lsGet, lsSet, sec, gradeCls} = KB;
 const MIN = 3; // ab so vielen Bewertungen zählt ein Bier für die Liga
 
 // Gleiche Merkmale wie im Bewertungsbogen (features/tastings/common.js) – hier dupliziert, weil
@@ -50,7 +50,7 @@ function zeigen(){
       <a href="liga.html?bier=${esc(b.id)}">
       <span class="pl num">${platz ? platz+"." : "–"}</span>
       <span class="nm mit-bild">${Bilder.bier(b)}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
-      <span class="sc"><b class="num">${fmtZahl(b.schnitt, 1)}</b></span>
+      <span class="sc"><b class="num ${gradeCls(b.schnitt)}">${fmtZahl(b.schnitt, 1)}</b></span>
       <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"} · ${Math.round(b.nochmal / b.anzahl * 100)} % nochmal</small>
       <span class="bar"><i style="width:${Math.round(b.schnitt * 10)}%"></i></span>
       </a>
@@ -91,7 +91,7 @@ async function zeigeDetail(bierId){
   const b = data.bier;
   document.title = b.name + " · Koldingbräu";
   const kennzahlen = `<div class="kws">
-      <div class="kw"><span>Schnitt</span><b class="num">${data.schnitt!=null?fmtZahl(data.schnitt,1):"–"}</b></div>
+      <div class="kw"><span>Schnitt</span><b class="num ${gradeCls(data.schnitt)}">${data.schnitt!=null?fmtZahl(data.schnitt,1):"–"}</b></div>
       <div class="kw"><span>Bewertungen</span><b class="num">${data.anzahl||0}</b></div>
       <div class="kw"><span>Nochmal</span><b class="num">${data.anzahl?Math.round(data.nochmal/data.anzahl*100):"–"}</b><small>${data.anzahl?"%":""}</small></div>
       <div class="kw"><span>Alkohol</span><b class="num">${b.alkohol!=null?fmtZahl(b.alkohol,1):"–"}</b><small>${b.alkohol!=null?"% Vol.":""}</small></div>
@@ -117,7 +117,7 @@ async function zeigeDetail(bierId){
       ` : `<p class="empty">Für dieses Bier gibt es noch keine Bewertungen aus abgeschlossenen Verkostungen.</p>`}
       ${sec("Verkostet bei", data.verkostungen.length?`<ul class="abende">${data.verkostungen.map(v=>`<li>
           <a href="verkostung.html?e=${esc(v.id)}">${esc(v.titel)}</a><small>${esc(KB.fmtDateLong(String(v.datum)))}</small>
-          <span class="num">${v.schnitt!=null?fmtZahl(v.schnitt,1):"–"}</span><small>${v.anzahl} Bew.</small></li>`).join("")}</ul>`:`<p class="empty">Noch keine Verkostung.</p>`)}
+          <span class="num ${gradeCls(v.schnitt)}">${v.schnitt!=null?fmtZahl(v.schnitt,1):"–"}</span><small>${v.anzahl} Bew.</small></li>`).join("")}</ul>`:`<p class="empty">Noch keine Verkostung.</p>`)}
     </article>`;
   $("#liga").innerHTML = body;
   Bilder.bierFotosVerdrahten($("#liga"));

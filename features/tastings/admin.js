@@ -199,12 +199,12 @@ function probeDetail(probeId){
   const a = auswertung(probeId);
   const body = `<p class="hint">${esc(bierZeile(p.bier))}</p>
     ${Bilder.bierFotos(p.bier)}
-    <div class="stats mini"><div class="stat"><b class="num">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div><div class="stat"><b class="num">${a.anzahl?Math.round(a.nochmal/a.anzahl*100):0} %</b><span>würden nochmal</span></div></div>
+    <div class="stats mini"><div class="stat"><b class="num ${gradeCls(a.schnitt)}">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div><div class="stat"><b class="num">${a.anzahl?Math.round(a.nochmal/a.anzahl*100):0} %</b><span>würden nochmal</span></div></div>
     ${sec("Geschmacksprofil", profil)}
     ${sec("Geruch", zaehle("geruch"))}
     ${sec("Fehlaromen", zaehle("fehler"))}
     ${sec("Einzelne Bewertungen", alle.length ? `<div class="bw">${alle.map(b=>`<div class="bw-row${b.ausgeblendet?" aus":""}">
-      <span class="grade">${b.note}</span>
+      <span class="grade ${gradeCls(b.note)}">${b.note}</span>
       <span class="bw-t"><b>${esc(tn(b.teilnehmer_id))}</b>${b.nochmal===true?" · nochmal: ja":b.nochmal===false?" · nochmal: nein":""}${vermerk(b)}${b.kommentar?`<span class="note">${esc(b.kommentar)}</span>`:""}</span>
       <span class="bw-a">${isAdmin()?`<button class="btn ghost" data-ed="${esc(b.teilnehmer_id)}">Bearbeiten</button>`:""}<button class="btn ghost" data-aus="${esc(b.id)}">${b.ausgeblendet?"Einblenden":"Ausblenden"}</button></span></div>`).join("")}</div>
       <p class="hint">Ausgeblendete Bewertungen zählen nicht fürs Ranking und die Liga.</p>` : "")}

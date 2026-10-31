@@ -31,6 +31,8 @@ function fmtDate(iso){if(!iso)return"–";const [,m,d]=iso.split("-");return `${
 function fmtDateLong(iso){if(!iso)return"";const [y,m,d]=iso.split("-");return `${+d}.${+m}.${y}`;}
 function fmtDateTime(ts){if(!ts)return"";const d=new Date(ts);return d.toLocaleDateString("de-DE")+", "+d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})+" Uhr";}
 function fmtZahl(v,stellen=1){return v==null||v===""||isNaN(+v)?"–":(+v).toLocaleString("de-DE",{minimumFractionDigits:stellen,maximumFractionDigits:stellen});}
+// Einheitliche Farbcodierung für alle Noten/Bewertungen (0–10): Grün ab 7, Gelb 4–6,9, Rot darunter.
+function gradeCls(v){if(v==null)return"";return v>=7?"g1":v>=4?"g2":"g3";}
 function personName(id){const p=state.people.find(x=>x.id===id);return p?p.name:"";}
 function todayIso(){const t=new Date();return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;}
 function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
@@ -388,7 +390,7 @@ async function boot(){
 
 const KB = window.KB = {
   CONFIG, ROLLEN, $, esc, state, isBM, isAdmin, siteUrl, sb: null, seite: null,
-  fmtDate, fmtDateLong, fmtDateTime, fmtZahl, personName, todayIso, toast, notice, lsGet, lsSet,
+  fmtDate, fmtDateLong, fmtDateTime, fmtZahl, gradeCls, personName, todayIso, toast, notice, lsGet, lsSet,
   sheet, openSheet, closeSheet, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
 };
 document.addEventListener("DOMContentLoaded", boot);

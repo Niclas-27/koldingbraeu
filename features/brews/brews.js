@@ -15,7 +15,7 @@ Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
 /* --- Helfer --- */
 /* Bewertung: Note von 0–10 (10 = beste Note), wie bei den Verkostungs-Gesamtnoten – bis 25.10.2026 noch
    eine Schulnote als Freitext (z. B. "2+"), siehe Migration 06 für die Umrechnung der Altdaten. */
-function gradeCls(v){if(v==null)return"";return v>=7?"g1":v>=4?"g2":"g3";}
+const gradeCls = KB.gradeCls; // einheitliche Farbcodierung, gemeinsam mit Liga/Verkostungen (core/core.js)
 function ageText(iso){if(!iso)return"";const days=Math.floor((Date.now()-new Date(iso+"T12:00:00").getTime())/864e5);
   if(days<0)return"geplant";if(days<1)return"heute";if(days<14)return`vor ${days} Tag${days===1?"":"en"}`;if(days<60)return`vor ${Math.round(days/7)} Wochen`;
   const months=Math.round(days/30.44);if(months<24)return`vor ${months} Monaten`;return`vor ${(days/365.25).toFixed(1).replace(".",",")} Jahren`;}
