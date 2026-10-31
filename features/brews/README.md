@@ -241,6 +241,10 @@ direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort is
 - **Resume:** `index.html?sud=<id>` öffnet für Braumeister/Admin automatisch den Assistenten (statt der
   normalen Detailansicht), solange der Status nicht `dokumentiert` ist – bei `gaerung` direkt beim
   Gärung-Schritt, sonst beim ersten.
+- **Ohne Seiten-Kopfzeile, fürs Handy:** Während des Assistenten sind die sticky Kopfzeile (Logo/Menü/Konto)
+  und die „Sude“-Titelzeile samt „+ Neuer Sud“-Knopf ausgeblendet (`kopfzeileZeigen()` plus `#sudeActions` in
+  `brews.js`) – es bleibt nur der kleine „← Zurück“-Link oben, das spart auf dem Handy spürbar Höhe. Beide
+  werden beim Verlassen (Detailansicht, Checkliste, „Sud nicht gefunden“) wieder eingeblendet.
 - Ausgelöst wird der Assistent an den beiden bestehenden „Aus Rezept”-Stellen: „+ Neuer Sud” → „Aus Rezept”
   auf der Sude-Seite, und „Sud aus diesem Rezept anlegen” auf der Rezept-Detailseite (`einstiegVerarbeiten()`/
   `neuerSud()` in `brews.js`) – beide riefen zuvor den normalen Editor auf. „Leer beginnen” und „Als Vorlage
