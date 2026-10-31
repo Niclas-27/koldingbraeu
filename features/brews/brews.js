@@ -680,8 +680,9 @@ const WIZARD_FIELDS={
   anstellen:[["stammwuerze","Stammwürze gemessen in °P – Spindel","number"],["refraktometer_anstellen","Refraktometer-Wert in °Brix","number"],
     ["hefe","Hefesorte"],["hefemenge","Hefemenge"]],
   gaerung:[["restextrakt","Restextrakt, endgültig in °P – Spindel","number"],["refraktometer_restextrakt","Refraktometer, endgültig in °Brix","number"]],
-  abfuellung:[["abgefuellt","Abfülldatum","date"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],
-    ["biermenge","Biermenge in Litern","number"],["ausschlag","Ausschlagwürze in Litern","number"],["alkohol","Alkohol in % vol","number"]],
+  abfuellung:[["abgefuellt","Abfülldatum","date"],["biermenge","Biermenge in Litern","number"],
+    ["karbonisierung","Gewünschte Karbonisierung in g/l","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],
+    ["ausschlag","Ausschlagwürze in Litern","number"],["alkohol","Alkohol in % vol","number"]],
 };
 let wizard=null; // {sud, step, rezept, anlage, messungen}
 let wizardTimer=null,wizardSaving=0,wizardPending={};
@@ -844,6 +845,26 @@ function wizardWasserRechner(){
   [hInp,hgInp,ngInp].forEach(el=>el.addEventListener("input",rechne));
   $("#wzUebernehmen").onclick=()=>{const rGes=rechne();$("#f_milchsaeure").value=Bz.fmtZahl(rGes,1);wizardQueueSave({milchsaeure:rGes});};
 }
+/* Zucker-Rechner im Abfüllung-Schritt: wie viel Haushaltszucker für die gewünschte Karbonisierung nötig ist
+   (Brau.primingZucker, siehe lib/brau.js). Für "Speise" gibt es bewusst KEINEN Rechner – die dafür übliche
+   Formel (Narziss) ergab bei einer Gegenprobe mit Beispielwerten ein unplausibles Ergebnis, darum lieber kein
+   Wert als ein möglicherweise falscher. */
+function wizardZuckerRechner(){
+  const kInp=$("#f_karbonisierung"),bInp=$("#f_biermenge");
+  if(!kInp)return;
+  const rechne=()=>{
+    const ziel=Bz.zahl(kInp.value),bier=Bz.zahl(bInp.value);
+    const g=Bz.primingZucker(bier,ziel);
+    $("#wzRecZucker").textContent=g!=null?Bz.fmtZahl(g,0)+" g":"–";
+    return g;
+  };
+  [kInp,bInp].forEach(el=>el.addEventListener("input",rechne));
+  $("#wzZuckerUebernehmen").onclick=()=>{
+    const g=rechne();if(g==null)return;
+    const text=`${Bz.fmtZahl(g,0)} g Haushaltszucker (errechnet für ${Bz.fmtZahl(Bz.zahl(kInp.value))} g/l Ziel-Karbonisierung)`;
+    $("#f_zucker").value=text;wizardQueueSave({zucker:text});
+  };
+}
 /* Fußleiste wie beim Verkostungs-Bewertungsbogen: ganz kleine Punkte + "n / total", Zurück/Weiter. Die Punkte
    sind zusätzlich (anders als beim Bewertungsbogen) anklickbar, um direkt zu einem Schritt zu springen – im
    Braugang-Assistenten ausdrücklich gewünscht (frei zwischen den Schritten wechseln). */
@@ -885,7 +906,13 @@ function wizardRenderStep(){
       ${wizardMessungenHtml()}`;
   } else if(key==="abfuellung"){
     const refAlk=Bz.alkoholAusRefraktometer(d.refraktometer_anstellen,d.refraktometer_restextrakt);
+    const zuckerG=Bz.primingZucker(d.biermenge,d.karbonisierung);
     body=`<div class="grid2">${WIZARD_FIELDS.abfuellung.map(f=>field(f,d[f[0]])).join("")}</div>
+      <div class="kws" style="grid-template-columns:1fr;max-width:260px;margin:4px 0">
+        <div class="kw"><span>Zucker-Empfehlung</span><b id="wzRecZucker">${zuckerG!=null?esc(Bz.fmtZahl(zuckerG,0))+" g":"–"}</b></div>
+      </div>
+      <button type="button" class="btn ghost" id="wzZuckerUebernehmen">Empfehlung ins Speise/Zucker-Feld übernehmen</button>
+      <p class="hint">Rechnet mit einer angenommenen Restkohlensäure von ca. ${esc(Bz.fmtZahl(Bz.REST_CO2_STANDARD_GL))} g/l (Richtwert für ca. 18–20 °C Gärtemperatur) – bei deutlich wärmer oder kälter vergorenem Bier von Hand anpassen. Für Speise (unvergorene Würze statt Zucker) gibt es bewusst keine automatische Berechnung – die dafür übliche Formel ließ sich nicht zuverlässig gegenprüfen.</p>
       ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt (Spindel) berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`:""}
       ${refAlk!=null?`<p class="hint">Zum Vergleich aus den Refraktometer-Werten geschätzt (korrigiert nach der verbreiteten „Sean-Terrill“-Näherungsformel, da Alkohol das Refraktometer sonst verfälscht): ${esc(Bz.fmtZahl(Bz.runde(refAlk,1)))} % vol. Auch das ist nur eine Orientierung, kein Laborwert.</p>`:""}
       <button type="button" class="btn primary" id="wzAbschliessen" style="margin-top:18px">Sud abschließen ✓</button>
@@ -902,7 +929,7 @@ function wizardRenderStep(){
   else if(key==="maischen"){wizardWireFields([["einmaischtemperatur",0,"number"],["abmaischtemperatur",0,"number"]]);wizardWireRowlist("rasten","#rl_rasten");}
   else if(key==="kochen"){wizardWireFields(WIZARD_FIELDS.kochen);wizardWireRowlist("hopfen","#rl_hopfen");}
   else if(key==="gaerung"){wizardWireFields(WIZARD_FIELDS.gaerung);wizardWireMessungen();}
-  else if(key==="abfuellung"){wizardWireFields(WIZARD_FIELDS.abfuellung);$("#wzAbschliessen").onclick=wizardAbschliessen;}
+  else if(key==="abfuellung"){wizardWireFields(WIZARD_FIELDS.abfuellung);wizardZuckerRechner();$("#wzAbschliessen").onclick=wizardAbschliessen;}
   else if(key==="wasser"){wizardWireFields(WIZARD_FIELDS.wasser);wizardWasserRechner();}
   else if(key==="uebersicht")wizardWireFields([["datum",0,"date"]]);
   else wizardWireFields(WIZARD_FIELDS[key]); // laeutern, anstellen: reine Feldschritte ohne Rowlist/Rechner

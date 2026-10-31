@@ -23,6 +23,8 @@ ok("Alkohol aus gemessener Stammwürze 12 °P und gemessenem Restextrakt 3 °P �
 ok("Alkohol aus Messung ohne Restextrakt → null", Brau.alkoholAusMessung(12, null) === null);
 ok("Alkohol aus Refraktometer (OG 14 °Bx, Endwert 7 °Bx) ≈ 5,8 % (gegen unabhängig von Hand gerechnete Terrill-Kubikformel als Gegenprobe: ≈1,013 SG Restdichte)", nah(Brau.alkoholAusRefraktometer(14, 7), 5.8, 0.3), Brau.alkoholAusRefraktometer(14, 7).toFixed(2));
 ok("Alkohol aus Refraktometer ohne Endwert → null", Brau.alkoholAusRefraktometer(14, null) === null);
+ok("Zucker für 18 l auf 5,5 g/l Ziel (Standard-Restkohlensäure) ≈ 130 g – passt zur Faustregel ~7 g/l", nah(Brau.primingZucker(18, 5.5), 130, 10), Brau.primingZucker(18, 5.5).toFixed(1));
+ok("Zucker 0, wenn Ziel unter der Restkohlensäure liegt", Brau.primingZucker(18, 1, 1.7) === 0);
 const maerzen = { ausschlag: 28, malze: [{ name: "Pilsner Malz", gramm: 3500 }, { name: "Münchner Malz", gramm: 2000 }] };
 ok("Märzen: 5,5 kg auf 28 l bei 67 % Ausbeute ≈ 12,5 °P (MMuM)", nah(Brau.stammwuerze(maerzen, 67), 12.5, 0.15), Brau.stammwuerze(maerzen, 67).toFixed(2));
 ok("Märzen: Magnum 10 g 15 % 60 min + HM 30 g 5 % 10 min ≈ 20 IBU (MMuM)", nah(Brau.ibu({ ausschlag: 28, hopfen: [{ gramm: 10, alpha: 15, zeit: 60, typ: "Kochen" }, { gramm: 30, alpha: 5, zeit: 10, typ: "Kochen" }] }, 12.5), 20, 3), Brau.ibu({ ausschlag: 28, hopfen: [{ gramm: 10, alpha: 15, zeit: 60, typ: "Kochen" }, { gramm: 30, alpha: 5, zeit: 10, typ: "Kochen" }] }, 12.5).toFixed(1));
