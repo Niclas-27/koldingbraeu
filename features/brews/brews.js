@@ -884,23 +884,25 @@ function wizardWasserRechner(){
   $("#wzUebernehmenHg").onclick=()=>{const {rHg}=rechne();const g=Bz.runde(rHg,1);$("#f_milchsaeure_hauptguss").value=g;wizardQueueSave({milchsaeure_hauptguss:g});};
   $("#wzUebernehmenNg").onclick=()=>{const {rNg}=rechne();const g=Bz.runde(rNg,1);$("#f_milchsaeure_nachguss").value=g;wizardQueueSave({milchsaeure_nachguss:g});};
 }
-/* Zucker-Rechner im Abfüllung-Schritt: wie viel Haushaltszucker für die gewünschte Karbonisierung nötig ist
-   (Brau.primingZucker, siehe lib/brau.js). Für "Speise" gibt es bewusst KEINEN Rechner – die dafür übliche
-   Formel (Narziss) ergab bei einer Gegenprobe mit Beispielwerten ein unplausibles Ergebnis, darum lieber kein
-   Wert als ein möglicherweise falscher. */
+/* Zucker-Rechner im Abfüllung-Schritt: wie viel Haushaltszucker je Liter Bier für die gewünschte Karbonisierung
+   nötig ist (Brau.primingZucker, siehe lib/brau.js) – bewusst eine Dosierung pro Liter statt einer Gesamtmenge
+   für die ganze Biermenge, braucht darum auch keine Biermenge als Eingabe. Hängt nicht von Stammwürze/Restextrakt
+   ab (siehe Kommentar bei Brau.primingZucker) – nur von Ziel- und Restkohlensäure. Für "Speise" gibt es bewusst
+   KEINEN Rechner – die dafür übliche Formel (Narziss) ergab bei einer Gegenprobe mit Beispielwerten ein
+   unplausibles Ergebnis, darum lieber kein Wert als ein möglicherweise falscher. */
 function wizardZuckerRechner(){
-  const kInp=$("#f_karbonisierung"),bInp=$("#f_biermenge");
+  const kInp=$("#f_karbonisierung");
   if(!kInp)return;
   const rechne=()=>{
-    const ziel=Bz.zahl(kInp.value),bier=Bz.zahl(bInp.value);
-    const g=Bz.primingZucker(bier,ziel);
-    $("#wzRecZucker").textContent=g!=null?Bz.fmtZahl(g,0)+" g":"–";
+    const ziel=Bz.zahl(kInp.value);
+    const g=Bz.primingZucker(ziel);
+    $("#wzRecZucker").textContent=g!=null?Bz.fmtZahl(g,1)+" g/l":"–";
     return g;
   };
-  [kInp,bInp].forEach(el=>el.addEventListener("input",rechne));
+  kInp.addEventListener("input",rechne);
   $("#wzZuckerUebernehmen").onclick=()=>{
     const g=rechne();if(g==null)return;
-    const text=`${Bz.fmtZahl(g,0)} g Haushaltszucker (errechnet für ${Bz.fmtZahl(Bz.zahl(kInp.value))} g/l Ziel-Karbonisierung)`;
+    const text=`${Bz.fmtZahl(g,1)} g/l Haushaltszucker (errechnet für ${Bz.fmtZahl(Bz.zahl(kInp.value))} g/l Ziel-Karbonisierung)`;
     $("#f_zucker").value=text;wizardQueueSave({zucker:text});
   };
 }
@@ -953,15 +955,15 @@ function wizardRenderStep(){
       ${wizardMessungenHtml()}`;
   } else if(key==="abfuellung"){
     const refAlk=Bz.alkoholAusRefraktometer(d.refraktometer_anstellen,d.refraktometer_restextrakt);
-    const zuckerG=Bz.primingZucker(d.biermenge,d.karbonisierung);
+    const zuckerGl=Bz.primingZucker(d.karbonisierung);
     const alkBerechnet=Bz.alkoholAusMessung(d.stammwuerze,d.restextrakt);
     const alkAbweichend=d.alkohol_geschaetzt===false&&alkBerechnet!=null&&Math.abs((d.alkohol??0)-alkBerechnet)>0.05;
     body=`<div class="grid2">${WIZARD_FIELDS.abfuellung.map(f=>field(f,d[f[0]])).join("")}</div>
       <div class="kws" style="grid-template-columns:1fr;max-width:260px;margin:4px 0">
-        <div class="kw"><span>Zucker-Empfehlung</span><b id="wzRecZucker">${zuckerG!=null?esc(Bz.fmtZahl(zuckerG,0))+" g":"–"}</b></div>
+        <div class="kw"><span>Zucker-Empfehlung je Liter</span><b id="wzRecZucker">${zuckerGl!=null?esc(Bz.fmtZahl(zuckerGl,1))+" g/l":"–"}</b></div>
       </div>
       <button type="button" class="btn ghost" id="wzZuckerUebernehmen">Empfehlung ins Speise/Zucker-Feld übernehmen</button>
-      <p class="hint">Rechnet mit einer angenommenen Restkohlensäure von ca. ${esc(Bz.fmtZahl(Bz.REST_CO2_STANDARD_GL))} g/l (Richtwert für ca. 18–20 °C Gärtemperatur) – bei deutlich wärmer oder kälter vergorenem Bier von Hand anpassen. Für Speise (unvergorene Würze statt Zucker) gibt es bewusst keine automatische Berechnung – die dafür übliche Formel ließ sich nicht zuverlässig gegenprüfen.</p>
+      <p class="hint">Rechnet mit einer angenommenen Restkohlensäure von ca. ${esc(Bz.fmtZahl(Bz.REST_CO2_STANDARD_GL))} g/l (Richtwert für ca. 18–20 °C Gärtemperatur) – bei deutlich wärmer oder kälter vergorenem Bier von Hand anpassen. Hängt nur von Ziel- und Restkohlensäure ab, nicht von Stammwürze/Restextrakt – darum reicht die Angabe je Liter, unabhängig von der Biermenge. Für Speise (unvergorene Würze statt Zucker) gibt es bewusst keine automatische Berechnung – die dafür übliche, von Stammwürze/Restextrakt abhängige Formel ließ sich nicht zuverlässig gegenprüfen.</p>
       ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt (Spindel) berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`
         :alkAbweichend?`<p class="hint" style="color:var(--warn)">Von Hand geändert – weicht von der Berechnung (${esc(Bz.fmtZahl(Bz.runde(alkBerechnet,1)))} % vol) ab. <button type="button" class="linkbtn" id="wzAlkoholZuruecksetzen">↺ Auf Berechnung zurücksetzen</button></p>`:""}
       ${refAlk!=null?`<p class="hint">Zum Vergleich aus den Refraktometer-Werten geschätzt (korrigiert nach der verbreiteten „Sean-Terrill“-Näherungsformel, da Alkohol das Refraktometer sonst verfälscht): ${esc(Bz.fmtZahl(Bz.runde(refAlk,1)))} % vol. Auch das ist nur eine Orientierung, kein Laborwert.</p>`:""}
