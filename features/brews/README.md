@@ -171,3 +171,44 @@ zu vergessen.
 ## Offene Punkte
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)
+
+## Braugang-Assistent (seit 31.10.2026)
+
+Eigenständiges Werkzeug, getrennt von der Checkliste oben: die Checkliste hakt vorgegebene Aufgaben ab, der
+Assistent erfasst während des Brauens die tatsächlichen Werte eines aus einem Rezept gestarteten Braugangs,
+in acht Schritten (Rezept & Start, Wasser & Milchsäure, Schüttung, Maischen, Läutern, Kochen, Kühlen &
+Anstellen, Gärung & Abfüllen). Zwischen den Schritten lässt sich frei hin- und herspringen (Schritt-Leiste
+oben, horizontal scrollbar fürs Handy).
+
+- **Kein eigenes Datenmodell für die Werte selbst** – jedes Feld schreibt direkt in dieselbe Spalte von
+  `public.sude`, die auch der normale Editor benutzt (`hauptguss`, `malz`, `rasten`, `hopfen`, `kochzeit`,
+  `stammwuerze`, `hefe`, `abgefuellt`, …). Neu sind nur ein paar bisher fehlende Messwerte und ein Status –
+  siehe `schema/08_braugang_assistent.sql`: `status` (`entwurf` → `gaerung` → `dokumentiert`; alle Alt-Sude
+  stehen auf `dokumentiert`), `wasserhaerte`, `milchsaeure`, `ph_vorher`, `ph_nachher`,
+  `refraktometer_anstellen`, `refraktometer_restextrakt`, `wizard_notizen` (offenes Katalog-Feld für Angaben,
+  die zu keiner festen Spalte passen) sowie die neue Tabelle `sud_messungen` für beliebig viele
+  Zwischenmessungen während der Gärung (Bezeichnung frei, z. B. „Tag 4“, plus Grad Plato und/oder
+  Refraktometer) – RLS wie bei `sud_schritte`/`sud_bilder`, reines Arbeitswerkzeug.
+- **Sofortiger Entwurf:** Der Sud entsteht schon bei Schritt 1 in Supabase (Status `entwurf`) und erscheint
+  damit sofort in der normalen Sudliste (Status-Badge „Entwurf“/„Gärung läuft“), statt erst am Ende.
+- **Autosave statt Speichern-Knopf:** Jede Änderung schreibt mit kurzer Verzögerung (`wizardQueueSave`,
+  500 ms, alle gleichzeitig anstehenden Änderungen gesammelt in einem Schreibvorgang) direkt nach Supabase –
+  ein versehentliches Neuladen verliert nichts, weil beim erneuten Öffnen einfach der zuletzt gespeicherte
+  Stand geladen wird. Kein eigener Zwischenspeicher im Browser nötig.
+- **Schüttung/Maischen/Kochen** nutzen dieselben Listen-Felder (`rowsHTML`) wie der normale Editor – „+ Malz“/
+  „+ Rast“/„+ Hopfengabe“ funktionieren identisch, nur mit Autosave statt Sammel-Speichern.
+- **Wasserhärte-Rechner** im Wasser-Schritt: aus Wasserhärte (°dH) und Hauptguss/Nachguss eine empfohlene
+  Milchsäuremenge – bewusst eine vereinfachte Beispielrechnung (Härte × Menge × Faktor), kein geprüfter
+  Brauwert, das Ergebnis bleibt frei überschreibbar.
+- **„Gärung & Abfüllen“ bleibt offen:** Dieser letzte Schritt lässt sich beliebig oft erneut besuchen (über
+  die Sud-Detailseite, Knopf „Braugang-Assistent“, oder automatisch beim Öffnen eines noch nicht
+  dokumentierten Suds), um weitere Zwischenmessungen nachzutragen, ohne die vorherigen Schritte anzufassen.
+  Erst der bewusste Klick auf „Sud abschließen“ setzt den Status auf `dokumentiert`.
+- **Resume:** `index.html?sud=<id>` öffnet für Braumeister/Admin automatisch den Assistenten (statt der
+  normalen Detailansicht), solange der Status nicht `dokumentiert` ist – bei `gaerung` direkt beim letzten
+  Schritt, sonst beim ersten.
+- Ausgelöst wird der Assistent an den beiden bestehenden „Aus Rezept“-Stellen: „+ Neuer Sud“ → „Aus Rezept“
+  auf der Sude-Seite, und „Sud aus diesem Rezept anlegen“ auf der Rezept-Detailseite (`einstiegVerarbeiten()`/
+  `neuerSud()` in `brews.js`) – beide riefen zuvor den normalen Editor auf. „Leer beginnen“ und „Als Vorlage
+  nutzen“ (Kopie eines bestehenden Suds) bleiben unverändert beim normalen Editor, da dort kein Rezept-Plan
+  zum Vergleich existiert.
