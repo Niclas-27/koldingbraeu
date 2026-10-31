@@ -123,10 +123,11 @@ function rowHTML(b){
   const bm=isBM();const malz=(b.malz||[]).map(m=>m.sorte).filter(Boolean).join(", ");
   const cap=b.etikett?`<i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}" title="Kronkorken ${esc(CAP_LABEL[b.etikett]||b.etikett)}"></i>`:"";
   const lock=bm&&!b.oeffentlich?`<span class="lock" title="Nur für angemeldete Braumeister sichtbar">intern</span>`:"";
+  const statusBadge=bm&&b.status!=="dokumentiert"?`<span class="tag ${b.status}">${b.status==="entwurf"?"Entwurf":"Gärung läuft"}</span>`:"";
   const sub=[malz,b.hopfensorten,b.hefe].filter(Boolean).join(" · ");
   return `<a class="brew" href="index.html?sud=${esc(b.id)}">
     ${sudBild(b)}<div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
-    <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span>${lock}</div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
+    <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span>${lock}${statusBadge}</div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
     <div class="facts"><div class="num">${b.stammwuerze!=null?esc(fmtNum(b.stammwuerze,"°P"))+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(b.bewertung)}" title="Bewertung">${esc(Bz.fmtZahl(b.bewertung,1))}</span>`:""}</div>
   </a>`;
 }
@@ -168,6 +169,7 @@ function zeigeDetail(b){
         ${b.datum_geschaetzt?`<span class="tag" title="In der Tabelle stand das Datum ohne Jahr">Jahr ergänzt</span>`:""}
         ${b.alkohol_geschaetzt?`<span class="tag" title="Berechnet aus Stammwürze und Restextrakt, keine Messung">Alkohol geschätzt</span>`:""}
         ${bm?(b.oeffentlich?`<span class="tag pub">öffentlich</span>`:`<span class="tag intern">intern</span>`):""}
+        ${bm&&b.status!=="dokumentiert"?`<span class="tag ${b.status}">${b.status==="entwurf"?"Entwurf":"Gärung läuft"}</span>`:""}
       </div>
     </header>${b.rezept_id?`<p class="meta-line" id="rezeptVerweis">Nach Rezept …</p>`:""}`;
   const changed=bm&&b.geaendert?`<p class="meta-line">Zuletzt geändert ${esc(fmtDateTime(b.geaendert))}${personName(b.geaendert_von)?" von "+esc(personName(b.geaendert_von)):""}</p>`:"";
@@ -189,9 +191,13 @@ function zeigeDetail(b){
       <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div><input type="file" id="galerieFile" accept="image/*" multiple hidden></section>
       ${changed}
     </article>
-    ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn" id="checklisteBtn">Checkliste</button><button class="btn primary" id="editBtn">Bearbeiten</button></div>`:""}`;
+    ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn" id="checklisteBtn">Checkliste</button>${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}</div>`:""}`;
   $("#list").innerHTML=body;
-  if(bm){$("#editBtn").onclick=()=>editInline(b);$("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);$("#checklisteBtn").onclick=()=>zeigeChecklist(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);}
+  if(bm){
+    if(b.status!=="dokumentiert")$("#wzFortBtn").onclick=async()=>{wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.length-1:0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();};
+    else $("#editBtn").onclick=()=>editInline(b);
+    $("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);$("#checklisteBtn").onclick=()=>zeigeChecklist(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
+  }
   const bp=[b.bild_foto,b.bild_etikett].filter(Boolean);
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
   if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
@@ -612,7 +618,8 @@ async function neuerSud(){
     if(error){$("#nrErr").textContent=fehlertext(error);return;}
     const mitAnl=!!($("#nr_anl")?.checked&&r.sudhausausbeute);
     const u=Bz.umrechnen(r,{ziel,anlage:mitAnl?anl:null});
-    openEditor({ausRezept:true,name:r.name,draft:draftAusRezept(u,r,ziel,mitAnl)},false);
+    closeSheet();
+    openWizard(r.name,draftAusRezept(u,r,ziel,mitAnl));
   };
 }
 function draftAusRezept(u,r,ziel,mitAnl){
@@ -646,6 +653,286 @@ async function rezeptAusSud(b){
   if(error){$("#rzBtn").disabled=false;toast(fehlertext(error));return;}
   toast("Rezept angelegt");location.href="rezepte.html?id="+data.id;
 }
+/* --- Braugang-Assistent ---
+   Eigenständiges Werkzeug (siehe features/brews/README.md), getrennt von der Checkliste: die Checkliste hakt
+   vorgegebene Aufgaben ab, der Assistent erfasst die tatsächlichen Werte eines aus einem Rezept gestarteten
+   Braugangs, Schritt für Schritt. Es gibt kein eigenes Datenmodell dafür – jedes Feld schreibt direkt in die
+   schon bestehende Spalte von public.sude (dieselben, die auch der normale Editor benutzt), nur Wasserhärte/
+   Milchsäure/pH/Refraktometer und die Zwischenmessungen während der Gärung sind neu (Migration 08).
+   Der Sud-Entwurf entsteht sofort bei Schritt 1 (Status "entwurf"), nicht erst am Ende – dadurch taucht er
+   schon während des Brauens in der normalen Sudliste auf. Jedes Feld speichert für sich, mit kurzer
+   Verzögerung (wizardQueueSave), damit ein versehentliches Neuladen nichts verliert: beim erneuten Öffnen
+   wird einfach der zuletzt gespeicherte Stand aus Supabase geladen, kein eigener Zwischenspeicher im Browser
+   nötig. "Gärung & Abfüllen" bleibt offen, bis bewusst auf "Sud abschließen" geklickt wird (Status "gaerung"
+   → "dokumentiert") – bis dahin lässt sich jederzeit zurückkommen, um eine weitere Zwischenmessung einzutragen. */
+const WIZARD_STEPS=[
+  ["uebersicht","Rezept & Start"],["wasser","Wasser & Milchsäure"],["schuettung","Schüttung"],
+  ["maischen","Maischen"],["laeutern","Läutern"],["kochen","Kochen"],["anstellen","Kühlen & Anstellen"],
+  ["gaerung","Gärung & Abfüllen"],
+];
+// [Spalte, Beschriftung, Typ] je Schritt – dieselbe Form wie FIELDS oben, darum auch dieselbe field()-Funktion
+const WIZARD_FIELDS={
+  wasser:[["wasserhaerte","Wasserhärte in °dH","number"],["hauptguss","Hauptguss in Litern","number"],["nachguss","Nachguss in Litern","number"],
+    ["ph_vorher","pH-Wert vorher","number"],["milchsaeure","Milchsäure zugegeben in ml","number"],["ph_nachher","pH-Wert nachher","number"],
+    ["wasser","Weitere Hinweise zum Brauwasser (frei)"]],
+  laeutern:[["laeutern","Läutern"],["wuerze","Würzemenge vor dem Ausschlagen in Litern","number"]],
+  kochen:[["kochzeit","Kochzeit in Minuten","integer"],["hopfensorten","Hopfensorten mit Alphasäure"]],
+  anstellen:[["stammwuerze","Stammwürze gemessen in °P – Spindel","number"],["refraktometer_anstellen","Refraktometer-Wert in °Brix","number"],
+    ["hefe","Hefesorte"],["hefemenge","Hefemenge"]],
+  gaerung:[["restextrakt","Restextrakt, endgültig in °P – Spindel","number"],["refraktometer_restextrakt","Refraktometer, endgültig in °Brix","number"],
+    ["messungen","Messungs-Verlauf (frei)"],["abgefuellt","Abfülldatum","date"],["ausschlag","Ausschlagwürze in Litern","number"],
+    ["biermenge","Biermenge in Litern","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],["alkohol","Alkohol in % vol","number"]],
+};
+let wizard=null; // {sud, step, rezept, anlage, messungen}
+let wizardTimer=null,wizardSaving=0,wizardPending={};
+function wizardIndicator(){
+  const el=$("#wzStatus");if(!el)return;
+  if(wizardSaving>0){el.textContent="speichert …";el.classList.add("speichert");}
+  else{el.textContent="gespeichert "+new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"});el.classList.remove("speichert");}
+}
+/* Alle Änderungen sammeln sich in EINEM wizardPending, egal ob einzelnes Feld oder ganze Liste (malz/rasten/
+   hopfen) – ein einziger gemeinsamer Timer, der gesammelt schreibt. Mit getrennten Timern pro Aufrufer würde
+   eine spätere Änderung die kurz vorher angestoßene, noch nicht geschriebene überschreiben und verwerfen. */
+function wizardQueueSave(patch){
+  Object.assign(wizard.sud,patch);Object.assign(wizardPending,patch);
+  if(!wizardTimer){wizardSaving++;wizardIndicator();} // mehrere Änderungen vor dem Schreiben zählen nur als EIN laufender Speichervorgang
+  clearTimeout(wizardTimer);
+  wizardTimer=setTimeout(wizardFlush,500);
+}
+async function wizardFlush(){
+  wizardTimer=null;
+  const patch=wizardPending;wizardPending={};
+  const {error}=await sb.from("sude").update(patch).eq("id",wizard.sud.id);
+  wizardSaving=Math.max(0,wizardSaving-1);
+  if(error){toast(fehlertext(error));return;}
+  wizardIndicator();
+  const i=state.brews.findIndex(b=>b.id===wizard.sud.id);if(i>-1)state.brews[i]=Object.assign({},state.brews[i],patch);
+}
+/* Listen (malz/rasten/hopfen) bleiben lokal immer vollständig, auch mit einer gerade erst angelegten,
+   noch leeren Zeile – nur die Version, die tatsächlich gespeichert wird, ist um leere Zeilen bereinigt
+   (wie im normalen Sud-Editor bei save()). wizard.sud[kind] wird daher hier bewusst NICHT über wizardQueueSave
+   (das würde es durch die bereinigte Fassung ersetzen) sondern direkt gesetzt. */
+function wizardSaveRows(kind,arr){
+  wizard.sud[kind]=arr;
+  const limpieza={malz:a=>a.filter(m=>m.sorte||m.gramm),
+    hopfen:a=>a.filter(h=>h.sorte||h.gramm).map(h=>({...h,zeit:h.typ==="Stopfen"?null:h.zeit})),
+    rasten:a=>a.filter(r=>r.temperatur!=null||r.zeit!=null)}[kind];
+  wizardPending[kind]=limpieza(arr);
+  if(!wizardTimer){wizardSaving++;wizardIndicator();}
+  clearTimeout(wizardTimer);
+  wizardTimer=setTimeout(wizardFlush,500);
+}
+function wizardRowValue(kind,i){
+  const nz=id=>{const el=$(id);return !el||el.value===""?null:Bz.zahl(el.value);};
+  if(kind==="malz")return{sorte:($("#malz_s_"+i)?.value||"").trim(),gramm:nz("#malz_g_"+i),ebc:nz("#malz_e_"+i)};
+  if(kind==="hopfen")return{sorte:($("#hop_s_"+i)?.value||"").trim(),gramm:nz("#hop_g_"+i),alpha:nz("#hop_a_"+i),zeit:nz("#hop_z_"+i),typ:$("#hop_t_"+i)?.value||"Kochen"};
+  return{temperatur:nz("#rast_t_"+i),zeit:nz("#rast_z_"+i)};
+}
+function wizardCollectRows(kind){return wizard.sud[kind].map((_,i)=>wizardRowValue(kind,i));}
+function wizardWireRowlist(kind,selector){
+  const wrap=$(selector);if(!wrap)return;
+  wrap.addEventListener("input",()=>{wizard.sud[kind]=wizardCollectRows(kind);wizardSaveRows(kind,wizard.sud[kind]);});
+  wrap.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    wizard.sud[kind]=wizardCollectRows(kind);wizard.sud[kind].splice(+b.dataset.i,1);wizardSaveRows(kind,wizard.sud[kind]);wizardRenderStep();});
+  const add=document.querySelector(`[data-wz-add="${kind}"]`);
+  if(add)add.onclick=()=>{
+    wizard.sud[kind]=wizardCollectRows(kind);
+    wizard.sud[kind].push(kind==="malz"?{sorte:"",gramm:"",ebc:null}:kind==="hopfen"?hopfenNeu(null):{temperatur:"",zeit:""});
+    wizardSaveRows(kind,wizard.sud[kind]);wizardRenderStep();
+  };
+}
+function wizardWireFields(felder){
+  felder.forEach(([k,,type])=>{
+    const el=$("#f_"+k);if(!el)return;
+    el.addEventListener("input",()=>{
+      let v;
+      if(type==="number")v=el.value===""?null:Bz.zahl(el.value);
+      else if(type==="integer")v=el.value===""?null:parseInt(el.value,10)||null;
+      else if(type==="date")v=el.value||null;
+      else v=el.value;
+      wizardQueueSave({[k]:v});
+    });
+  });
+}
+/* "Eigene Angabe" je Schritt: offenes Zusatzfeld für alles, was in keine feste Spalte passt (wizard_notizen). */
+function wizardExtraHtml(stepKey){
+  const liste=(wizard.sud.wizard_notizen||[]).map((n,i)=>n.schritt===stepKey?{...n,_i:i}:null).filter(Boolean);
+  return `<div class="wz-extra">${liste.map(n=>`<div class="r one"><input placeholder="Bezeichnung" value="${esc(n.label)}" data-wz-extra-label="${n._i}"><input placeholder="Wert" value="${esc(n.wert)}" data-wz-extra-wert="${n._i}"><button type="button" class="x" data-wz-extra-del="${n._i}" aria-label="Entfernen">✕</button></div>`).join("")}
+    <button type="button" class="add" data-wz-extra-add="${esc(stepKey)}">+ eigene Angabe</button></div>`;
+}
+function wizardWireExtra(stepKey){
+  $(`[data-wz-extra-add="${stepKey}"]`).onclick=()=>{
+    wizard.sud.wizard_notizen=(wizard.sud.wizard_notizen||[]).concat([{schritt:stepKey,label:"",wert:""}]);
+    wizardQueueSave({wizard_notizen:wizard.sud.wizard_notizen});wizardRenderStep();
+  };
+  document.querySelectorAll("[data-wz-extra-label],[data-wz-extra-wert]").forEach(el=>el.addEventListener("input",()=>{
+    const i=+(el.dataset.wzExtraLabel??el.dataset.wzExtraWert);
+    wizard.sud.wizard_notizen[i][el.dataset.wzExtraLabel!=null?"label":"wert"]=el.value;
+    wizardQueueSave({wizard_notizen:wizard.sud.wizard_notizen});
+  }));
+  document.querySelectorAll("[data-wz-extra-del]").forEach(b=>b.onclick=()=>{
+    wizard.sud.wizard_notizen.splice(+b.dataset.wzExtraDel,1);
+    wizardQueueSave({wizard_notizen:wizard.sud.wizard_notizen});wizardRenderStep();
+  });
+}
+/* --- Zwischenmessungen während der Gärung (eigene Tabelle, beliebig viele, über Tage/Wochen) --- */
+async function wizardMessungenLaden(){
+  const {data,error}=await sb.from("sud_messungen").select("*").eq("sud_id",wizard.sud.id).order("angelegt");
+  wizard.messungen=error?[]:data;
+}
+function wizardMessungenHtml(){
+  const rows=(wizard.messungen||[]).map((m,i)=>`<div class="r"><input placeholder="z. B. Tag 4" value="${esc(m.bezeichnung)}" data-mz-bez="${i}" aria-label="Bezeichnung"><input type="number" step="0.1" inputmode="decimal" placeholder="°P" value="${esc(m.plato??"")}" data-mz-plato="${i}" aria-label="Grad Plato"><input type="number" step="0.1" inputmode="decimal" placeholder="°Brix" value="${esc(m.refraktometer??"")}" data-mz-refr="${i}" aria-label="Refraktometer"><button type="button" class="x" data-mz-del="${i}" aria-label="Messung entfernen">✕</button></div>`).join("");
+  return `<div class="rowlist m3" id="rl_messungen">${rows}</div><button type="button" class="add" id="btnMessungHinzufuegen">+ Zwischenmessung</button>`;
+}
+function wizardWireMessungen(){
+  const speichern=async(i)=>{
+    const m=wizard.messungen[i];
+    const bez=($("[data-mz-bez='"+i+"']")?.value||"").trim();
+    const plato=$("[data-mz-plato='"+i+"']")?.value;const refr=$("[data-mz-refr='"+i+"']")?.value;
+    const patch={bezeichnung:bez,plato:plato===""?null:Bz.zahl(plato),refraktometer:refr===""?null:Bz.zahl(refr)};
+    if(!bez)return; // ohne Bezeichnung nicht speichern (Pflichtfeld in der DB)
+    if(m.id){wizardSaving++;wizardIndicator();const{error}=await sb.from("sud_messungen").update(patch).eq("id",m.id);wizardSaving--;wizardIndicator();if(error)toast(fehlertext(error));else Object.assign(m,patch);}
+    else{wizardSaving++;wizardIndicator();const{data,error}=await sb.from("sud_messungen").insert({...patch,sud_id:wizard.sud.id}).select().single();wizardSaving--;wizardIndicator();if(error)toast(fehlertext(error));else wizard.messungen[i]=data;}
+  };
+  $("#rl_messungen")?.querySelectorAll("[data-mz-bez]").forEach(el=>{let t=null;el.oninput=()=>{clearTimeout(t);t=setTimeout(()=>speichern(+el.dataset.mzBez),500);};});
+  $("#rl_messungen")?.querySelectorAll("[data-mz-plato]").forEach(el=>{let t=null;el.oninput=()=>{clearTimeout(t);t=setTimeout(()=>speichern(+el.dataset.mzPlato),500);};});
+  $("#rl_messungen")?.querySelectorAll("[data-mz-refr]").forEach(el=>{let t=null;el.oninput=()=>{clearTimeout(t);t=setTimeout(()=>speichern(+el.dataset.mzRefr),500);};});
+  $("#btnMessungHinzufuegen").onclick=()=>{wizard.messungen.push({bezeichnung:"",plato:null,refraktometer:null});wizardRenderStep();};
+  $("#rl_messungen")?.querySelectorAll("[data-mz-del]").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.mzDel,m=wizard.messungen[i];
+    if(!m.id){wizard.messungen.splice(i,1);wizardRenderStep();return;}
+    sheet("Zwischenmessung entfernen?",`<p>„${esc(m.bezeichnung)}“ wird entfernt.</p>`,
+      `<span class="spacer"></span><button class="btn" id="noDelMz">Abbrechen</button><button class="btn danger" id="yesDelMz">Ja, entfernen</button>`);
+    $("#noDelMz").onclick=closeSheet;
+    $("#yesDelMz").onclick=async()=>{const{error}=await sb.from("sud_messungen").delete().eq("id",m.id);if(error){toast(fehlertext(error));closeSheet();return;}
+      wizard.messungen.splice(i,1);closeSheet();wizardRenderStep();};
+  });
+}
+/* --- Wasserhärte-Rechner: vereinfachte Beispielformel (Härte × Wassermenge × Faktor), keine geprüfte
+   brautechnische Berechnung – dient nur als grobe Orientierung, Ergebnis bleibt frei überschreibbar. */
+function wizardWasserRechner(){
+  const hInp=$("#f_wasserhaerte"),hgInp=$("#f_hauptguss"),ngInp=$("#f_nachguss");
+  if(!hInp)return;
+  const FAKTOR=0.09;
+  const rechne=()=>{
+    const h=Bz.zahl(hInp.value)||0,hg=Bz.zahl(hgInp.value)||0,ng=Bz.zahl(ngInp.value)||0;
+    const rHg=h*hg*FAKTOR,rNg=h*ng*FAKTOR,rGes=rHg+rNg;
+    $("#wzRecHg").textContent=h&&hg?Bz.fmtZahl(rHg,1)+" ml":"–";
+    $("#wzRecNg").textContent=h&&ng?Bz.fmtZahl(rNg,1)+" ml":"–";
+    $("#wzRecGes").textContent=h&&(hg||ng)?Bz.fmtZahl(rGes,1)+" ml":"–";
+    return rGes;
+  };
+  [hInp,hgInp,ngInp].forEach(el=>el.addEventListener("input",rechne));
+  $("#wzUebernehmen").onclick=()=>{const rGes=rechne();$("#f_milchsaeure").value=Bz.fmtZahl(rGes,1);wizardQueueSave({milchsaeure:rGes});};
+}
+function wizardStepsNavHtml(){
+  return `<div class="wz-steps">${WIZARD_STEPS.map(([k,titel],i)=>`<button type="button" class="wz-step${i===wizard.step?" current":""}${i<wizard.step?" done":""}" data-wz-goto="${i}"><span class="wz-num">${i<wizard.step?"✓":i+1}</span>${esc(titel)}</button>`).join("")}</div>
+    <div class="wz-bar"><i style="width:${wizard.step/(WIZARD_STEPS.length-1)*100}%"></i></div>`;
+}
+function wizardPlanHinweis(){
+  if(!wizard.rezept)return"";
+  const r=wizard.rezept,u=wizard.rezeptUmgerechnet;
+  const ziele=[u.hauptguss!=null?`Hauptguss ${Bz.fmtZahl(u.hauptguss)} l`:"",u.nachguss!=null?`Nachguss ${Bz.fmtZahl(u.nachguss)} l`:"",
+    u.kochzeit!=null?`Kochzeit ${Bz.fmtZahl(u.kochzeit,0)} min`:"",r.stammwuerze!=null?`Stammwürze ${Bz.fmtZahl(r.stammwuerze)} °P`:""].filter(Boolean).join(" · ");
+  return `<p class="hint">Geplant laut Rezept <a href="rezepte.html?id=${esc(r.id)}">${esc(r.name)}</a>: ${esc(ziele)}</p>`;
+}
+function wizardRenderStep(){
+  const[key,titel]=WIZARD_STEPS[wizard.step],d=wizard.sud;
+  const fs=inner=>`<fieldset>${inner}</fieldset>`;
+  let body="";
+  if(key==="uebersicht"){
+    body=`${wizardPlanHinweis()}<div class="grid2">${field(["datum","Braudatum","date"],d.datum)}<label class="f">Sud-Nr.<input value="${esc(d.nr)}" disabled></label></div><p class="hint">Status: ${esc({entwurf:"Entwurf",gaerung:"Gärung läuft",dokumentiert:"Dokumentiert"}[d.status])} – erscheint damit schon in der normalen Sudliste.</p>`;
+  } else if(key==="schuettung"){
+    body=`<div class="rowlist m3" id="rl_malz">${rowsHTML("malz",d.malz)}</div><button type="button" class="add" data-wz-add="malz">+ Malz</button>`;
+  } else if(key==="maischen"){
+    body=`<div class="grid2">${field(["einmaischtemperatur","Einmaischtemperatur in °C","number"],d.einmaischtemperatur)}${field(["abmaischtemperatur","Abmaischtemperatur in °C","number"],d.abmaischtemperatur)}</div>
+      <div class="rowlist" id="rl_rasten">${rowsHTML("rasten",d.rasten)}</div><button type="button" class="add" data-wz-add="rasten">+ Rast</button>`;
+  } else if(key==="kochen"){
+    body=`<div class="grid2">${WIZARD_FIELDS.kochen.map(f=>field(f,d[f[0]])).join("")}</div>
+      <div class="rowlist h5" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-wz-add="hopfen">+ Hopfengabe</button>`;
+  } else if(key==="gaerung"){
+    body=`<div class="grid2">${WIZARD_FIELDS.gaerung.map(f=>field(f,d[f[0]])).join("")}</div>
+      <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin:18px 0 10px">Zwischenmessungen</h3>
+      ${wizardMessungenHtml()}
+      <button type="button" class="btn primary" id="wzAbschliessen" style="margin-top:18px">Sud abschließen ✓</button>
+      <p class="hint">Erst wenn Restextrakt und Abfülldatum feststehen und wirklich abgefüllt wurde – bis dahin lässt sich dieser Schritt beliebig oft erneut besuchen.</p>`;
+  } else {
+    body=`<div class="grid2">${WIZARD_FIELDS[key].map(f=>field(f,d[f[0]])).join("")}</div>`;
+    if(key==="wasser")body=`<p class="hint">Richtwert pH 5,2–5,6 im Hauptguss. Die Empfehlung ist eine vereinfachte Beispielrechnung – als grobe Orientierung, kein geprüfter Brauwert.</p>${body}
+      <div class="kws" style="grid-template-columns:repeat(3,minmax(0,1fr));max-width:420px;margin-top:4px">
+        <div class="kw"><span>Empf. Hauptguss</span><b id="wzRecHg">–</b></div><div class="kw"><span>Empf. Nachguss</span><b id="wzRecNg">–</b></div><div class="kw"><span>Gesamt</span><b id="wzRecGes">–</b></div>
+      </div><button type="button" class="btn ghost" id="wzUebernehmen" style="margin-top:8px">Empfehlung in Milchsäure-Feld übernehmen</button>`;
+  }
+  $("#wzBody").innerHTML=fs(body)+wizardExtraHtml(key);
+  if(key==="schuettung")wizardWireRowlist("malz","#rl_malz");
+  else if(key==="maischen"){wizardWireFields([["einmaischtemperatur",0,"number"],["abmaischtemperatur",0,"number"]]);wizardWireRowlist("rasten","#rl_rasten");}
+  else if(key==="kochen"){wizardWireFields(WIZARD_FIELDS.kochen);wizardWireRowlist("hopfen","#rl_hopfen");}
+  else if(key==="gaerung"){wizardWireFields(WIZARD_FIELDS.gaerung);wizardWireMessungen();$("#wzAbschliessen").onclick=wizardAbschliessen;}
+  else if(key==="wasser"){wizardWireFields(WIZARD_FIELDS.wasser);wizardWasserRechner();}
+  else if(key==="uebersicht")wizardWireFields([["datum",0,"date"]]);
+  else wizardWireFields(WIZARD_FIELDS[key]); // laeutern, anstellen: reine Feldschritte ohne Rowlist/Rechner
+  wizardWireExtra(key);
+  $("#wzStepTitel").textContent=`${wizard.step+1}. ${titel}`;
+  $("#wzBack").disabled=wizard.step===0;
+  $("#wzNext").hidden=wizard.step===WIZARD_STEPS.length-1;
+  document.querySelectorAll("[data-wz-goto]").forEach(b=>b.onclick=()=>{wizard.step=+b.dataset.wzGoto;wizardRenderStep();});
+}
+function wizardAnzeigen(){
+  $("#overview").hidden=true;$("#filter").hidden=true;
+  $("#list").innerHTML=`<p class="noprint"><a class="back" id="wzZurueck" href="index.html?sud=${esc(wizard.sud.id)}">← ${esc(title(wizard.sud))}</a></p>
+    <article class="sud-blatt wz">
+      <div class="wz-kopf"><h2>Braugang-Assistent</h2><span class="num" id="wzStatus">gespeichert</span></div>
+      ${wizardStepsNavHtml()}
+      <h3 id="wzStepTitel" style="font-size:1.1rem;margin:4px 0 10px"></h3>
+      <div id="wzBody"></div>
+      <div class="nav-row noprint">
+        <button type="button" class="btn" id="wzBack">← Zurück</button>
+        <button type="button" class="btn primary" id="wzNext">Weiter →</button>
+      </div>
+    </article>`;
+  $("#wzZurueck").onclick=e=>{e.preventDefault();zeigeDetail(wizard.sud);};
+  $("#wzBack").onclick=()=>{if(wizard.step>0){wizard.step--;wizardRenderStep();}};
+  $("#wzNext").onclick=()=>{
+    if(WIZARD_STEPS[wizard.step][0]==="anstellen"&&wizard.sud.status==="entwurf")wizardQueueSave({status:"gaerung"});
+    if(wizard.step<WIZARD_STEPS.length-1){wizard.step++;wizardRenderStep();}
+  };
+  wizardRenderStep();
+}
+async function wizardAbschliessen(){
+  $("#wzAbschliessen").disabled=true;
+  const {error}=await sb.from("sude").update({status:"dokumentiert"}).eq("id",wizard.sud.id);
+  if(error){toast(fehlertext(error));$("#wzAbschliessen").disabled=false;return;}
+  wizard.sud.status="dokumentiert";
+  const i=state.brews.findIndex(b=>b.id===wizard.sud.id);if(i>-1)state.brews[i]=Object.assign({},state.brews[i],{status:"dokumentiert"});
+  toast("Sud abgeschlossen");
+  zeigeDetail(wizard.sud);
+}
+/* Rezept-Plan zum Vergleich laden (nur Anzeige, read-only) */
+async function wizardRezeptLaden(){
+  if(!wizard.sud.rezept_id)return;
+  const [rz,an]=await Promise.all([sb.from("rezepte").select("*").eq("id",wizard.sud.rezept_id).maybeSingle(),sb.from("anlagen").select("*").order("id").limit(1).maybeSingle()]);
+  if(!rz.data)return;
+  wizard.rezept=rz.data;wizard.anlage=an.data;
+  const ziel=wizard.sud.ausschlag||wizard.sud.wuerze||an.data?.standard_menge||rz.data.ausschlag;
+  wizard.rezeptUmgerechnet=Bz.umrechnen(rz.data,{ziel,anlage:an.data&&rz.data.sudhausausbeute?an.data:null});
+  wizardRenderStep();
+}
+/* Neuen Braugang aus einem Rezept anlegen: Sud-Entwurf sofort in Supabase, dann den Assistenten öffnen –
+   anders als die übrigen "Neuer Sud"-Wege (leer/Kopie), die weiterhin den normalen Editor (Sheet) benutzen. */
+async function openWizard(name,draftData){
+  if(!isBM())return;
+  const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
+  const out=Object.assign({nr:nextNr,datum:todayIso(),oeffentlich:false,status:"entwurf"},draftData);
+  out.malz=(out.malz||[]).filter(m=>m.sorte||m.gramm);out.hopfen=(out.hopfen||[]).map(hopfenNeu);out.rasten=(out.rasten||[]).filter(r=>r.temperatur!=null||r.zeit!=null);
+  const {data,error}=await sb.from("sude").insert(out).select().single();
+  if(error){toast(fehlertext(error));return;}
+  state.brews=state.brews.concat([data]);
+  wizard={sud:data,step:0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};
+  history.replaceState(null,"","index.html?sud="+data.id);
+  await wizardMessungenLaden();
+  wizardAnzeigen();
+  wizardRezeptLaden();
+}
 let einstieg=true;
 function einstiegVerarbeiten(){
   if(!einstieg)return;einstieg=false;
@@ -653,7 +940,7 @@ function einstiegVerarbeiten(){
   if(p.get("ausRezept")&&isBM()){
     history.replaceState(null,"",location.pathname);
     let x=null;try{x=JSON.parse(sessionStorage.getItem("kb_sud_aus_rezept")||"null");sessionStorage.removeItem("kb_sud_aus_rezept");}catch(_){}
-    if(x&&x.rezept){openEditor({ausRezept:true,name:x.name,draft:draftAusRezept(x.rezept,{...x.rezept,id:x.rezept_id,name:x.name},x.ziel,x.anlage)},false);}
+    if(x&&x.rezept){openWizard(x.name,draftAusRezept(x.rezept,{...x.rezept,id:x.rezept_id,name:x.name},x.ziel,x.anlage));}
   }
 }
 /* --- CSV-Export --- */
@@ -690,7 +977,11 @@ KB.seite = {
     const sudId=new URLSearchParams(location.search).get("sud");
     if(sudId){
       const b=state.brews.find(x=>x.id===sudId);
-      if(b)zeigeDetail(b);
+      if(b&&isBM()&&b.status!=="dokumentiert"){
+        wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.length-1:0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};
+        await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();
+      }
+      else if(b)zeigeDetail(b);
       else{$("#overview").hidden=true;$("#filter").hidden=true;$("#list").innerHTML=`<p class="noprint"><a class="back" href="index.html">← Alle Sude</a></p><p class="empty">Diesen Sud gibt es nicht oder er ist nicht öffentlich.</p>`;}
       return;
     }
