@@ -131,13 +131,19 @@ function rowHTML(b){
     <div class="facts"><div class="num">${b.stammwuerze!=null?esc(fmtNum(b.stammwuerze,"°P"))+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(b.bewertung)}" title="Bewertung">${esc(Bz.fmtZahl(b.bewertung,1))}</span>`:""}</div>
   </a>`;
 }
-function renderAll(){renderStats();renderChips();renderList();}
+/* Kopfzeile (Logo/Menü/Konto) nur im Braugang-Assistenten ausblenden, um auf dem Handy Höhe zu gewinnen –
+   dort bleibt nur der kleine "← Zurück"-Link. Auf jeder anderen Ansicht wieder einblenden, da die Seite
+   zwischen Liste/Detail/Assistent per history.replaceState ohne echtes Neuladen wechselt (sonst bliebe die
+   Kopfzeile verschwunden, wenn man z. B. per Browser-Zurück von der Assistenten- auf die Listenansicht kommt). */
+function kopfzeileZeigen(zeigen){const h=document.querySelector(".site-header");if(h)h.hidden=!zeigen;}
+function renderAll(){kopfzeileZeigen(true);renderStats();renderChips();renderList();}
 
 /* --- Details (eigene Seite index.html?sud=<id>, wie bei den Rezepten) --- */
 let aktuellerSud=null;
 function zeigeDetail(b){
+  kopfzeileZeigen(true);
   aktuellerSud=b;
-  $("#overview").hidden=true;$("#filter").hidden=true;
+  $("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;
   document.title=title(b)+" · Koldingbräu";
   const bm=isBM();const total=malzSum(b);
   const grist=(b.malz||[]).length?`<div class="grist">${b.malz.map(m=>`<div class="grist-row"><span>${esc(m.sorte)}${m.ebc!=null&&m.ebc!==""?` <small style="color:var(--muted)">${esc(Bz.fmtZahl(m.ebc))} EBC</small>`:""}</span><span class="num">${m.gramm?esc((+m.gramm).toLocaleString("de-DE"))+" g":"–"}</span><div class="grist-bar"><i style="width:${total?Math.round((+m.gramm||0)/total*100):0}%"></i></div></div>`).join("")}<div class="grist-row" style="color:var(--muted)"><span>Schüttung gesamt</span><span class="num">${fmtKg(total)}</span></div></div>`:"";
@@ -376,7 +382,7 @@ function schritteAbleiten(b){
 let checklisteSud=null,checklisteSchritte=[],checklisteGruppen=[];
 async function zeigeChecklist(b){
   checklisteSud=b;checklisteGruppen=schritteAbleiten(b);
-  $("#overview").hidden=true;$("#filter").hidden=true;
+  $("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;
   $("#list").innerHTML=`<p class="noprint"><a class="back" id="checklisteZurueck" href="index.html?sud=${esc(b.id)}">← ${esc(title(b))}</a></p>
     <article class="sud-blatt">
       <h2>Checkliste: ${esc(title(b))}</h2>
@@ -955,7 +961,8 @@ function wizardRenderStep(){
   document.querySelectorAll("[data-wz-goto]").forEach(b=>b.onclick=()=>{wizard.step=+b.dataset.wzGoto;wizardRenderStep();});
 }
 function wizardAnzeigen(){
-  $("#overview").hidden=true;$("#filter").hidden=true;
+  kopfzeileZeigen(false);
+  $("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;
   $("#list").innerHTML=`<p class="noprint"><a class="back" id="wzZurueck" href="index.html?sud=${esc(wizard.sud.id)}">← ${esc(title(wizard.sud))}</a></p>
     <article class="sud-blatt wz">
       <div class="wz-kopf"><p class="kicker">${esc(title(wizard.sud))}</p><span class="num" id="wzStatus">gespeichert</span></div>
@@ -1050,7 +1057,7 @@ KB.seite = {
         await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();
       }
       else if(b)zeigeDetail(b);
-      else{$("#overview").hidden=true;$("#filter").hidden=true;$("#list").innerHTML=`<p class="noprint"><a class="back" href="index.html">← Alle Sude</a></p><p class="empty">Diesen Sud gibt es nicht oder er ist nicht öffentlich.</p>`;}
+      else{$("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;$("#list").innerHTML=`<p class="noprint"><a class="back" href="index.html">← Alle Sude</a></p><p class="empty">Diesen Sud gibt es nicht oder er ist nicht öffentlich.</p>`;}
       return;
     }
     renderAll();einstiegVerarbeiten();
