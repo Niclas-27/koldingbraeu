@@ -105,23 +105,24 @@ button.wahl-k:hover{border-color:var(--muted)}
 .chk-eigen-eingabe input{flex:1;min-width:140px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:1rem}
 #checklisteFortschritt{font-weight:600}
 
-/* Braugang-Assistent: Schritt-Navigation (horizontal scrollbar wie .menu auf dem Handy), Fortschrittsbalken,
-   Speicher-Anzeige, offenes "eigene Angabe"-Zusatzfeld je Schritt. Formularfelder/Rowlists selbst nutzen
-   dieselben Klassen (.grid2, .rowlist, .add, .x) wie der normale Sud-Editor. */
-.wz-kopf{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
-.wz-kopf .num{color:var(--muted);font-size:.8rem}
+/* Braugang-Assistent: Kopf klein (Braugang-Titel + Schrittname), Fußleiste wie beim Verkostungs-Bewertungsbogen
+   (features/tastings/form.js: .bogen-fuss/.fortschritt/.punkte/.bogen-knoepfe) – hier noch mal definiert, weil
+   index.html nur brews.css lädt, nicht tastings.css. Formularfelder/Rowlists nutzen dieselben Klassen
+   (.grid2, .rowlist, .add, .x) wie der normale Sud-Editor. */
+.wz-kopf{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.wz-kopf .num{color:var(--muted);font-size:.78rem}
 .wz-kopf .num.speichert{color:var(--amber)}
-.wz-steps{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-.wz-step{flex:1 0 auto;min-width:72px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;cursor:pointer;padding:6px 4px;border-radius:10px;font-size:.7rem;color:var(--muted);text-align:center}
-.wz-step .wz-num{width:24px;height:24px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:600;color:var(--muted);flex:none}
-.wz-step.current{color:var(--ink);font-weight:600}
-.wz-step.current .wz-num{background:var(--amber);border-color:var(--amber);color:#fff}
-.wz-step.done .wz-num{background:var(--hop);border-color:var(--hop);color:#fff}
-.wz-bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin:6px 0 16px}
-.wz-bar i{display:block;height:100%;background:var(--amber);transition:width .2s}
+.wz-schritt-titel{font-size:1.4rem;font-weight:800;font-stretch:85%;margin:0 0 14px}
 .wz-extra{margin-top:16px;border-top:1px dashed var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
-.wz .nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
-.wz .nav-row .btn{min-height:44px}
+.bogen-fuss{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.bogen-knoepfe{display:flex;gap:10px}
+.bogen-knoepfe .btn{min-height:44px}
+.fortschritt{display:flex;align-items:center;gap:10px}
+.fortschritt .punkte{display:flex;gap:5px;flex:1}
+.fortschritt .punkte .punkt{flex:1;border:0;background:transparent;padding:8px 0;cursor:pointer}
+.fortschritt .punkte .punkt i{display:block;width:100%;height:5px;border-radius:3px;background:var(--line)}
+.fortschritt .punkte .punkt i.ab{background:var(--amber)}
+.fortschritt .zahl{font-size:.78rem;color:var(--muted);flex:none;font-family:var(--font-data)}
 /* Status-Badge für laufende Braugänge (Liste + Detailseite), analog zu .tag.intern/.tag.pub */
 .tag.entwurf{border-color:var(--amber);color:var(--amber)}
 .tag.gaerung{border-color:var(--hop);color:var(--hop)}

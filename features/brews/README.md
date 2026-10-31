@@ -172,13 +172,15 @@ zu vergessen.
 
 - Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)
 
-## Braugang-Assistent (seit 31.10.2026)
+## Braugang-Assistent (seit 31.10.2026, Schritt „Abfüllung” + Alkohol-Berechnung 31.10.2026 ergänzt)
 
 Eigenständiges Werkzeug, getrennt von der Checkliste oben: die Checkliste hakt vorgegebene Aufgaben ab, der
 Assistent erfasst während des Brauens die tatsächlichen Werte eines aus einem Rezept gestarteten Braugangs,
-in acht Schritten (Rezept & Start, Wasser & Milchsäure, Schüttung, Maischen, Läutern, Kochen, Kühlen &
-Anstellen, Gärung & Abfüllen). Zwischen den Schritten lässt sich frei hin- und herspringen (Schritt-Leiste
-oben, horizontal scrollbar fürs Handy).
+in neun Schritten (Rezept & Start, Wasser & Milchsäure, Schüttung, Maischen, Läutern, Kochen, Kühlen &
+Anstellen, Gärung, Abfüllung). Kopf/Fuß sind bewusst wie beim Verkostungs-Bewertungsbogen gehalten
+(`features/tastings/form.js`): oben klein nur der Braugang-Titel, darunter groß der aktuelle Schrittname;
+unten eine schmale Punkte-Leiste + „n / 9” + Zurück/Weiter (hier zusätzlich: die Punkte sind anklickbar, um
+direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort ist die Reihenfolge fest).
 
 - **Kein eigenes Datenmodell für die Werte selbst** – jedes Feld schreibt direkt in dieselbe Spalte von
   `public.sude`, die auch der normale Editor benutzt (`hauptguss`, `malz`, `rasten`, `hopfen`, `kochzeit`,
@@ -200,15 +202,24 @@ oben, horizontal scrollbar fürs Handy).
 - **Wasserhärte-Rechner** im Wasser-Schritt: aus Wasserhärte (°dH) und Hauptguss/Nachguss eine empfohlene
   Milchsäuremenge – bewusst eine vereinfachte Beispielrechnung (Härte × Menge × Faktor), kein geprüfter
   Brauwert, das Ergebnis bleibt frei überschreibbar.
-- **„Gärung & Abfüllen“ bleibt offen:** Dieser letzte Schritt lässt sich beliebig oft erneut besuchen (über
-  die Sud-Detailseite, Knopf „Braugang-Assistent“, oder automatisch beim Öffnen eines noch nicht
-  dokumentierten Suds), um weitere Zwischenmessungen nachzutragen, ohne die vorherigen Schritte anzufassen.
-  Erst der bewusste Klick auf „Sud abschließen“ setzt den Status auf `dokumentiert`.
+- **Gärung bleibt offen:** Dieser Schritt lässt sich beliebig oft erneut besuchen (über die Sud-Detailseite,
+  Knopf „Braugang-Assistent“, oder automatisch beim Öffnen eines noch nicht dokumentierten Suds), um weitere
+  Zwischenmessungen nachzutragen, ohne die vorherigen Schritte anzufassen.
+- **Abfüllung** ist ein eigener, letzter Schritt (Abfülldatum, Speise/Zucker, Flaschen, Biermenge,
+  Ausschlagwürze, Alkohol) – bewusst von der Gärung getrennt, weil das inhaltlich zwei verschiedene Phasen
+  sind. Erst der bewusste Klick auf „Sud abschließen“ dort setzt den Status auf `dokumentiert`.
+- **Alkohol automatisch berechnet:** Sobald sowohl Stammwürze (Anstellen-Schritt) als auch Restextrakt
+  (Gärung-Schritt) vorliegen, füllt `wizardAlkoholAutoberechnen()` das Alkohol-Feld im Abfüllung-Schritt
+  automatisch – über die neue `Brau.alkoholAusMessung(stammwuerze, restextrakt)` in `lib/brau.js`
+  (Balling-Näherung wie bei der bestehenden `Brau.alkohol(plato, evg)`, aber mit zwei echten Messwerten statt
+  einem angenommenen Endvergärungsgrad, also genauer). Wird der Wert von Hand im Abfüllung-Schritt
+  überschrieben, merkt sich das bestehende Feld `alkohol_geschaetzt` das (wie schon beim normalen Editor) und
+  die Automatik überschreibt ihn danach nicht mehr kommentarlos.
 - **Resume:** `index.html?sud=<id>` öffnet für Braumeister/Admin automatisch den Assistenten (statt der
-  normalen Detailansicht), solange der Status nicht `dokumentiert` ist – bei `gaerung` direkt beim letzten
-  Schritt, sonst beim ersten.
-- Ausgelöst wird der Assistent an den beiden bestehenden „Aus Rezept“-Stellen: „+ Neuer Sud“ → „Aus Rezept“
-  auf der Sude-Seite, und „Sud aus diesem Rezept anlegen“ auf der Rezept-Detailseite (`einstiegVerarbeiten()`/
-  `neuerSud()` in `brews.js`) – beide riefen zuvor den normalen Editor auf. „Leer beginnen“ und „Als Vorlage
-  nutzen“ (Kopie eines bestehenden Suds) bleiben unverändert beim normalen Editor, da dort kein Rezept-Plan
+  normalen Detailansicht), solange der Status nicht `dokumentiert` ist – bei `gaerung` direkt beim
+  Gärung-Schritt, sonst beim ersten.
+- Ausgelöst wird der Assistent an den beiden bestehenden „Aus Rezept”-Stellen: „+ Neuer Sud” → „Aus Rezept”
+  auf der Sude-Seite, und „Sud aus diesem Rezept anlegen” auf der Rezept-Detailseite (`einstiegVerarbeiten()`/
+  `neuerSud()` in `brews.js`) – beide riefen zuvor den normalen Editor auf. „Leer beginnen” und „Als Vorlage
+  nutzen” (Kopie eines bestehenden Suds) bleiben unverändert beim normalen Editor, da dort kein Rezept-Plan
   zum Vergleich existiert.
