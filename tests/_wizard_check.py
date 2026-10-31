@@ -20,6 +20,11 @@ def pruefe(name, bedingung):
     if not bedingung:
         fehler.append(name)
 
+async def gehe_zu(pg, index):
+    """Per Punkt in der Fußleiste zu Schritt `index` (0-basiert) springen."""
+    await pg.click(f'[data-wz-goto="{index}"]')
+    await pg.wait_for_timeout(150)
+
 async def main():
     async with async_playwright() as p:
         br = await p.chromium.launch()
@@ -37,14 +42,18 @@ async def main():
         await pg.wait_for_selector("#ausRz")
         await pg.select_option("#nr_rz", "r1")
         await pg.click("#ausRz button[type=submit]")
-        await pg.wait_for_selector(".wz-steps", timeout=5000)
-        pruefe("Acht Schritte in der Navigation", await pg.locator(".wz-step").count() == 8)
+        await pg.wait_for_selector(".fortschritt", timeout=5000)
+        pruefe("Neun Schritte in der Fußleiste", await pg.locator(".punkte .punkt").count() == 9)
+        pruefe("Zähler zeigt 1 / 9", "1 / 9" in await pg.inner_text(".zahl"))
         pruefe("Erster Schritt aktiv (Rezept & Start)", "Rezept & Start" in await pg.inner_text("#wzStepTitel"))
+        pruefe("Kopf zeigt klein den Braugang-Titel", await pg.locator(".wz-kopf .kicker").count() == 1)
         pruefe("Plan-Hinweis zum Rezept sichtbar", "Kolding Kölsch" in await pg.inner_text("#wzBody"))
         pruefe("Status Entwurf", "Entwurf" in await pg.inner_text("#wzBody"))
+        pruefe("Kein großes Schritt-Menü mehr (nur die kleinen Punkte)", await pg.locator(".wz-steps").count() == 0)
 
         # Schritt 2: Wasser – Härte-Rechner
-        await pg.click('.wz-step:has-text("Wasser")')
+        await gehe_zu(pg, 1)
+        pruefe("Schritttitel wechselt auf Wasser & Milchsäure", "Wasser" in await pg.inner_text("#wzStepTitel"))
         await pg.fill("#f_wasserhaerte", "14")
         await pg.fill("#f_hauptguss", "20")
         await pg.wait_for_timeout(150)
@@ -54,21 +63,40 @@ async def main():
         pruefe("Gespeichert-Anzeige aktualisiert", "gespeichert" in (await pg.inner_text("#wzStatus")).lower())
 
         # Schritt 3: Schüttung – weitere Zutat
-        await pg.click('.wz-step:has-text("Schüttung")')
+        await gehe_zu(pg, 2)
         vor = await pg.locator("#rl_malz .r").count()
         await pg.click('[data-wz-add="malz"]')
         await pg.wait_for_timeout(200)
         pruefe("Neue Malz-Zeile erscheint und bleibt stehen", await pg.locator("#rl_malz .r").count() == vor + 1)
 
-        # Schritt 8: Gärung & Abfüllen – Zwischenmessung + Abschluss
-        await pg.click('.wz-step:has-text("Gärung")')
+        # Schritt 7: Anstellen – Stammwürze eintragen (für die Alkohol-Berechnung)
+        await gehe_zu(pg, 6)
+        pruefe("Schritt heißt Kühlen & Anstellen", "Anstellen" in await pg.inner_text("#wzStepTitel"))
+        await pg.fill("#f_stammwuerze", "12")
+        await pg.wait_for_timeout(700)
+
+        # Schritt 8: Gärung – Zwischenmessung + Restextrakt (löst die Alkohol-Berechnung aus)
+        await gehe_zu(pg, 7)
+        pruefe("Schritt heißt nur noch Gärung (ohne Abfüllen)", await pg.inner_text("#wzStepTitel") == "Gärung")
+        pruefe("Kein Abschließen-Knopf mehr im Gärung-Schritt", await pg.locator("#wzAbschliessen").count() == 0)
         await pg.click("#btnMessungHinzufuegen")
         await pg.fill('#rl_messungen [data-mz-bez]', "Tag 4")
         await pg.fill('#rl_messungen [data-mz-plato]', "8.2")
         await pg.wait_for_timeout(700)
         calls = await pg.evaluate("window.__calls.filter(c => c[0] === 'sud_messungen' && c[1] === 'insert')")
         pruefe("Zwischenmessung als Insert in sud_messungen gespeichert", len(calls) == 1 and calls[0][2]["bezeichnung"] == "Tag 4")
-        await pg.fill("#f_restextrakt", "4.1")
+        await pg.fill("#f_restextrakt", "3")
+        await pg.wait_for_timeout(700)
+
+        # Schritt 9: Abfüllung – Alkohol sollte automatisch berechnet sein, Abschließen beendet den Braugang
+        await gehe_zu(pg, 8)
+        pruefe("Schritt heißt Abfüllung", "Abfüllung" in await pg.inner_text("#wzStepTitel"))
+        alkohol = await pg.input_value("#f_alkohol")
+        pruefe("Alkohol automatisch aus Stammwürze/Restextrakt berechnet (≈4,8)", alkohol.replace(",", ".").startswith("4.8"))
+        pruefe("Hinweis zur Automatik sichtbar", "automatisch" in await pg.inner_text("#wzBody"))
+        await pg.fill("#f_flaschen", "40")
+        await pg.fill("#f_zucker", "6 g/l")
+        await pg.fill("#f_biermenge", "18")
         await pg.fill("#f_abgefuellt", "2026-11-05")
         await pg.wait_for_timeout(700)
         await pg.click("#wzAbschliessen")
