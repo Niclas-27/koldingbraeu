@@ -679,8 +679,7 @@ const WIZARD_FIELDS={
   kochen:[["kochzeit","Kochzeit in Minuten","integer"],["hopfensorten","Hopfensorten mit Alphasäure"]],
   anstellen:[["stammwuerze","Stammwürze gemessen in °P – Spindel","number"],["refraktometer_anstellen","Refraktometer-Wert in °Brix","number"],
     ["hefe","Hefesorte"],["hefemenge","Hefemenge"]],
-  gaerung:[["restextrakt","Restextrakt, endgültig in °P – Spindel","number"],["refraktometer_restextrakt","Refraktometer, endgültig in °Brix","number"],
-    ["messungen","Messungs-Verlauf (frei)"]],
+  gaerung:[["restextrakt","Restextrakt, endgültig in °P – Spindel","number"],["refraktometer_restextrakt","Refraktometer, endgültig in °Brix","number"]],
   abfuellung:[["abgefuellt","Abfülldatum","date"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],
     ["biermenge","Biermenge in Litern","number"],["ausschlag","Ausschlagwürze in Litern","number"],["alkohol","Alkohol in % vol","number"]],
 };
@@ -772,9 +771,12 @@ function wizardWireFields(felder){
   });
 }
 /* "Eigene Angabe" je Schritt: offenes Zusatzfeld für alles, was in keine feste Spalte passt (wizard_notizen). */
+/* Dieselben Klassen (.rowlist/.r/.x/.add) wie bei Malz/Hopfen/Rasten – NICHT nur ".r" ohne ".rowlist"-Hülle
+   (das war der Fehler bisher: ohne die Hülle griff weder das Spalten-Raster noch die gemeinsame Feld-Optik
+   .rowlist input aus core/base.css, darum sahen diese Zeilen anders aus als alle übrigen Felder). */
 function wizardExtraHtml(stepKey){
   const liste=(wizard.sud.wizard_notizen||[]).map((n,i)=>n.schritt===stepKey?{...n,_i:i}:null).filter(Boolean);
-  return `<div class="wz-extra">${liste.map(n=>`<div class="r one"><input placeholder="Bezeichnung" value="${esc(n.label)}" data-wz-extra-label="${n._i}"><input placeholder="Wert" value="${esc(n.wert)}" data-wz-extra-wert="${n._i}"><button type="button" class="x" data-wz-extra-del="${n._i}" aria-label="Entfernen">✕</button></div>`).join("")}
+  return `<div class="wz-extra"><div class="rowlist">${liste.map(n=>`<div class="r"><input placeholder="Bezeichnung" value="${esc(n.label)}" data-wz-extra-label="${n._i}" aria-label="Bezeichnung"><input placeholder="Wert" value="${esc(n.wert)}" data-wz-extra-wert="${n._i}" aria-label="Wert"><button type="button" class="x" data-wz-extra-del="${n._i}" aria-label="Entfernen">✕</button></div>`).join("")}</div>
     <button type="button" class="add" data-wz-extra-add="${esc(stepKey)}">+ eigene Angabe</button></div>`;
 }
 function wizardWireExtra(stepKey){
@@ -882,8 +884,10 @@ function wizardRenderStep(){
       <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin:18px 0 10px">Zwischenmessungen</h3>
       ${wizardMessungenHtml()}`;
   } else if(key==="abfuellung"){
+    const refAlk=Bz.alkoholAusRefraktometer(d.refraktometer_anstellen,d.refraktometer_restextrakt);
     body=`<div class="grid2">${WIZARD_FIELDS.abfuellung.map(f=>field(f,d[f[0]])).join("")}</div>
-      ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`:""}
+      ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt (Spindel) berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`:""}
+      ${refAlk!=null?`<p class="hint">Zum Vergleich aus den Refraktometer-Werten geschätzt (korrigiert nach der verbreiteten „Sean-Terrill“-Näherungsformel, da Alkohol das Refraktometer sonst verfälscht): ${esc(Bz.fmtZahl(Bz.runde(refAlk,1)))} % vol. Auch das ist nur eine Orientierung, kein Laborwert.</p>`:""}
       <button type="button" class="btn primary" id="wzAbschliessen" style="margin-top:18px">Sud abschließen ✓</button>
       <p class="hint">Erst wenn wirklich abgefüllt wurde – bis dahin bleibt der Sud auf „Gärung läuft“.</p>`;
   } else {
