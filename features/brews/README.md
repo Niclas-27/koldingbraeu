@@ -180,7 +180,12 @@ in neun Schritten (Rezept & Start, Wasser & Milchsäure, Schüttung, Maischen, L
 Anstellen, Gärung, Abfüllung). Kopf/Fuß sind bewusst wie beim Verkostungs-Bewertungsbogen gehalten
 (`features/tastings/form.js`): oben klein nur der Braugang-Titel, darunter groß der aktuelle Schrittname;
 unten eine schmale Punkte-Leiste + „n / 9” + Zurück/Weiter (hier zusätzlich: die Punkte sind anklickbar, um
-direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort ist die Reihenfolge fest).
+direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort ist die Reihenfolge fest). Anders
+als beim Bewertungsbogen ist die Fußleiste `#wzFuss` hier `position:fixed` am unteren Bildschirmrand verankert,
+damit Zurück/Weiter bei unterschiedlich hohen Schritten nicht auf der Seite herumspringen und immer ohne
+Scrollen erreichbar sind – `.sud-blatt.wz` reserviert dafür unten entsprechend Platz. (`position:sticky` wäre
+die naheliegendere Lösung gewesen, scheitert aber an `overflow-x:hidden` auf html/body – siehe Kommentar in
+`brews.css`.)
 
 - **Kein eigenes Datenmodell für die Werte selbst** – jedes Feld schreibt direkt in dieselbe Spalte von
   `public.sude`, die auch der normale Editor benutzt (`hauptguss`, `malz`, `rasten`, `hopfen`, `kochzeit`,
