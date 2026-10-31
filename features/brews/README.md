@@ -241,10 +241,25 @@ direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort is
 - **Resume:** `index.html?sud=<id>` öffnet für Braumeister/Admin automatisch den Assistenten (statt der
   normalen Detailansicht), solange der Status nicht `dokumentiert` ist – bei `gaerung` direkt beim
   Gärung-Schritt, sonst beim ersten.
-- **Ohne Seiten-Kopfzeile, fürs Handy:** Während des Assistenten sind die sticky Kopfzeile (Logo/Menü/Konto)
-  und die „Sude“-Titelzeile samt „+ Neuer Sud“-Knopf ausgeblendet (`kopfzeileZeigen()` plus `#sudeActions` in
-  `brews.js`) – es bleibt nur der kleine „← Zurück“-Link oben, das spart auf dem Handy spürbar Höhe. Beide
-  werden beim Verlassen (Detailansicht, Checkliste, „Sud nicht gefunden“) wieder eingeblendet.
+- **Ohne Seiten-Kopf-/Fußzeile, fürs Handy:** Während des Assistenten sind die sticky Kopfzeile
+  (Logo/Menü/Konto), die Seiten-Fußzeile (Impressum/Datenschutz-Links) und die „Sude“-Titelzeile samt
+  „+ Neuer Sud“-Knopf ausgeblendet (`kopfzeileZeigen()` plus `#sudeActions` in `brews.js`) – es bleibt nur der
+  kleine „← Zurück“-Link oben, das spart auf dem Handy spürbar Höhe. Alle drei werden beim Verlassen
+  (Detailansicht, Checkliste, „Sud nicht gefunden“) wieder eingeblendet.
+- **Wasser-Schritt mit getrennter Milchsäure je Guss:** Hauptguss und Nachguss haben jeweils ein eigenes
+  Milchsäure-Feld direkt daneben (`milchsaeure_hauptguss`/`milchsaeure_nachguss`, ersetzt die zu grobe erste
+  Fassung mit nur einem gemeinsamen Feld – siehe `schema/10_milchsaeure_getrennt.sql`), mit je einem eigenen
+  „übernehmen“-Link für die Wasserhärte-Empfehlung. **Wichtiger Bugfix dabei:** der alte „Übernehmen“-Knopf
+  setzte den Feldwert mit `Bz.fmtZahl()` (deutsches Komma-Format, z. B. „12,3“) direkt als `.value` eines
+  `<input type="number">` – das lehnt der Browser bei einem Komma still ab (HTML-Zahlenfelder verlangen immer
+  einen Punkt als Dezimaltrennzeichen), sichtbar wurde der tatsächlich gespeicherte Wert erst nach erneutem
+  Rendern (z. B. Zurück/Vor), weil `field()` dort den rohen Zahlenwert nutzt. Jetzt wird der rohe Wert gesetzt.
+- **Zusätzliche Felder landen auf der fertigen Sud-Seite:** alle im Assistenten neu hinzugekommenen Werte
+  (Wasserhärte, pH vorher/nachher, Milchsäure Hauptguss/Nachguss, Refraktometer-Werte, Karbonisierung) werden
+  jetzt auch in `zeigeDetail()` angezeigt (Brauwasser-, Läutern & Kochen-, Gärung- und Abfüllung-Abschnitt),
+  die Zwischenmessungen bekommen einen eigenen Abschnitt (`messungenDetailLaden()`, lädt `sud_messungen` nach,
+  nur für Braumeister/Admin sichtbar wie die Fotogalerie) und „eigene Angaben“ (`wizard_notizen`) einen
+  eigenen „Eigene Angaben“-Abschnitt. Vorher wurden diese Werte zwar gespeichert, aber nirgends mehr gezeigt.
 - Ausgelöst wird der Assistent an den beiden bestehenden „Aus Rezept”-Stellen: „+ Neuer Sud” → „Aus Rezept”
   auf der Sude-Seite, und „Sud aus diesem Rezept anlegen” auf der Rezept-Detailseite (`einstiegVerarbeiten()`/
   `neuerSud()` in `brews.js`) – beide riefen zuvor den normalen Editor auf. „Leer beginnen” und „Als Vorlage
