@@ -214,7 +214,18 @@ direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort is
   (Balling-Näherung wie bei der bestehenden `Brau.alkohol(plato, evg)`, aber mit zwei echten Messwerten statt
   einem angenommenen Endvergärungsgrad, also genauer). Wird der Wert von Hand im Abfüllung-Schritt
   überschrieben, merkt sich das bestehende Feld `alkohol_geschaetzt` das (wie schon beim normalen Editor) und
-  die Automatik überschreibt ihn danach nicht mehr kommentarlos.
+  die Automatik überschreibt ihn danach nicht mehr kommentarlos. Zusätzlich, sobald beide Refraktometer-Werte
+  (Anstellen + Gärung) vorliegen, zeigt der Abfüllung-Schritt als reinen Hinweistext (nicht gespeichert, nur
+  zum Vergleich) einen zweiten Alkoholwert aus `Brau.alkoholAusRefraktometer(ogBrix, fgBrixUnkorrigiert)` –
+  Refraktometer-Endwerte lassen sich nicht wie Plato-Werte direkt verrechnen, weil der Alkohol selbst die
+  Lichtbrechung verfälscht; die Funktion korrigiert das nach der in der Homebrewing-Szene verbreiteten
+  „Sean-Terrill“-Näherungsformel (lineare Fassung). Wie beim Wasserhärte-Rechner: eine anerkannte
+  Faustformel zur Orientierung, kein Laborwert, keine Berücksichtigung eines geräteeigenen Korrekturfaktors.
+- **„Messungs-Verlauf” (Freitext) bewusst nicht im Assistenten:** Das Feld gab es schon vorher auf `sude`, als
+  Freitext-Platz für einen handschriftlichen Verlauf der Gärungsmessungen. Mit den strukturierten
+  Zwischenmessungen (`sud_messungen`, siehe oben) ist das für neue, über den Assistenten geführte Sude
+  überflüssig – die Spalte und das Feld im normalen Editor bleiben für ältere Sude bestehen, tauchen im
+  Gärung-Schritt des Assistenten aber nicht mehr auf.
 - **Resume:** `index.html?sud=<id>` öffnet für Braumeister/Admin automatisch den Assistenten (statt der
   normalen Detailansicht), solange der Status nicht `dokumentiert` ist – bei `gaerung` direkt beim
   Gärung-Schritt, sonst beim ersten.
