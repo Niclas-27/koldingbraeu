@@ -61,7 +61,7 @@ function gastZeigen(){
       return `<button class="probe${m?" done":""}" data-p="${esc(p.id)}">
         ${offen?Bilder.bier(p.bier):`<span class="pn num">${p.nummer}</span>`}
         <span class="pt"><b>${offen?esc(p.bier.name):"Probe "+p.nummer}</b><small>${offen?esc(bierZeile(p.bier)):"blind"}</small></span>
-        <span class="pg">${m?`<b class="num">${m.note}</b>`:"bewerten"}</span>
+        <span class="pg">${m?`<b class="num ${gradeCls(m.note)}">${m.note}</b>`:"bewerten"}</span>
       </button>`;}).join("")}</div>`);
   }
 

@@ -48,7 +48,7 @@ async function listeLaden(){
       const inhalt = `<span class="d">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</span>
         <b class="t">${esc(v.titel)}</b>
         <span class="m">${v.proben.length} ${v.proben.length===1?"Bier":"Biere"}${(v.namen||[]).length ? " · mit "+esc(v.namen.join(", ")) : ""}</span>
-        ${sieger?`<span class="w">${Bilder.bier(sieger)}<span>${esc(sieger.name)}</span><b class="num">${note(sieger.schnitt)}</b></span>`:""}`;
+        ${sieger?`<span class="w">${Bilder.bier(sieger)}<span>${esc(sieger.name)}</span><b class="num ${gradeCls(sieger.schnitt)}">${note(sieger.schnitt)}</b></span>`:""}`;
       return v.bild_titel
         ? `<a class="vk-tile mit-titel" href="verkostung.html?e=${esc(v.id)}">
         <img class="vt-bild" src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy">

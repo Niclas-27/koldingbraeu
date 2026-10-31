@@ -3,7 +3,7 @@
    Reihenfolge: common → form → guest → overview → results → admin → main.
    Gäste haben keinen Tabellenzugriff, sondern nutzen nur die vk_*-Funktionen der Datenbank. */
 "use strict";
-const {$, esc, state, isBM, isAdmin, siteUrl, fmtDateLong, fmtZahl, toast, notice, sheet, closeSheet, sec, fehlertext, lsGet, lsSet} = KB;
+const {$, esc, state, isBM, isAdmin, siteUrl, fmtDateLong, fmtZahl, gradeCls, toast, notice, sheet, closeSheet, sec, fehlertext, lsGet, lsSet} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});
 
 const STATUS = {vorbereitung:"In Vorbereitung", laeuft:"Läuft", abgeschlossen:"Abgeschlossen"};
@@ -45,7 +45,7 @@ function rangTabelle(zeilen, opts){
     return `<li class="${z.schnitt!=null&&platz<=3?"top p"+platz:""}"${opts&&opts.klick?` data-id="${esc(z.id)}" tabindex="0" role="button"`:""}>
       <span class="pl num">${z.schnitt==null?"–":platz+"."}</span>
       <span class="nm${z.bild?" mit-bild":""}">${z.bild||""}<span><b>${esc(z.titel)}</b>${z.unter?`<small>${esc(z.unter)}</small>`:""}</span></span>
-      <span class="sc"><b class="num">${note(z.schnitt)}</b></span>
+      <span class="sc"><b class="num ${gradeCls(z.schnitt)}">${note(z.schnitt)}</b></span>
       <small class="mt">${z.anzahl||0} Bew.${z.anzahl?` · ${Math.round((z.nochmal||0)/z.anzahl*100)} % nochmal`:""}</small>
       <span class="bar"><i style="width:${w}%"></i></span>
     </li>`;}).join("")}</ol>`;
