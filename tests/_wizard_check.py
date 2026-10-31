@@ -44,6 +44,7 @@ async def main():
         await pg.click("#ausRz button[type=submit]")
         await pg.wait_for_selector(".fortschritt", timeout=5000)
         pruefe("Neun Schritte in der Fußleiste", await pg.locator(".punkte .punkt").count() == 9)
+        pruefe("Kopfzeile im Assistenten ausgeblendet", await pg.locator(".site-header").is_hidden())
         pruefe("Zähler zeigt 1 / 9", "1 / 9" in await pg.inner_text(".zahl"))
         pruefe("Erster Schritt aktiv (Rezept & Start)", "Rezept & Start" in await pg.inner_text("#wzStepTitel"))
         pruefe("Kopf zeigt klein den Braugang-Titel", await pg.locator(".wz-kopf .kicker").count() == 1)
@@ -118,6 +119,7 @@ async def main():
         await pg.click("#wzAbschliessen")
         await pg.wait_for_selector(".sud-blatt:not(.wz)", timeout=5000)
         pruefe("Nach Abschluss zurück auf der normalen Sud-Seite", await pg.locator(".wz").count() == 0)
+        pruefe("Kopfzeile nach Abschluss wieder sichtbar", await pg.locator(".site-header").is_visible())
         t = await pg.inner_text("body")
         pruefe("Kein 'Entwurf'/'Gärung läuft'-Badge mehr auf der Detailseite", "Gärung läuft" not in t and "Entwurf" not in t)
 
