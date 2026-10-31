@@ -214,7 +214,10 @@ direkt zu einem Schritt zu springen – im Bewertungsbogen selbst nicht, dort is
   (Balling-Näherung wie bei der bestehenden `Brau.alkohol(plato, evg)`, aber mit zwei echten Messwerten statt
   einem angenommenen Endvergärungsgrad, also genauer). Wird der Wert von Hand im Abfüllung-Schritt
   überschrieben, merkt sich das bestehende Feld `alkohol_geschaetzt` das (wie schon beim normalen Editor) und
-  die Automatik überschreibt ihn danach nicht mehr kommentarlos. Zusätzlich, sobald beide Refraktometer-Werte
+  die Automatik überschreibt ihn danach nicht mehr kommentarlos – stattdessen erscheint, solange der Wert vom
+  berechneten abweicht, ein Warnhinweis „Von Hand geändert – weicht von der Berechnung ab“ mit einem
+  „↺ Auf Berechnung zurücksetzen“-Link (`#wzAlkoholZuruecksetzen` in `brews.js`), der `alkohol_geschaetzt`
+  wieder auf `true` setzt. Zusätzlich, sobald beide Refraktometer-Werte
   (Anstellen + Gärung) vorliegen, zeigt der Abfüllung-Schritt als reinen Hinweistext (nicht gespeichert, nur
   zum Vergleich) einen zweiten Alkoholwert aus `Brau.alkoholAusRefraktometer(ogBrix, fgBrixUnkorrigiert)` –
   Refraktometer-Endwerte lassen sich nicht wie Plato-Werte direkt verrechnen, weil der Alkohol selbst die
