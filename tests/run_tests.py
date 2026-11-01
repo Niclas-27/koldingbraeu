@@ -97,10 +97,11 @@ async def main():
             await pg.click(".rank.erg li >> nth=0 >> summary"); await pg.wait_for_timeout(200)
         t = await seite("anon", "verkostung.html?e=v9", "vk_ergebnis", ergebnis); pruefe("Ergebnisseite mit Kommentar und Namen", "Geheimtipp" in t and "Mit Niels" in t)
         async def ergebnis_bilder(pg):
-            pruefe("Ergebnis zeigt Titelbild und Galerie", await pg.locator("#titelbild").count() == 1 and await pg.locator(".galerie .g-item").count() == 2)
+            # Teilnehmer-Galerie ist seit 27.10.2026 nur für Braumeister/Admin sichtbar (privater Bucket)
+            pruefe("Ergebnis zeigt Titelbild, aber keine Galerie für Gäste", await pg.locator("#titelbild").count() == 1 and await pg.locator(".galerie").count() == 0)
             pruefe("Platzhalter für Biere ohne Bild", await pg.locator(".podium .bb svg").count() >= 1)
-            await pg.click(".galerie .g-zeig >> nth=1"); await pg.wait_for_timeout(200)
-            pruefe("Galerie öffnet Großansicht", "2 / 2" in await pg.inner_text(".lightbox"))
+            await pg.click("#titelbild"); await pg.wait_for_timeout(200)
+            pruefe("Titelbild öffnet Großansicht", await pg.locator(".lightbox").count() == 1)
         await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_bilder", ergebnis_bilder)
         await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_handy", ergebnis, 390, 844)
         async def gast(pg):
@@ -113,7 +114,7 @@ async def main():
             pruefe("Bogen verlangt Gesamtnote", "Gesamtnote" in await pg.inner_text("#bErr"))
             await pg.click(".scale button[data-n='7']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(400)
             pruefe("Bewertung gesendet", '"p_note":7' in await pg.evaluate("JSON.stringify(window.__letzte)"))
-            pruefe("Gast sieht Galerie und Foto-Knopf (0 von 3)", await pg.locator(".galerie .g-item").count() == 1 and "0 von 3" in await pg.inner_text("#fotoBtn"))
+            pruefe("Gast sieht Foto-Knopf (0 von 3), aber keine Galerie", await pg.locator(".galerie").count() == 0 and "0 von 3" in await pg.inner_text("#fotoBtn"))
             await bild_waehlen(pg, "#fotoBtn"); await pg.wait_for_timeout(500)
             pruefe("Gast-Foto geht an die Edge Function", await pg.evaluate("window.__invoke") == "galerie-hochladen")
             pruefe("Zähler steht auf 1 von 3", "1 von 3" in await pg.inner_text("#fotoBtn"))
@@ -175,7 +176,9 @@ async def main():
             pruefe("Alpha-Ausgleich zeigt „statt 15,8 %“", "statt 15,8 %" in await pg.inner_text("#rz"))
             await pg.screenshot(path=str(SHOTS / "rz_detail_umgerechnet.png"), full_page=True)
             await pg.click("#sudAnlegen"); await pg.wait_for_timeout(900)
-            pruefe("Sud aus Rezept: Editor vorausgefüllt", "Neuer Sud nach" in await pg.inner_text("#sheetTitle") and await pg.input_value("#malz_g_0") == "2983")
+            # Seit dem Braugang-Assistenten: Sud-Entwurf wird gleich gespeichert, dann öffnet der Assistent
+            sud = await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='sude'&&c[1]==='insert'))")
+            pruefe("Sud aus Rezept: Entwurf mit umgerechneter Schüttung, Assistent offen", '"gramm":2983' in sud and '"status":"entwurf"' in sud and await pg.locator(".wz-card, .wizard, [class*=wz]").count() > 0)
             await pg.screenshot(path=str(SHOTS / "rz_sud_editor.png"))
         await seite("bm", "rezepte.html", "rz_liste_bm", importieren)
         async def bearbeiten(pg):
@@ -194,8 +197,8 @@ async def main():
             await pg.click("#newBtn"); await pg.wait_for_timeout(300)
             await pg.screenshot(path=str(SHOTS / "sud_neu_auswahl.png"))
             await pg.fill("#nr_menge", "40"); await pg.click("#ausRz button[type=submit]"); await pg.wait_for_timeout(300)
-            pruefe("Neuer Sud aus Rezept, 40 l", "Neuer Sud nach" in await pg.inner_text("#sheetTitle") and await pg.input_value("#hop_g_0") == "20")
-            await pg.click("#cancelEdit")
+            sud = await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='sude'&&c[1]==='insert'))")
+            pruefe("Neuer Sud aus Rezept, 40 l (Entwurf, Hopfen 20 g)", '"gramm":20' in sud and "auf 40 l" in sud)
         await seite("bm", "index.html", "sud_neu", neuer_sud)
         async def rueckweg(pg):
             pruefe("Deep-Link öffnet Sud als eigene Seite", await pg.locator(".sud-blatt").count() == 1)
