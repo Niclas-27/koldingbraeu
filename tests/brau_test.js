@@ -51,5 +51,14 @@ const a = Brau.ausMMuM(alt);
 ok("Flaches Format: Malze, Rasten, Hopfen", a.rezept.malze.length === 2 && a.rezept.malze[1].gramm === 2000 && a.rezept.rasten.length === 2 && a.rezept.hopfen[0].typ === "Kochen");
 ok("Ausschlag 0 → Hinweis", a.rezept.ausschlag === null && a.hinweise.some(h => /Ausschlagwürze/.test(h)));
 let wurf = false; try { Brau.ausMMuM([1, 2]); } catch (e) { wurf = true; } ok("Unsinn wird abgelehnt", wurf);
+// Sudhausausbeute: tatsächliche Ausbeute, eigene Ausbeute je Rezept
+const hazy = [4000, 1500, 500, 400, 1000].map(g => ({ gramm: g }));
+ok("Ist-Ausbeute Sud 23: 20 l, 16,5 °P, 7,4 kg ≈ 47,6 %", nah(Brau.istAusbeute(20, 16.5, hazy), 47.6, 0.3), Brau.istAusbeute(20, 16.5, hazy));
+ok("Ist-Ausbeute ohne Stammwürze = null", Brau.istAusbeute(20, null, hazy) === null);
+const sch = Brau.ausbeuteSchnitt([{ datum: "2020-01-01", ausschlag: 20, stammwuerze: 16.5, malz: hazy }, { datum: "2026-01-01", ausschlag: 20, stammwuerze: null, malz: hazy }, { datum: "2025-01-01", ausschlag: 20, stammwuerze: 16.5, malz: hazy }], 5);
+ok("Schnitt überspringt unvollständige Sude", sch.anzahl === 2 && nah(sch.wert, 47.6, 0.3), JSON.stringify(sch));
+ok("Zielausbeute: Rezept vor Anlage", Brau.zielAusbeute({ eigene_ausbeute: 48 }, { sudhausausbeute: 55 }) === 48 && Brau.zielAusbeute({}, { sudhausausbeute: 55 }) === 55);
+const ue = Brau.umrechnen({ ...r, eigene_ausbeute: 50 }, { ziel: 24, anlage: { sudhausausbeute: 65 } });
+ok("Eigene Ausbeute geht vor: Schüttung × 55/50", ue.malze[0].gramm === Math.round(4230 * 55 / 50), ue.malze[0].gramm);
 console.log(fehler ? `\n${fehler} Fehler` : "\nAlles grün.");
 process.exit(fehler ? 1 : 0);

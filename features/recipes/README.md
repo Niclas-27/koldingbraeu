@@ -25,6 +25,18 @@ umrechenbar auf jede Menge und auf die eigene Anlage. Aus einem Rezept wird ein 
 - **Sud aus Rezept:** Kopie der umgerechneten Werte in den Sud-Editor, mit Verweis aufs Rezept. Späteres Ändern des Rezepts ändert alte Sude nicht.
 - **Export** als MMuM-JSON (2.0) und Druckansicht.
 
+## Sudhausausbeute
+- **Anlagenprofil** (nur Admin): Standard-Ausbeute der eigenen Anlage. Im Formular steht als Vorschlag der Schnitt der
+  letzten 5 Sude mit vollständigen Werten (Schüttung, Ausschlagwürze, Stammwürze) – per Klick übernehmbar.
+- **Rezept, „Ausbeute laut Quelle“** (`rezepte.sudhausausbeute`): mit dieser Ausbeute hat der Autor die Schüttung geplant;
+  Bezug fürs Umrechnen.
+- **Rezept, „Eigene Ausbeute für dieses Rezept“** (`rezepte.eigene_ausbeute`, optional): was die Anlage mit genau diesem
+  Rezept schafft (z. B. weniger bei viel Hafer/Weizen). Geht vor dem Anlagenprofil (`Brau.zielAusbeute`). Vorschlag im
+  Editor: Ø der Sude aus diesem Rezept, sonst der Sude im selben Stil.
+- Umrechnen: Schüttung × Ausbeute laut Quelle / eigene Ausbeute. Jeder Sud zeigt seine tatsächliche Ausbeute
+  (`Brau.istAusbeute`), „Rezept aus Sud“ übernimmt sie als Quell- und eigenen Wert.
+- Schema: `schema/01_eigene_ausbeute.sql`.
+
 ## Dateien
 
 | Datei | Inhalt |
@@ -44,5 +56,5 @@ Rezepte haben wie Sude optional **Foto** und **Etikett** (Editor → „Bilder�
 
 ## Offene Punkte
 
-- Anlagenprofil Koldingbräu: echte Werte eintragen (Start: 65 % Ausbeute, 3 l/h Verdampfung, 20 l)
+- Anlagenprofil Koldingbräu: Ausbeute am 01.11.2026 auf 55,3 % gesetzt (Ø letzte 5 Sude); Verdampfung (3 l/h) noch prüfen
 - BeerXML-Import, Brautag-Modus mit Timern, Einkaufsliste

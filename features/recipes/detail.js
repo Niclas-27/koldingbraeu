@@ -4,7 +4,7 @@
 "use strict";
 let R = null;                                    // das Rezept, wie gespeichert
 let sicht = { ziel: null, mitAnlage: false, alpha: {} };
-let baum = { eltern: null, kinder: [], sude: [], ausSud: null };
+let baum = { eltern: null, kinder: [], sude: [], ausSud: null, ausbeute: null };
 
 async function detailLaden(){
   const {data, error} = await sb.from("rezepte").select("*").eq("id", rezeptId).maybeSingle();
@@ -14,13 +14,14 @@ async function detailLaden(){
     sicht.ziel = R.ausschlag || anlage?.standard_menge || 20;
     sicht.mitAnlage = false;
   }
-  const [eltern, kinder, sude, ausSud] = await Promise.all([
+  const [eltern, kinder, sude, ausSud, ausbeute] = await Promise.all([
     R.eltern_id ? sb.from("rezepte").select("id,name").eq("id", R.eltern_id).maybeSingle() : {data: null},
     sb.from("rezepte").select("id,name").eq("eltern_id", R.id).order("angelegt"),
     sb.rpc("rezept_sude", {p_rezept: R.id}),
     R.aus_sud_id && isBM() ? sb.from("sude").select("id,nr,stil,datum").eq("id", R.aus_sud_id).maybeSingle() : {data: null},
+    rezeptVorschlag(R).catch(() => null),
   ]);
-  baum = { eltern: eltern.data, kinder: kinder.data || [], sude: sude.data || [], ausSud: ausSud.data };
+  baum = { eltern: eltern.data, kinder: kinder.data || [], sude: sude.data || [], ausSud: ausSud.data, ausbeute };
   document.title = R.name + " · Koldingbräu";
   detailZeigen();
 }
@@ -29,7 +30,8 @@ function aktuell(){ return B.umrechnen(R, { ziel: sicht.ziel, anlage: sicht.mitA
 
 function detailZeigen(){
   const u = aktuell();
-  const k = B.kennwerte(u, sicht.mitAnlage && anlage ? anlage.sudhausausbeute : undefined);
+  const zA = B.zielAusbeute(R, anlage);           // eigene Ausbeute für dieses Rezept, sonst Anlagenprofil
+  const k = B.kennwerte(u, sicht.mitAnlage && zA ? zA : undefined);
   const gesamtMalz = u.malze.reduce((a, m) => a + (m.gramm || 0), 0);
   const koch = u.hopfen.map((h, i) => ({...h, i})).filter(h => h.typ !== "Stopfen");
   const stopf = u.hopfen.map((h, i) => ({...h, i})).filter(h => h.typ === "Stopfen");
@@ -51,11 +53,12 @@ function detailZeigen(){
         <label for="zielMenge">für</label>
         <input id="zielMenge" type="number" min="1" max="500" step="0.5" value="${esc(sicht.ziel)}" inputmode="decimal">
         <span>Liter Ausschlagwürze</span>
-        ${anlage ? `<label class="check klein"><input type="checkbox" id="mitAnlage"${sicht.mitAnlage ? " checked" : ""}${anlageMoeglich ? "" : " disabled"}><span>auf Anlage ${esc(anlage.name)} (${zf(anlage.sudhausausbeute)} % Ausbeute)</span></label>` : ""}
+        ${anlage ? `<label class="check klein"><input type="checkbox" id="mitAnlage"${sicht.mitAnlage ? " checked" : ""}${anlageMoeglich ? "" : " disabled"}><span>auf Anlage ${esc(anlage.name)} (${zf(zA)} % Ausbeute${R.eigene_ausbeute ? " für dieses Rezept" : ""})</span></label>` : ""}
         ${geaendert ? `<button class="linkbtn" id="zurueck">Originalwerte</button>` : ""}
       </div>
-      ${anlage && !R.sudhausausbeute ? `<p class="hint noprint">Das Rezept nennt keine Sudhausausbeute – auf eure Anlage kann nur die Menge umgerechnet werden.</p>` : ""}
-      ${geaendert ? `<p class="hint">Umgerechnet für ${zf(sicht.ziel)} l${sicht.mitAnlage ? `, Schüttung für ${zf(anlage.sudhausausbeute)} % statt ${zf(R.sudhausausbeute)} % Ausbeute` : ""}${Object.keys(sicht.alpha).length ? ", Hopfen auf euren Alphawert" : ""} – Stammwürze, Bittere und Farbe bleiben wie im Rezept.</p>` : ""}
+      ${anlage && !R.sudhausausbeute ? `<p class="hint noprint">Das Rezept nennt keine Sudhausausbeute laut Quelle – auf eure Anlage kann nur die Menge umgerechnet werden.</p>` : ""}
+      ${anlage && baum.ausbeute && zA && Math.abs(baum.ausbeute.wert - zA) >= 3 ? `<p class="hint noprint">Eure Sude ${esc(baum.ausbeute.basis)} kamen im Schnitt auf ${zf(baum.ausbeute.wert)} % Ausbeute (${sudeText(baum.ausbeute.anzahl)}), gerechnet wird mit ${zf(zA)} %. Unter „Bearbeiten“ lässt sich der Wert fürs Rezept übernehmen.</p>` : ""}
+      ${geaendert ? `<p class="hint">Umgerechnet für ${zf(sicht.ziel)} l${sicht.mitAnlage ? `, Schüttung für ${zf(zA)} % statt ${zf(R.sudhausausbeute)} % Ausbeute` : ""}${Object.keys(sicht.alpha).length ? ", Hopfen auf euren Alphawert" : ""} – Stammwürze, Bittere und Farbe bleiben wie im Rezept.</p>` : ""}
       ${R.stammwuerze != null ? `<p class="hint noprint" title="Eigene Nachrechnung aus den Zutaten: Stammwürze aus Schüttung und Sudhausausbeute, Bittere nach Tinseth, Farbe als Faustformel">Nachgerechnet: ${esc([zf(k.stammwuerze) + " °P", zf(k.bittere, 0) + " IBU", zf(k.farbe, 0) + " EBC", zf(k.alkohol) + " %"].join(" · "))}</p>` : ""}
     </header>
 
@@ -175,6 +178,6 @@ function loeschen(){
 
 /* Übergabe an die Sud-Seite: das umgerechnete Rezept wird kurz im Browser abgelegt, die Sud-Seite öffnet damit den Editor */
 function sudAusRezept(u){
-  try{ sessionStorage.setItem("kb_sud_aus_rezept", JSON.stringify({rezept_id: R.id, name: R.name, rezept: u, ziel: sicht.ziel, anlage: sicht.mitAnlage})); }catch(_){ toast("Der Browser erlaubt keine Zwischenablage – bitte über „+ Neuer Sud“ gehen."); return; }
+  try{ sessionStorage.setItem("kb_sud_aus_rezept", JSON.stringify({rezept_id: R.id, name: R.name, rezept: u, ziel: sicht.ziel, anlage: sicht.mitAnlage && anlage ? (B.zielAusbeute(R, anlage) || true) : false})); }catch(_){ toast("Der Browser erlaubt keine Zwischenablage – bitte über „+ Neuer Sud“ gehen."); return; }
   location.href = "index.html?ausRezept=1";
 }
