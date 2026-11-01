@@ -82,8 +82,11 @@ function rFormZeichnen(v, ziel){
       <label class="f" for="r_beschreibung">Kurzbeschreibung<textarea id="r_beschreibung" data-k="beschreibung" maxlength="4000">${esc(d.beschreibung || "")}</textarea></label>
       <label class="check"><input type="checkbox" id="r_oeffentlich"${d.oeffentlich ? " checked" : ""}><span><b>Öffentlich zeigen</b><br><span class="hint">Dann sehen auch Gäste dieses Rezept.</span></span></label>`)}
     ${fs("Bilder", `<div class="grid2">${Bilder.feldHtml("rf_foto", d.bild_foto, {art: "frei", beschriftung: "Foto"})}${Bilder.feldHtml("rf_etikett", d.bild_etikett, {art: "frei", beschriftung: "Etikett"})}</div><p class="hint">Beides freiwillig. Das Etikett erscheint als Vorschaubild in der Rezeptliste.</p>`)}
-    ${fs("Bezug und Kennwerte", `<div class="grid2">${inp("ausschlag", "Für Liter Ausschlagwürze *", "number")}${inp("sudhausausbeute", "Sudhausausbeute (%)", "number")}
+    ${fs("Bezug und Kennwerte", `<div class="grid2">${inp("ausschlag", "Für Liter Ausschlagwürze *", "number")}<span></span>
+      ${inp("sudhausausbeute", "Ausbeute laut Quelle (%)", "number")}${inp("eigene_ausbeute", "Eigene Ausbeute für dieses Rezept (%)", "number", anlage ? ` placeholder="leer = Anlage: ${esc(zf(anlage.sudhausausbeute))}"` : "")}
       ${inp("stammwuerze", "Stammwürze (°P)", "number")}${inp("bittere", "Bittere (IBU)", "number")}${inp("farbe", "Farbe (EBC)", "number")}${inp("alkohol", "Alkohol (% Vol.)", "number")}</div>
+      <p class="hint">Ausbeute laut Quelle: mit dieser Ausbeute hat der Autor die Schüttung geplant. Eigene Ausbeute: was eure Anlage mit genau diesem Rezept schafft (z. B. weniger bei viel Hafer oder Weizen). Leer lassen, dann gilt das Anlagenprofil.</p>
+      <p class="hint" id="ausbeuteVorschlag" hidden></p>
       <button type="button" class="add" id="berechnen">Kennwerte aus den Zutaten berechnen</button><span class="hint" id="berechnetInfo"></span>`)}
     ${fs("Schüttung", `<div class="rowlist rz3" id="rl_malze">${d.malze.map((m, i) => `<div class="r">${zelle("malze", i, "name", m.name, "Malz", false, "dl_malz")}${zelle("malze", i, "gramm", m.gramm, "Gramm", true)}${zelle("malze", i, "ebc", m.ebc, "EBC", true)}${weg("malze", i)}</div>`).join("")}</div>
       <button type="button" class="add" data-neu="malze">+ Malz</button>`)}
@@ -114,9 +117,16 @@ function rFormZeichnen(v, ziel){
     const ebcFeld = f.querySelector(`input[data-l="malze"][data-i="${inp.dataset.i}"][data-f="ebc"]`);
     if(ebcFeld && ebcFeld.value === ""){ const e = vorschlaege.malz.get(inp.value) ?? B.malzEbc(inp.value); if(e != null) ebcFeld.value = e; }
   }));
+  // Vorschlag für die eigene Ausbeute aus den Suden dieses Rezepts bzw. Stils
+  rezeptVorschlag({...rDraft, id: rEditId}).then(vs => {
+    const el = $("#ausbeuteVorschlag"); if(!vs || !el || !document.contains(el)) return;
+    el.innerHTML = `Eure Sude ${esc(vs.basis)}: Ø ${esc(zf(vs.wert))} % Ausbeute (${esc(sudeText(vs.anzahl))}). <button type="button" class="linkbtn" id="ausbeuteUebernehmen">Übernehmen</button>`;
+    el.hidden = false;
+    $("#ausbeuteUebernehmen").onclick = () => { const fe = f.querySelector('[data-k="eigene_ausbeute"]'); fe.value = vs.wert; rDraft.eigene_ausbeute = vs.wert; };
+  }).catch(() => {});
   $("#berechnen").onclick = () => {
     rSammeln();
-    const k = B.kennwerte(rDraft);
+    const k = B.kennwerte(rDraft, B.zielAusbeute(rDraft, anlage) && !rDraft.sudhausausbeute ? B.zielAusbeute(rDraft, anlage) : undefined);
     const setze = (key, val, st) => { if(val != null && isFinite(val)){ rDraft[key] = B.runde(val, st); f.querySelector(`[data-k="${key}"]`).value = rDraft[key]; } };
     setze("stammwuerze", k.stammwuerze, 1); setze("bittere", k.bittere, 0); setze("farbe", k.farbe, 0); setze("alkohol", k.alkohol, 1);
     $("#berechnetInfo").textContent = k.stammwuerze == null ? " Für die Stammwürze fehlen Ausschlagwürze, Sudhausausbeute oder Malzmengen." : " Berechnet und eingetragen.";
@@ -125,7 +135,7 @@ function rFormZeichnen(v, ziel){
 
 function rSammeln(){
   const f = $("#rzForm"); if(!f) return;
-  const zahlFelder = ["ausschlag", "sudhausausbeute", "stammwuerze", "bittere", "farbe", "alkohol", "hauptguss", "nachguss", "einmaischtemperatur", "abmaischtemperatur", "kochzeit", "endvergaerungsgrad", "karbonisierung"];
+  const zahlFelder = ["ausschlag", "sudhausausbeute", "eigene_ausbeute", "stammwuerze", "bittere", "farbe", "alkohol", "hauptguss", "nachguss", "einmaischtemperatur", "abmaischtemperatur", "kochzeit", "endvergaerungsgrad", "karbonisierung"];
   f.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; rDraft[k] = zahlFelder.includes(k) ? B.zahl(el.value) : el.value.trim(); });
   rDraft.oeffentlich = $("#r_oeffentlich").checked;
   f.querySelectorAll("[data-l]").forEach(el => {
@@ -140,6 +150,7 @@ async function rSpeichern(){
   const d = rDraft, err = $("#rzErr");
   if(!d.name){ err.textContent = "Bitte einen Namen eingeben."; $("#r_name")?.focus(); return; }
   if(!d.ausschlag || d.ausschlag <= 0){ err.textContent = "Bitte angeben, für wie viele Liter das Rezept gilt."; $("#r_ausschlag")?.focus(); return; }
+  if(d.eigene_ausbeute != null && (d.eigene_ausbeute < 30 || d.eigene_ausbeute > 95)){ err.textContent = "Die eigene Ausbeute muss zwischen 30 und 95 % liegen."; $("#r_eigene_ausbeute")?.focus(); return; }
   const out = {...d};
   out.malze = d.malze.filter(m => m.name || m.gramm);
   out.rasten = d.rasten.filter(x => x.temperatur != null || x.zeit != null);

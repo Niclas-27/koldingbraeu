@@ -193,7 +193,7 @@ function zeigeDetail(b){
       ${sec("Schüttung",grist)}
       ${sec("Maischplan",steps)}
       ${sec("Läutern & Kochen"+(b.kochzeit!=null?` · ${Bz.fmtZahl(b.kochzeit,0)} min`:""),
-        kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Stammwürze (Refraktometer)",fmtNum(b.refraktometer_anstellen,"°Brix")]])
+        kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Stammwürze (Refraktometer)",fmtNum(b.refraktometer_anstellen,"°Brix")],["Sudhausausbeute",(v=>v==null?null:Bz.fmtZahl(v)+" % (berechnet aus Schüttung, Ausschlagwürze und Stammwürze)")(Bz.istAusbeute(b.ausschlag,b.stammwuerze,b.malz))]])
         +(b.hopfensorten?`<p style="margin:12px 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")
         +(hops?`<div style="margin-top:${b.hopfensorten?"0":"12px"}">${hops}</div>`:""))}
       ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",b.hefemenge],["Messungen",b.messungen],["Restextrakt",fmtNum(b.restextrakt,"°P")],
@@ -625,7 +625,7 @@ async function save(){
 }
 /* --- Neuer Sud: leer oder aus Rezept --- */
 async function neuerSud(){
-  const [rz,an]=await Promise.all([sb.from("rezepte").select("id,name,stil,ausschlag,sudhausausbeute").order("name"),sb.from("anlagen").select("*").order("id").limit(1).maybeSingle()]);
+  const [rz,an]=await Promise.all([sb.from("rezepte").select("id,name,stil,ausschlag,sudhausausbeute,eigene_ausbeute").order("name"),sb.from("anlagen").select("*").order("id").limit(1).maybeSingle()]);
   const liste=rz.data||[],anl=an.data;
   sheet("Neuer Sud",`<div class="wahl">
       <button class="wahl-k" id="leer"><b>Leer beginnen</b><span>Alle Felder selbst ausfüllen.</span></button>
@@ -633,13 +633,18 @@ async function neuerSud(){
         ${liste.length?`<form id="ausRz" class="stack" novalidate>
           <label class="f" for="nr_rz">Rezept<select id="nr_rz">${liste.map(r=>`<option value="${esc(r.id)}">${esc(r.name)}${r.stil?" · "+esc(r.stil):""}</option>`).join("")}</select></label>
           <label class="f" for="nr_menge">Ausschlagwürze (Liter)<input id="nr_menge" type="number" step="0.5" min="1" inputmode="decimal" value="${esc(anl?.standard_menge??20)}"></label>
-          ${anl?`<label class="check"><input type="checkbox" id="nr_anl" checked><span>Auf Anlage ${esc(anl.name)} umrechnen (${esc(Bz.fmtZahl(anl.sudhausausbeute))} % Ausbeute)</span></label>`:""}
+          ${anl?`<label class="check"><input type="checkbox" id="nr_anl" checked><span>Auf Anlage ${esc(anl.name)} umrechnen (<span id="nr_sha"></span>)</span></label>`:""}
           <span class="err" id="nrErr"></span>
           <button class="btn primary" type="submit" style="align-self:flex-start">Sud anlegen</button></form>`:""}
       </div></div>`,`<span class="spacer"></span><button class="btn" id="nrZu">Abbrechen</button>`);
   $("#nrZu").onclick=closeSheet;
   $("#leer").onclick=()=>openEditor(null,false);
   const f=$("#ausRz");if(!f)return;
+  // Zeigt, mit welcher Ausbeute für das gewählte Rezept gerechnet wird
+  const shaZeigen=()=>{const el=$("#nr_sha");if(!el)return;const r=liste.find(x=>x.id===$("#nr_rz").value)||{};const cb=$("#nr_anl");
+    if(!r.sudhausausbeute){el.textContent="Rezept nennt keine Ausbeute – nur die Menge wird umgerechnet";cb.checked=false;cb.disabled=true;return;}
+    cb.disabled=false;el.textContent=`${Bz.fmtZahl(Bz.zielAusbeute(r,anl))} % Ausbeute${r.eigene_ausbeute?" für dieses Rezept":""} statt ${Bz.fmtZahl(r.sudhausausbeute)} % laut Quelle`;};
+  $("#nr_rz").onchange=shaZeigen;shaZeigen();
   f.onsubmit=async e=>{e.preventDefault();
     const id=$("#nr_rz").value,ziel=Bz.zahl($("#nr_menge").value);
     if(!ziel||ziel<=0){$("#nrErr").textContent="Bitte die Ausschlagwürze in Litern angeben.";return;}
@@ -648,10 +653,10 @@ async function neuerSud(){
     const mitAnl=!!($("#nr_anl")?.checked&&r.sudhausausbeute);
     const u=Bz.umrechnen(r,{ziel,anlage:mitAnl?anl:null});
     closeSheet();
-    openWizard(r.name,draftAusRezept(u,r,ziel,mitAnl));
+    openWizard(r.name,draftAusRezept(u,r,ziel,mitAnl?Bz.zielAusbeute(r,anl):null));
   };
 }
-function draftAusRezept(u,r,ziel,mitAnl){
+function draftAusRezept(u,r,ziel,mitAnl){ // mitAnl: verwendete Ausbeute in % (oder true/false aus älteren Aufrufen)
   const t=v=>v==null?"":Bz.fmtZahl(v);
   const sorten=[...new Map((u.hopfen||[]).filter(h=>h.sorte).map(h=>[h.sorte,h.alpha])).entries()].map(([s,a])=>a!=null?`${s} ${t(a)} %`:s).join(", ");
   const ziele=[r.stammwuerze!=null?`${t(r.stammwuerze)} °P`:"",r.bittere!=null?`${t(r.bittere)} IBU`:"",r.farbe!=null?`${t(r.farbe)} EBC`:"",r.alkohol!=null?`${t(r.alkohol)} % Alkohol`:""].filter(Boolean).join(" · ");
@@ -664,7 +669,7 @@ function draftAusRezept(u,r,ziel,mitAnl){
     malz:(u.malze||[]).map(m=>({sorte:m.name,gramm:m.gramm,ebc:m.ebc??null})),
     hopfen:(u.hopfen||[]).map(h=>({sorte:h.sorte,gramm:h.gramm,alpha:h.alpha,zeit:h.zeit,typ:h.typ})),
     hopfensorten:sorten,hefe:r.hefe||"",
-    notizen:`Nach Rezept „${r.name}“, umgerechnet auf ${t(ziel)} l Ausschlagwürze${mitAnl?" (Anlagenprofil)":""}.${ziele?"\nZiel: "+ziele:""}${gaer?"\n"+gaer:""}`};
+    notizen:`Nach Rezept „${r.name}“, umgerechnet auf ${t(ziel)} l Ausschlagwürze${typeof mitAnl==="number"?`, Schüttung für ${t(mitAnl)} % Sudhausausbeute`:mitAnl?" (Anlagenprofil)":""}.${ziele?"\nZiel: "+ziele:""}${gaer?"\n"+gaer:""}`};
 }
 /* Rückweg: aus einem Sud ein Rezept machen */
 async function rezeptAusSud(b){
@@ -676,7 +681,9 @@ async function rezeptAusSud(b){
     malze:(b.malz||[]).filter(m=>m.sorte||m.gramm).map(m=>({name:m.sorte,gramm:Bz.zahl(m.gramm),ebc:m.ebc!=null&&m.ebc!==""?Bz.zahl(m.ebc):Bz.malzEbc(m.sorte)})),
     hopfen:(b.hopfen||[]).map(hopfenNeu).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>h),
     hefe:b.hefe||null,anmerkung:[b.hefemenge?`Hefemenge: ${b.hefemenge}`:"",b.wasser?`Wasser: ${b.wasser}`:"",b.laeutern?`Läutern: ${b.laeutern}`:"",b.notizen||""].filter(Boolean).join("\n")||null,oeffentlich:false};
-  if(r.stammwuerze&&r.ausschlag){const kg=r.malze.reduce((a,m)=>a+(m.gramm||0),0)/1000;if(kg)r.sudhausausbeute=Bz.runde(r.ausschlag*r.stammwuerze/100*Bz.sgAusPlato(r.stammwuerze)/kg*100,1);}
+  // Tatsächliche Ausbeute dieses Suds = Bezug der Mengen und eigene Ausbeute des neuen Rezepts
+  const sha=Bz.istAusbeute(r.ausschlag,r.stammwuerze,r.malze);
+  if(sha){r.sudhausausbeute=sha;if(sha>=30&&sha<=95)r.eigene_ausbeute=sha;}
   $("#rzBtn").disabled=true;
   const {data,error}=await sb.from("rezepte").insert(r).select("id").single();
   if(error){$("#rzBtn").disabled=false;toast(fehlertext(error));return;}
