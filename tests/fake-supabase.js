@@ -9,7 +9,7 @@ const stile=[{id:1,name:"Pils",reihenfolge:10},{id:2,name:"Helles",reihenfolge:2
 const biere=[{id:"b1",name:"Kolding Kölsch",brauerei:"Koldingbräu",eigen:true,alkohol:4.9,stil_id:1,sud_id:null,notiz:null,bild_kronkorken:"biere/b1/kronkorken-a.jpg",bild_flasche:null},{id:"b2",name:"Augustiner Hell",brauerei:"Augustiner",eigen:false,alkohol:5.2,stil_id:2,sud_id:null,notiz:null},{id:"b3",name:"Hazy Hops",brauerei:"Kehrwieder",eigen:false,alkohol:6.5,stil_id:15}];
 const db={
  profile:[{id:uid,name:"Niels",email:"n@x.de",rolle:rolle==="admin"?"admin":"braumeister"}],
- sude:[{id:"s1",nr:1,datum:"2024-03-01",stil:"Kölsch",ausschlag:20,stammwuerze:11.5,malz:[{sorte:"Pils",gramm:4000}],hopfen:[],maischplan:[],oeffentlich:true,bewertung:8.6},{id:"s2",nr:2,datum:"2025-05-01",stil:"IPA",malz:[],hopfen:[],maischplan:[],oeffentlich:false,bewertung:9.4}],
+ sude:[{id:"s1",status:"dokumentiert",nr:1,datum:"2024-03-01",stil:"Kölsch",ausschlag:20,stammwuerze:11.5,malz:[{sorte:"Pils",gramm:4000}],hopfen:[],maischplan:[],oeffentlich:true,bewertung:8.6},{id:"s2",status:"dokumentiert",nr:2,datum:"2025-05-01",stil:"IPA",malz:[],hopfen:[],maischplan:[],oeffentlich:false,bewertung:9.4}],
  bierstile:stile,
  verkostungen:[{id:"v1",titel:"Herbstrunde",datum:"2026-10-17",ort:"Hamburg",blind:false,status:"laeuft",code:"abc234defg",proben:[{count:3}],teilnehmer:[{count:2}]}],
  proben:[{id:"p1",verkostung_id:"v1",bier_id:"b1",nummer:1},{id:"p2",verkostung_id:"v1",bier_id:"b2",nummer:2},{id:"p3",verkostung_id:"v1",bier_id:"b3",nummer:3}],
@@ -79,6 +79,7 @@ const rpcs={
  vk_admin_bewerten(a){window.__admin=a;let w=db.bewertungen.find(x=>x.probe_id===a.p_probe&&x.teilnehmer_id===a.p_teilnehmer);if(!w){w={id:"w"+Math.random(),probe_id:a.p_probe,teilnehmer_id:a.p_teilnehmer,ausgeblendet:false,nachgetragen:true};db.bewertungen.push(w);}else{w.original_note=w.original_note??w.note;}Object.assign(w,{note:a.p_note,kommentar:a.p_kommentar,admin_geaendert:"2026-10-18T11:00:00Z"});return {data:{ok:true},error:null};},
  vk_admin_teilnehmer(a){const t={id:"tx"+Math.random(),verkostung_id:a.p_verkostung,name:a.p_name};db.teilnehmer.push(t);return {data:t.id,error:null};},
  vk_vorschlagen(){return {data:{ok:true},error:null};},
+ vk_angekuendigt(){return {data:[],error:null};},
  vk_archiv(){return {data:[{id:"v0",titel:"Frühjahrsrunde",bild_titel:"verkostungen/v0/titel-a.jpg",datum:"2026-04-01",ort:"Hamburg",teilnehmer:7,namen:["Niels","Carsten","Jan"],proben:[{nummer:2,name:"Augustiner Hell",brauerei:"Augustiner",stil:"Helles",alkohol:5.2,schnitt:8.14,anzahl:7,nochmal:6},{nummer:1,name:"Kolding Kölsch",brauerei:"Koldingbräu",stil:"Pils",schnitt:7.5,anzahl:6,nochmal:3}]},{id:"v9",titel:"Pils & Lager",datum:"2026-10-18",ort:null,teilnehmer:3,namen:["Niels","Carsten","Jan"],proben:[{nummer:2,name:"Einbecker",schnitt:9,anzahl:3,nochmal:3}]}],error:null};},
  vk_ergebnis(){const P=(nr,n,s,no,nm,ext)=>Object.assign({nummer:nr,bier_id:"b"+nr,name:n,brauerei:n.split(" ")[0],eigen:false,stil:s,alkohol:null,schnitt:no,anzahl:3,nochmal:nm,noten:[no,no,no],merkmale:{},geruch:{},fehler:{},kommentare:[]},ext||{});
    return {data:{verkostung:{id:"v9",titel:"Pils & Lager",datum:"2026-10-18",ort:"Röntbarg",blind:false,bild_titel:"verkostungen/v9/titel-a.jpg"},galerie:["verkostungen/v9/galerie/a.jpg","verkostungen/v9/galerie/b.jpg"],teilnehmer:["Niels","Carsten","Jan"],proben:[
@@ -107,6 +108,6 @@ window.supabase={createClient(){return {
  rpc(n,a){log.push(["rpc",n,a]);return Promise.resolve(rpcs[n](a||{}));},
  auth:{getSession:()=>Promise.resolve({data:{session:rolle==="anon"?null:{user:{id:uid,email:"n@x.de"}}}}),onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}};},signInWithPassword:()=>Promise.resolve({error:null}),signOut:()=>Promise.resolve({})},
  functions:{invoke(n,o){log.push(["fn",n]);window.__invoke=n;if(n==="galerie-hochladen"){const tok=o.body.get("token");const t=db.teilnehmer.find(x=>x.token===tok);db.verkostung_bilder.push({id:"g"+Math.random(),verkostung_id:"v1",pfad:"verkostungen/v1/galerie/neu.jpg",teilnehmer_id:t&&t.id});merken();}return Promise.resolve({data:{ok:true},error:null});}},
- storage:{from(b){return {upload(pfad,blob){(window.__uploads=window.__uploads||[]).push(pfad);return Promise.resolve({data:{path:pfad},error:null});},remove(ps){(window.__removed=window.__removed||[]).push(...ps);return Promise.resolve({data:ps,error:null});}};}},
+ storage:{from(b){return {upload(pfad,blob){(window.__uploads=window.__uploads||[]).push(pfad);return Promise.resolve({data:{path:pfad},error:null});},remove(ps){(window.__removed=window.__removed||[]).push(...ps);return Promise.resolve({data:ps,error:null});},createSignedUrls(ps){return Promise.resolve({data:ps.map(p=>({path:p,signedUrl:"https://fake.supabase.co/storage/v1/object/public/"+b+"/"+p+"?token=t"})),error:null});}};}},
 };}};
 })();
