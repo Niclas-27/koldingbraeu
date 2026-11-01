@@ -49,15 +49,24 @@ function anlageForm(){
   sheet("Anlagenprofil " + (a.name || ""), `<form id="anlForm" class="stack" novalidate>
       <p class="hint">Mit diesen Werten werden Rezepte auf eure Anlage umgerechnet: Die Schüttung passt sich an eure Sudhausausbeute an, der Nachguss an eure Verdampfung.${ro ? " Ändern kann sie der Admin." : ""}</p>
       <div class="grid2">
-        <label class="f" for="an_sha">Sudhausausbeute (%)<input id="an_sha" type="number" step="0.5" min="30" max="95" value="${esc(a.sudhausausbeute ?? "")}"${ro ? " disabled" : ""}></label>
+        <label class="f" for="an_sha">Sudhausausbeute (%)<input id="an_sha" type="number" step="0.1" min="30" max="95" value="${esc(a.sudhausausbeute ?? "")}"${ro ? " disabled" : ""}></label>
         <label class="f" for="an_verd">Verdampfung (Liter je Stunde)<input id="an_verd" type="number" step="0.1" min="0" max="20" value="${esc(a.verdampfung ?? "")}"${ro ? " disabled" : ""}></label>
         <label class="f" for="an_menge">Übliche Ausschlagwürze (Liter)<input id="an_menge" type="number" step="0.5" min="1" max="500" value="${esc(a.standard_menge ?? "")}"${ro ? " disabled" : ""}></label>
       </div>
+      <p class="hint" id="anVorschlag">Tatsächliche Ausbeute eurer letzten Sude wird berechnet …</p>
+      <p class="hint">Einzelne Rezepte (z. B. mit viel Hafer oder Weizen) können eine eigene Ausbeute haben – die steht dann im Rezept und geht vor.</p>
       <label class="f" for="an_notiz">Notiz<textarea id="an_notiz" maxlength="1000"${ro ? " disabled" : ""}>${esc(a.notiz || "")}</textarea></label>
       <span class="err" id="anErr"></span>
     </form>`,
     `<span class="spacer"></span><button class="btn" id="anZu">${ro ? "Schließen" : "Abbrechen"}</button>${ro ? "" : `<button class="btn primary" id="anSave" form="anlForm" type="submit">Speichern</button>`}`);
   $("#anZu").onclick = closeSheet;
+  anlageVorschlag().then(vs => {
+    const el = $("#anVorschlag"); if(!el) return;
+    if(!vs){ el.textContent = "Aus euren Suden lässt sich noch keine Ausbeute berechnen (es fehlen Ausschlagwürze, Stammwürze oder Schüttung)."; return; }
+    const ab = a.sudhausausbeute != null ? vs.wert - a.sudhausausbeute : 0;
+    el.innerHTML = `${vs.anzahl === 1 ? "Euer letzter Sud kam" : `Eure letzten ${vs.anzahl} Sude kamen im Schnitt`} auf <b>${esc(zf(vs.wert))} %</b>${Math.abs(ab) >= 1 ? ` (${ab > 0 ? "+" : "−"}${esc(zf(Math.abs(ab)))} Punkte gegenüber dem eingetragenen Wert)` : ""}.${ro ? "" : ` <button type="button" class="linkbtn" id="anUebernehmen">Übernehmen</button>`}`;
+    const b = $("#anUebernehmen"); if(b) b.onclick = () => { $("#an_sha").value = vs.wert; };
+  }).catch(() => { const el = $("#anVorschlag"); if(el) el.hidden = true; });
   if(ro) return;
   $("#anlForm").onsubmit = async e => { e.preventDefault();
     const out = {sudhausausbeute: B.zahl($("#an_sha").value), verdampfung: B.zahl($("#an_verd").value), standard_menge: B.zahl($("#an_menge").value), notiz: $("#an_notiz").value.trim() || null, geaendert: new Date().toISOString()};
