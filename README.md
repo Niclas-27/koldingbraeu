@@ -30,10 +30,14 @@ features/
   recipes/   Rezepte: MMuM-Import, Umrechnen, Stammbaum
 lib/         eigene Hilfsbausteine ohne Bereichsbezug (qr.js, brau.js = Brau-Rechnungen und MMuM-Format,
              bilder.js = Fotos wählen, zuschneiden, verkleinern, hochladen, Großansicht, gezeichnete Platzhalter)
-supabase/    bereichsübergreifende Datenbank (Profile, Rollen) und Edge Functions „einladen“, „galerie-hochladen“
+supabase/    bereichsübergreifende Datenbank (Profile, Rollen) und Edge Functions „einladen“, „galerie-hochladen“,
+             „galerie-loeschen“
+scripts/     assets.sh = Bibliothek und Schriften holen, build-previews.mjs = Vorschauseiten für geteilte Links
 tests/       Klicktests mit Test-Attrappe statt echter Datenbank
 fonts/, vendor/   Schriften und Supabase-Bibliothek – beim Veröffentlichen geholt
-docs/        Konzept und Pläne – nur lokal, nicht im Repo
+sude.json    Altbestand: die 22 Sude von 2018 bis 2025 als Rohdaten, aus denen die Datenbank einmalig befüllt
+             wurde – die Seite liest die Datei nicht
+docs/        Konzept und Pläne – nur lokal, nicht im Repo (also auch nirgends gesichert)
 ```
 
 **Regeln:** Ein Bereich nutzt nur `core/` und `lib/`, nie direkt einen anderen Bereich. Rechte werden in der
@@ -56,12 +60,29 @@ Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
 - Gäste haben keinen Tabellenzugriff; sie arbeiten nur über die Datenbankfunktionen `vk_*` mit dem Code der Verkostung und einem persönlichen Schlüssel, der auf ihrem Handy liegt.
 - Öffentlich sind abgeschlossene Verkostungen (Liste und Ergebnisseite `verkostung.html?e=…` mit Podest, Rangliste, Einzelnoten, Geschmacksprofil, Kommentaren ohne Namen und den Namen der Teilnehmer) sowie die Liga. Wer welche Note gab, sehen nur Braumeister; sie können einzelne Bewertungen ausblenden.
 - Der Admin kann Bewertungen nachträglich ändern oder fehlende nachtragen (Verkostung → Bier antippen → „Bearbeiten“ bzw. „+ Bewertung nachtragen“). Jede Änderung wird intern vermerkt, die ursprüngliche Note bleibt erhalten.
-- Fotos: Titelbild und Galerie je Verkostung (Gäste bis zu drei Fotos), Kronkorken- und Flaschenbild je Bier, Foto und Etikett je Sud und Rezept. Ohne Foto gibt es einen gezeichneten Platzhalter. Löschen dürfen nur Braumeister.
+- Fotos: Titelbild und Galerie je Verkostung (Gäste bis zu drei Fotos), Kronkorken- und Flaschenbild je Bier, Foto und Etikett je Sud und Rezept. Ohne Foto gibt es einen gezeichneten Platzhalter. Die Galerie einer Verkostung sehen nur Braumeister (privater Speicher). Löschen dürfen Braumeister; Gäste können nur ihr zuletzt hochgeladenes Foto wieder entfernen, solange die Verkostung läuft.
 - Einzelheiten: `features/tastings/README.md`.
 
 ## Arbeitsweise
 
-Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repos. Änderungen werden dort gemacht und zu GitHub hochgeladen – nach etwa einer Minute ist die Seite live.
+Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repos.
+
+- **`main`** ist der Arbeits-Branch. Neue Funktionen entstehen auf einem eigenen Branch (`feature/…`, `fix/…`)
+  und kommen per Pull Request nach `main`. Auf `main` ist noch nichts live.
+- **`production`** ist das, was tatsächlich auf kolding.de steht. Soll etwas veröffentlicht werden, geht `main`
+  per Pull Request nach `production` – etwa eine Minute nach dem Mergen ist die Seite live.
+- Der Veröffentlichen-Workflow (`.github/workflows/pages.yml`) läuft außerdem alle vier Stunden von selbst, damit
+  neue öffentliche Sude, Rezepte, Verkostungen und Biere ihre Vorschauseite bekommen (siehe unten).
+
+Vor dem Arbeiten den lokalen Stand holen: `git pull` auf `main`.
+
+## Vorschaubilder für geteilte Links
+
+WhatsApp & Co. lesen beim Teilen nur rohes HTML und führen kein JavaScript aus. Deshalb erzeugt
+`scripts/build-previews.mjs` beim Veröffentlichen kleine statische Seiten unter `/sud/<id>/`, `/rezept/<id>/`,
+`/verkostung/<id>/` und `/bier/<id>/` mit passendem Titel und Bild, die sofort zur eigentlichen Seite weiterleiten.
+Angefragt wird wie von einem Gast: nur öffentliche Sude und Rezepte, abgeschlossene Verkostungen und Biere mit
+Kronkorken-Bild bekommen eine Seite. Alles andere zeigt beim Teilen das allgemeine Logo (`assets/og-default.png`).
 
 ## Lokal ansehen
 
