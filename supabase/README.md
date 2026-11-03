@@ -10,6 +10,7 @@ Hier liegt nur, was alle Bereiche gemeinsam nutzen. Die Tabellen und Funktionen 
   Trigger für neue Konten und Rollenschutz.
 - `functions/einladen/` – Edge Function, mit der der Admin Braumeister per E-Mail einlädt.
 - `functions/galerie-hochladen/` – Edge Function, über die Gäste einer laufenden Verkostung bis zu drei Fotos in die Galerie laden (prüft Code, Schlüssel und Limit, nimmt nur JPEG).
+- `functions/galerie-loeschen/` – Edge Function, über die ein Teilnehmer sein zuletzt hochgeladenes Galerie-Foto selbst wieder entfernen kann (gleiche Code/Schlüssel-Prüfung wie beim Hochladen).
 - Storage-Bucket `bilder` – öffentlich lesbar; hochladen, ersetzen und löschen dürfen nur Braumeister (Policies in `features/tastings/schema/04_images.sql`).
 
 ## Rollen
