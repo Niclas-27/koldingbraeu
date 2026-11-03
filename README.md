@@ -4,6 +4,10 @@ Unsere Sude seit 2018: Schüttung, Maischplan, Hopfengaben, Hefe, Messwerte und 
 
 **Online:** <https://kolding.de> (`www.kolding.de` und <https://niclas-27.github.io/koldingbraeu/> leiten dorthin weiter)
 
+**Übergabe/Weiterarbeit:** Alles Bereichsübergreifende, das nicht in dieser README oder einer
+`features/*/README.md` steht – vor allem der zweistufige Deploy-Ablauf (`main` → `production`) –
+steht in [`HANDOVER.md`](HANDOVER.md).
+
 ## Domain
 
 `kolding.de` liegt bei Host Europe (KIS → Domainservices → Nameserver / DNS-Einträge). Für GitHub Pages gesetzt:
