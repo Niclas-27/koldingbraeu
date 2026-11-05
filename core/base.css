@@ -237,8 +237,12 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--m
 label.f input,label.f select,label.f textarea,.rowlist input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:1rem;color:var(--ink);width:100%;min-width:0}
 textarea{resize:vertical;min-height:70px}
 .rowlist{display:flex;flex-direction:column;gap:6px}
-.rowlist .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.6fr) 36px;gap:6px}
+.rowlist .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.6fr) 36px;gap:6px;align-items:end}
 .rowlist .r.one{grid-template-columns:minmax(0,1fr) 36px}
+/* rf = ein Eingabefeld samt dauerhaft sichtbarer Mini-Beschriftung (siehe rf() in brews.js) –
+   anders als der Platzhaltertext im Feld verschwindet die Beschriftung nicht nach dem Ausfüllen. */
+.rowlist .r .rf{display:flex;flex-direction:column;gap:3px;min-width:0}
+.rowlist .r .rf span{font-size:.72rem;color:var(--muted);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .x{border:1px solid var(--line);background:transparent;border-radius:8px;cursor:pointer;color:var(--muted)}
 .add{align-self:flex-start;border:1px dashed var(--line);background:transparent;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.85rem;color:var(--muted)}
 .err{color:var(--warn);font-size:.85rem}
