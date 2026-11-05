@@ -1,12 +1,14 @@
 /* Koldingbräu – Verkostungen: Bewertungsbogen (Gäste und Admin)
    Mobil optimiert: das Testing läuft hauptsächlich am Handy, darum nur ein Abschnitt pro
    Bildschirm, mit „Weiter“ (bzw. „Zurück“) durchgeklickt. Reihenfolge wie vorgegeben:
-   Aussehen, Geruch, Geschmack, Mundgefühl, Fehlaromen, Was fällt dir auf?, Nochmal trinken?,
-   Benotung (einziges Pflichtfeld, deshalb zuletzt). */
+   Aussehen, Geruch, Geschmack, Mundgefühl, Was fällt dir auf?, Nochmal trinken?,
+   Benotung (einziges Pflichtfeld, deshalb zuletzt).
+   Der frühere Fehlaromen-Schritt wurde entfernt (31.10.2026) – die Spalte bewertungen.fehler
+   existiert in der DB weiter (historische Daten, Anzeige in Admin/Ergebnis/Bier-Detail bleibt),
+   neue Bewertungen senden dafür einfach ein leeres Array. */
 "use strict";
 const BOGEN_SCHRITTE = [
   ...MERKMALE.map(([grp, liste]) => ({art:"merkmale", label:grp, felder:liste, chips: grp==="Geruch"?GERUCH:null, chipArt:"geruch"})),
-  {art:"chips", label:"Fehlaromen", chips:FEHLER, chipArt:"fehler"},
   {art:"text", label:"Was fällt dir auf?"},
   {art:"yn", label:"Würdest du es nochmal trinken?"},
   {art:"note", label:"Benotung"},
@@ -15,6 +17,8 @@ const BOGEN_SCHRITTE = [
 /* opts: {titel, hint, oben (zusätzliches HTML, bleibt über alle Schritte sichtbar), alt, speichern(werte) → Promise<{error}>, fertig()} */
 function bogenZeigen(opts){
   const alt = opts.alt || {};
+  // fehler bleibt im Zustand erhalten (nicht mehr editierbar, siehe Kommentar oben), damit ein
+  // erneutes Speichern einer alten Bewertung ihre historischen Fehlaromen-Tags nicht löscht.
   const f = { note: alt.note ?? null, merkmale: {...(alt.merkmale||{})}, geruch: new Set(alt.geruch||[]), fehler: new Set(alt.fehler||[]), nochmal: alt.nochmal ?? null, kommentar: alt.kommentar || "" };
   let schritt = 0;
 
@@ -34,7 +38,6 @@ function bogenZeigen(opts){
       if(s.chips) h += chips(s.chips, f.geruch, s.chipArt);
       return h;
     }
-    if(s.art === "chips") return chips(s.chips, f.fehler, s.chipArt);
     if(s.art === "text") return `<label class="f" for="b_kom">Kommentar (optional)<textarea id="b_kom" maxlength="1000">${esc(f.kommentar)}</textarea></label><p class="hint">Beschreib das Bier, so genau du magst.</p>`;
     if(s.art === "yn") return `<div class="yn"><button type="button" data-yn="true" aria-pressed="${f.nochmal===true}">Ja</button><button type="button" data-yn="false" aria-pressed="${f.nochmal===false}">Nein</button></div>`;
     if(s.art === "note") return `<div class="scale" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${Array.from({length:11},(_,i)=>`<button type="button" role="radio" aria-checked="${f.note===i}" data-n="${i}">${i}</button>`).join("")}</div>
@@ -58,7 +61,7 @@ function bogenZeigen(opts){
   function verdrahten(){
     const s = BOGEN_SCHRITTE[schritt], inhalt = $("#bogenInhalt");
     inhalt.querySelectorAll(".sl input").forEach(r => r.addEventListener("input", () => { const k = r.id.slice(2); f.merkmale[k] = +r.value; $("#o_"+k).textContent = r.value; r.closest(".sl").classList.remove("unset"); }));
-    inhalt.querySelectorAll(".tagpick .chip").forEach(c => c.onclick = () => { const set = c.dataset.art==="geruch" ? f.geruch : f.fehler; const t = c.dataset.t; set.has(t) ? set.delete(t) : set.add(t); c.setAttribute("aria-pressed", String(set.has(t))); });
+    inhalt.querySelectorAll(".tagpick .chip").forEach(c => c.onclick = () => { const set = f.geruch; const t = c.dataset.t; set.has(t) ? set.delete(t) : set.add(t); c.setAttribute("aria-pressed", String(set.has(t))); });
     const ta = $("#b_kom"); if(ta) ta.addEventListener("input", () => { f.kommentar = ta.value; });
     inhalt.querySelectorAll(".yn button").forEach(b => b.onclick = () => { const v = b.dataset.yn==="true"; f.nochmal = f.nochmal===v ? null : v; inhalt.querySelectorAll(".yn button").forEach(x=>x.setAttribute("aria-pressed", String(f.nochmal!==null && (x.dataset.yn==="true")===f.nochmal))); });
     inhalt.querySelectorAll(".scale button").forEach(b => b.onclick = () => { f.note = +b.dataset.n; $("#bErr").textContent = ""; inhalt.querySelectorAll(".scale button").forEach(x=>x.setAttribute("aria-checked", String(x===b))); });
