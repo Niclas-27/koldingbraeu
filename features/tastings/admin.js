@@ -75,7 +75,8 @@ function detailZeigen(){
       <section class="vk-card qrbox"><h3>${v.status==="abgeschlossen"?"Link zur Verkostung":"Mitmachen am Abend"}</h3>
         <div class="qr" id="qrKlein">${QR.svg(link)}</div>
         <p class="num linktext">${esc(link)}</p>
-        <div class="top-actions"><button class="btn" id="qrGross">Groß zeigen</button><button class="btn" id="copyLink">Link kopieren</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Selbst mitbewerten</a></div>
+        <div class="vk-codezeile"><span class="hint">Code zum Durchsagen oder Eintippen</span><b class="vk-code num" id="vkCode">${esc(v.code)}</b></div>
+        <div class="top-actions"><button class="btn" id="qrGross">Groß zeigen</button><button class="btn" id="copyLink">Link kopieren</button><button class="btn" id="copyCode">Code kopieren</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Selbst mitbewerten</a></div>
         <p class="hint">${v.status==="vorbereitung"?"Diesen QR-Code bzw. Code erst am Abend zeigen. Mitmachen geht, sobald du die Verkostung startest. ":""}${v.status==="abgeschlossen"?"Die Verkostung ist abgeschlossen – über den Link sieht man jetzt das Ergebnis.":"Der Code gilt nur für diese Verkostung. Nach dem Abschließen kann niemand mehr beitreten oder bewerten."}</p>
       </section>
       <section class="vk-card"><h3>Biere (${proben.length})</h3>
@@ -117,6 +118,7 @@ function detailZeigen(){
     $("#qrZu").onclick = closeSheet;
   };
   if($("#einladungTeilen")) $("#einladungTeilen").onclick = () => einladungTeilen(v);
+  $("#copyCode").onclick = async () => { try{ await navigator.clipboard.writeText(v.code); toast("Code kopiert"); }catch(_){ toast("Kopieren ging nicht – bitte den Code markieren"); } };
   $("#copyLink").onclick = async () => { try{ await navigator.clipboard.writeText(link); toast("Link kopiert"); }catch(_){ toast("Kopieren ging nicht – bitte den Link markieren"); } };
   $("#addBier").onclick = () => bierWaehlen();
   Bilder.feldVerdrahten("titelFeld", {art:"frei", basis:`verkostungen/${v.id}/titel`, titel:"Titelbild", geaendert: async p => {

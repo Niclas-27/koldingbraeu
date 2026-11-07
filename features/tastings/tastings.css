@@ -74,6 +74,8 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .qr svg{width:100%;height:auto;display:block}
 .qr.gross{width:min(420px,100%);margin:0 auto}
 .linktext{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere;margin:0}
+.vk-codezeile{display:flex;flex-direction:column;gap:2px;margin:12px 0 0}
+.vk-code{font-size:1.5rem;letter-spacing:.04em;overflow-wrap:anywhere;user-select:all}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .plist li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .plist .pn{color:var(--amber);font-size:1.1rem}
@@ -170,3 +172,6 @@ button.stufe:hover{border-color:var(--muted)}
 .einladung-vorschau{white-space:pre-wrap;font-family:var(--font-body);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
 .ank-wann{font-size:1.05rem;margin:4px 0 0}
 .ank-text{white-space:pre-wrap}
+
+.g-eigene{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+.g-eigene img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
