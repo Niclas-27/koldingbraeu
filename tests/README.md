@@ -11,6 +11,9 @@ python3 tests/run_tests.py
 - `brau_test.js` – Rechentests für `lib/brau.js` (`node tests/brau_test.js`)
 - `data/` – Beispieldateien (MMuM-Export „Drives Me Hazy“)
 - `run_tests.py` – öffnet die Seiten am Computer und in Handygröße, klickt die Abläufe durch, prüft die Ergebnisse
+- `_wizard_check.py` – eigener, kleiner Klicktest nur für den Braugang-Assistenten (`python3 tests/_wizard_check.py`).
+  Gedacht für den Fall, dass der Gesamtlauf in einer abgeschotteten Umgebung unzuverlässig ist; gleiche Attrappe,
+  kein Teil von `run_tests.py`
 - `screenshots/` – Bildschirmfotos des letzten Laufs (nicht im Repo)
 
 Die Rechte selbst (wer darf was) prüft die Datenbank; diese Tests decken die Oberfläche ab. Neue Bereiche ergänzen
