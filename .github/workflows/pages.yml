@@ -14,7 +14,7 @@ on:
   push:
     branches: [production]
   schedule:
-    - cron: "17 */4 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:

@@ -129,6 +129,9 @@ async def main():
         t = await seite("anon", "verkostung.html?v=falsch", "vk_falscher_code"); pruefe("Falscher Code wird gemeldet", "gibt es nicht" in t)
         async def verwalten(pg):
             pruefe("QR-Code wird gezeichnet", await pg.locator(".qr svg").count() > 0)
+            pruefe("Beitritts-Code steht einzeln im Kasten „Mitmachen“", (await pg.inner_text("#vkCode")).strip() != "" and await pg.locator("#copyCode").count() == 1)
+            await pg.click("#copyCode"); await pg.wait_for_timeout(200)
+            pruefe("Hinweis-Meldung ist eine Leiste, keine Pille", await pg.evaluate("parseFloat(getComputedStyle(document.querySelector('.toast')).borderTopLeftRadius) < 20"))
             await pg.click(".rank li[data-id] >> nth=1"); await pg.wait_for_timeout(300)
             await pg.click("[data-ed] >> nth=0")
             for _ in range(6): await pg.click("#bWeiter")  # alle Schritte bis Benotung überspringen
