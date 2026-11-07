@@ -102,6 +102,14 @@ async def main():
             pruefe("Rangliste wiederholt das Podest nicht", await pg.locator(".rank.erg li.top").count() == 0)
             await pg.click(".podium .stufe.s1"); await pg.wait_for_timeout(300)
         t = await seite("anon", "verkostung.html?e=v9", "vk_ergebnis", ergebnis); pruefe("Ergebnisseite mit Kommentar und Namen", "Geheimtipp" in t and "Mit Niels" in t)
+        async def ergebnis_meine(pg):
+            await pg.evaluate("localStorage.setItem('kb_meine_v9', JSON.stringify({b2: 7}))"); await pg.reload(); await pg.wait_for_timeout(600)
+            pruefe("Ergebnis zeigt dem Gast seine eigene Note", "deine Note 7" in await pg.inner_text("main"))
+        await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_meine", ergebnis_meine)
+        async def abschliessen(pg):
+            await pg.click("#stEnde"); await pg.click(".frage [data-f=ja]"); await pg.wait_for_timeout(800)
+            pruefe("Braumeister landet nach dem Abschließen direkt auf dem Ergebnis", "e=v1" in pg.url)
+        await seite("bm", "verkostung.html?id=v1", "vk_abschliessen", abschliessen)
         async def ergebnis_bilder(pg):
             # Teilnehmer-Galerie ist seit 27.10.2026 nur für Braumeister/Admin sichtbar (privater Bucket)
             pruefe("Ergebnis zeigt Titelbild, aber keine Galerie für Gäste", await pg.locator("#titelbild").count() == 1 and await pg.locator(".galerie").count() == 0)

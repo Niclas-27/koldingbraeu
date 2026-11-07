@@ -66,9 +66,9 @@ function vkLaden({p_code,p_token}){
  const t=db.teilnehmer.find(x=>x.token===p_token);
  const offen=!v.blind||v.status==="abgeschlossen";
  const proben=db.proben.filter(p=>p.verkostung_id===v.id).sort((a,b)=>a.nummer-b.nummer).map(p=>{const b=biere.find(x=>x.id===p.bier_id);const w=db.bewertungen.filter(x=>x.probe_id===p.id&&!x.ausgeblendet);
-   return {id:p.id,nummer:p.nummer,bier:offen?{name:b.name,brauerei:b.brauerei,eigen:b.eigen,stil:stile.find(s=>s.id===b.stil_id)?.name,alkohol:b.alkohol,bild_kronkorken:b.bild_kronkorken||null,bild_flasche:b.bild_flasche||null}:null,schnitt:w.length?w.reduce((a,x)=>a+x.note,0)/w.length:null,anzahl:w.length,nochmal:w.filter(x=>x.nochmal).length};});
+   return {id:p.id,nummer:p.nummer,bier_id:v.status==="abgeschlossen"?p.bier_id:null,bier:offen?{name:b.name,brauerei:b.brauerei,eigen:b.eigen,stil:stile.find(s=>s.id===b.stil_id)?.name,alkohol:b.alkohol,bild_kronkorken:b.bild_kronkorken||null,bild_flasche:b.bild_flasche||null}:null,schnitt:w.length?w.reduce((a,x)=>a+x.note,0)/w.length:null,anzahl:w.length,nochmal:w.filter(x=>x.nochmal).length};});
  const gal=(db.verkostung_bilder||[]).filter(g=>g.verkostung_id===v.id);
- return {data:{verkostung:{titel:v.titel,datum:v.datum,ort:v.ort,blind:v.blind,status:v.status,bild_titel:v.bild_titel||null},teilnehmer:db.teilnehmer.length,proben,galerie:gal.map(g=>({pfad:g.pfad,mein:!!t&&g.teilnehmer_id===t.id})),
+ return {data:{verkostung:{id:v.status==="abgeschlossen"?v.id:null,titel:v.titel,datum:v.datum,ort:v.ort,blind:v.blind,status:v.status,bild_titel:v.bild_titel||null},teilnehmer:db.teilnehmer.length,proben,galerie:gal.map(g=>({pfad:g.pfad,mein:!!t&&g.teilnehmer_id===t.id})),
    ich:t?{name:t.name,bewertungen:db.bewertungen.filter(x=>x.teilnehmer_id===t.id),vorschlaege:[],bilder:gal.filter(g=>g.teilnehmer_id===t.id).length}:null},error:null};
 }
 const rpcs={
