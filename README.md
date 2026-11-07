@@ -4,6 +4,10 @@ Unsere Sude seit 2018: Schüttung, Maischplan, Hopfengaben, Hefe, Messwerte und 
 
 **Online:** <https://kolding.de> (`www.kolding.de` und <https://niclas-27.github.io/koldingbraeu/> leiten dorthin weiter)
 
+**Übergabe/Weiterarbeit:** Alles Bereichsübergreifende, das nicht in dieser README oder einer
+`features/*/README.md` steht – vor allem der zweistufige Deploy-Ablauf (`main` → `production`) –
+steht in [`HANDOVER.md`](HANDOVER.md).
+
 ## Domain
 
 `kolding.de` liegt bei Host Europe (KIS → Domainservices → Nameserver / DNS-Einträge). Für GitHub Pages gesetzt:
@@ -60,7 +64,8 @@ Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
 - Gäste haben keinen Tabellenzugriff; sie arbeiten nur über die Datenbankfunktionen `vk_*` mit dem Code der Verkostung und einem persönlichen Schlüssel, der auf ihrem Handy liegt.
 - Öffentlich sind abgeschlossene Verkostungen (Liste und Ergebnisseite `verkostung.html?e=…` mit Podest, Rangliste, Einzelnoten, Geschmacksprofil, Kommentaren ohne Namen und den Namen der Teilnehmer) sowie die Liga. Wer welche Note gab, sehen nur Braumeister; sie können einzelne Bewertungen ausblenden.
 - Der Admin kann Bewertungen nachträglich ändern oder fehlende nachtragen (Verkostung → Bier antippen → „Bearbeiten“ bzw. „+ Bewertung nachtragen“). Jede Änderung wird intern vermerkt, die ursprüngliche Note bleibt erhalten.
-- Fotos: Titelbild und Galerie je Verkostung (Gäste bis zu drei Fotos), Kronkorken- und Flaschenbild je Bier, Foto und Etikett je Sud und Rezept. Ohne Foto gibt es einen gezeichneten Platzhalter. Die Galerie einer Verkostung sehen nur Braumeister (privater Speicher). Löschen dürfen Braumeister; Gäste können nur ihr zuletzt hochgeladenes Foto wieder entfernen, solange die Verkostung läuft.
+- Einladen: Für eine geplante Verkostung (Datum, Uhrzeit, Ort, Einladungstext) erzeugt die Verwaltung eine fertige Nachricht mit Link zum Teilen per WhatsApp & Co. (`verkostung.html?a=…`, Ankündigungsseite). Am Abend selbst gibt es den Mitmach-Link bzw. QR-Code.
+- Fotos: Titelbild und Galerie je Verkostung (Gäste bis zu drei Fotos), Kronkorken- und Flaschenbild je Bier, Foto, Kronkorken und Flasche je Sud und Rezept (Sud und verknüpftes Bier teilen sich Kronkorken und Flasche). Jedes Bild lässt sich beim Hochladen zuschneiden und später über „Ausschnitt ändern“ neu zuschneiden (`lib/README.md`). Ohne Foto gibt es einen gezeichneten Platzhalter. Die Galerie einer Verkostung sehen nur Braumeister (privater Speicher). Löschen dürfen Braumeister; Gäste können nur ihr zuletzt hochgeladenes Foto wieder entfernen, solange die Verkostung läuft.
 - Einzelheiten: `features/tastings/README.md`.
 
 ## Arbeitsweise
@@ -74,6 +79,13 @@ Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repo
 - Der Veröffentlichen-Workflow (`.github/workflows/pages.yml`) läuft außerdem alle vier Stunden von selbst, damit
   neue öffentliche Sude, Rezepte, Verkostungen und Biere ihre Vorschauseite bekommen (siehe unten).
 
+- **Erst lokal testen, dann veröffentlichen:** Neue Funktionen werden auf ihrem Branch im Mac-Ordner ausgecheckt und
+  dort gegen die echte Datenbank ausprobiert (siehe „Lokal ansehen“). Erst nach dem OK geht es nach `main` und `production`.
+- **Datenbank-Änderungen:** Was nur etwas hinzufügt (neue Spalte, neue Funktion), darf vor dem Veröffentlichen
+  laufen. Was bestehendes Verhalten ändert oder Daten umschreibt, läuft erst **nach** dem Veröffentlichen der
+  passenden Oberfläche – sonst bricht die Live-Seite. Die SQL-Dateien liegen im jeweiligen `schema/`-Ordner und
+  sagen im Kopf, welcher Teil wann läuft. Edge Functions werden in Supabase bereitgestellt, nicht über GitHub.
+
 Vor dem Arbeiten den lokalen Stand holen: `git pull` auf `main`.
 
 ## Vorschaubilder für geteilte Links
@@ -82,7 +94,9 @@ WhatsApp & Co. lesen beim Teilen nur rohes HTML und führen kein JavaScript aus.
 `scripts/build-previews.mjs` beim Veröffentlichen kleine statische Seiten unter `/sud/<id>/`, `/rezept/<id>/`,
 `/verkostung/<id>/` und `/bier/<id>/` mit passendem Titel und Bild, die sofort zur eigentlichen Seite weiterleiten.
 Angefragt wird wie von einem Gast: nur öffentliche Sude und Rezepte, abgeschlossene Verkostungen und Biere mit
-Kronkorken-Bild bekommen eine Seite. Alles andere zeigt beim Teilen das allgemeine Logo (`assets/og-default.png`).
+Kronkorken-Bild bekommen eine Seite. Geplante Verkostungen bekommen ebenfalls eine Seite; sie leitet zur
+Ankündigung (`verkostung.html?a=…`). `404.html` fängt Adressen wie `/sud/<id>/` ab, für die (noch) keine
+Vorschauseite gebaut wurde, und leitet trotzdem richtig weiter. Alles andere zeigt beim Teilen das allgemeine Logo (`assets/og-default.png`).
 
 ## Lokal ansehen
 
