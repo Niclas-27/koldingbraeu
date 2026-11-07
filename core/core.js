@@ -44,6 +44,19 @@ function lsSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(
 let onClose=null;
 function openSheet(){$("#sheet").hidden=false;$("#scrim").hidden=false;document.body.style.overflow="hidden";}
 function closeSheet(){$("#sheet").hidden=true;$("#scrim").hidden=true;document.body.style.overflow="";const f=onClose;onClose=null;if(f)f();}
+/* Gemeinsame Rückfrage vor dem Löschen/Entfernen für die ganze Seite. Eigenes kleines Fenster statt des
+   Seitenblatts, damit sie auch über einem offenen Editor-Blatt funktioniert, ohne dessen Inhalt zu ersetzen.
+   bestaetigen(titel, text, knopf, ok, gefahr=true): text ist reiner Text; ok() läuft erst nach "Ja". */
+function bestaetigen(titel,text,knopf,ok,gefahr=true){
+  const d=document.createElement("div");d.className="frage";d.setAttribute("role","alertdialog");d.setAttribute("aria-modal","true");
+  d.innerHTML=`<div class="frage-k"><h3>${esc(titel)}</h3>${text?`<p>${esc(text)}</p>`:""}<div class="frage-f"><button type="button" class="btn" data-f="nein">Abbrechen</button><button type="button" class="btn ${gefahr?"danger":"primary"}" data-f="ja">${esc(knopf||"Ja, löschen")}</button></div></div>`;
+  const zu=()=>{d.remove();document.removeEventListener("keydown",esc_);};
+  const esc_=e=>{if(e.key==="Escape")zu();};
+  d.onclick=e=>{if(e.target===d)zu();};
+  d.querySelector('[data-f="nein"]').onclick=zu;
+  d.querySelector('[data-f="ja"]').onclick=async e=>{e.currentTarget.disabled=true;zu();await ok();};
+  document.addEventListener("keydown",esc_);document.body.appendChild(d);d.querySelector('[data-f="nein"]').focus();
+}
 function sheet(titleText,body,foot,opts){$("#sheetTitle").textContent=titleText;$("#sheetBody").innerHTML=body;$("#sheetFoot").innerHTML=foot||"";onClose=(opts&&opts.onClose)||null;openSheet();$("#sheetBody").scrollTop=0;}
 function kv(pairs){const p=pairs.filter(([,v])=>v!=null&&v!=="");if(!p.length)return"";return`<dl class="kv">${p.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;}
 function sec(h,inner){return inner?`<section class="sec"><h3>${esc(h)}</h3>${inner}</section>`:"";}
@@ -391,7 +404,7 @@ async function boot(){
 const KB = window.KB = {
   CONFIG, ROLLEN, $, esc, state, isBM, isAdmin, siteUrl, sb: null, seite: null,
   fmtDate, fmtDateLong, fmtDateTime, fmtZahl, gradeCls, personName, todayIso, toast, notice, lsGet, lsSet,
-  sheet, openSheet, closeSheet, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
+  sheet, openSheet, closeSheet, bestaetigen, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
 };
 document.addEventListener("DOMContentLoaded", boot);
 

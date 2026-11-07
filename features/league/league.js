@@ -85,9 +85,9 @@ const profil = merkmale => MERKMALE.flatMap(([,l])=>l).filter(([k]) => merkmale[
   `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
 
 async function zeigeDetail(bierId){
-  $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Zur Liga</a></p><p class="empty">Wird geladen …</p>`;
+  $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Alle Biere</a></p><p class="empty">Wird geladen …</p>`;
   const {data, error} = await KB.sb.rpc("bier_detail", {p_id: bierId});
-  if(error){ $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Zur Liga</a></p><p class="empty">${esc(fehlertext(error))}</p>`; return; }
+  if(error){ $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Alle Biere</a></p><p class="empty">${esc(fehlertext(error))}</p>`; return; }
   const b = data.bier;
   document.title = b.name + " · Koldingbräu";
   const kennzahlen = `<div class="kws">
@@ -105,7 +105,7 @@ async function zeigeDetail(bierId){
     </header>`;
   const bilder = Bilder.bierFotos(b);
   const hatWerte = data.anzahl > 0;
-  const body = `<p class="noprint"><a class="back" href="liga.html">← Zur Liga</a></p>
+  const body = `<p class="noprint"><a class="back" href="liga.html">← Alle Biere</a></p>
     <article class="bier-blatt">
       ${header}
       ${bilder?sec("Bilder", bilder):""}
