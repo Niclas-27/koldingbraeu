@@ -175,3 +175,9 @@ button.stufe:hover{border-color:var(--muted)}
 
 .g-eigene{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
 .g-eigene img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+
+/* Ergebnis: eigene Note des Gastes */
+.stufe .meine,.erg .meine{color:var(--amber);font-weight:600}
+.stufe .meine{display:block;font-size:.75rem;margin-top:2px}
+.meine-detail{margin:0 0 6px;color:var(--muted)}
+.meine-detail b{color:var(--amber)}

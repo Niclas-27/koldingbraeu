@@ -101,7 +101,9 @@ function detailZeigen(){
     return `<span class="tag tn-tag">${esc(t.name)} · ${n} von ${proben.length} bewertet${isAdmin()?`<button type="button" class="tn-x" data-tn-del="${esc(t.id)}" aria-label="${esc(t.name)} entfernen">✕</button>`:""}</span>`;}).join("")}</div>`);
   main().innerHTML = h;
 
-  const setStatus = async s => { const {error} = await sb.from("verkostungen").update({status: s}).eq("id", v.id); if(error){ toast(fehlertext(error)); return; } toast({laeuft:"Verkostung läuft",abgeschlossen:"Abgeschlossen – Ergebnis ist aufgedeckt",vorbereitung:"Zurück in Vorbereitung"}[s]); detailLaden(); };
+  const setStatus = async s => { const {error} = await sb.from("verkostungen").update({status: s}).eq("id", v.id); if(error){ toast(fehlertext(error)); return; } toast({laeuft:"Verkostung läuft",abgeschlossen:"Abgeschlossen – Ergebnis ist aufgedeckt",vorbereitung:"Zurück in Vorbereitung"}[s]);
+    if(s === "abgeschlossen") { stopTimer(); location.href = "verkostung.html?e="+encodeURIComponent(v.id); return; }  // wie bei den Gästen: direkt aufs Ergebnis
+    detailLaden(); };
   $("#stStart") && ($("#stStart").onclick = () => setStatus("laeuft"));
   $("#stEnde") && ($("#stEnde").onclick = () => bestaetigen("Verkostung abschließen?", "Danach kann niemand mehr bewerten, und das Ergebnis erscheint öffentlich in der Liga und bei den Verkostungen.", "Abschließen", () => setStatus("abgeschlossen")));
   $("#stWieder") && ($("#stWieder").onclick = () => bestaetigen("Wieder öffnen?", "Die Gäste können dann wieder bewerten. Das Ergebnis verschwindet so lange aus der öffentlichen Liga.", "Wieder öffnen", () => setStatus("laeuft")));
