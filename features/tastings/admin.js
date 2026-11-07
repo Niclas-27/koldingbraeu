@@ -35,14 +35,14 @@ async function detailLaden(){
     sb.from("proben").select("id,nummer,bier_id,biere(id,name,brauerei,eigen,alkohol,stil_id,sud_id,bild_kronkorken,bild_flasche,bierstile(name))").eq("verkostung_id", detailId).order("nummer"),
     sb.from("teilnehmer").select("id,name,angelegt").eq("verkostung_id", detailId).order("angelegt"),
     sb.from("vorschlaege").select("*").eq("verkostung_id", detailId).order("angelegt"),
-    sb.from("verkostung_bilder").select("id,pfad,teilnehmer_id,angelegt").eq("verkostung_id", detailId).order("angelegt"),
+    sb.from("verkostung_bilder").select("id,pfad,teilnehmer_id,bildunterschrift,aufgenommen,angelegt").eq("verkostung_id", detailId).order("angelegt"),
   ]);
   if(v.error || !v.data){ stopTimer(); main().innerHTML = `<p class="empty">${v.error?esc(fehlertext(v.error)):"Diese Verkostung gibt es nicht (mehr)."}</p><p class="empty"><a href="verkostung.html">Zur Übersicht</a></p>`; return; }
   const ids = (pr.data||[]).map(p=>p.id);
   const bw = ids.length ? await sb.from("bewertungen").select("*").in("probe_id", ids) : {data: []};
   D = {v: v.data, proben: (pr.data||[]).map(p=>({...p, bier: {...p.biere, stil: p.biere?.bierstile?.name}})), teilnehmer: tn.data||[], bewertungen: bw.data||[], vorschlaege: vs.data||[], galerie: gb.data||[]};
   detailZeigen();
-  if(D.v.status === "laeuft") { if(!timer) startTimer(detailLaden); } else stopTimer();
+  if(D.v.status === "laeuft") { if(!timer) startTimer(() => { if(!(galerieM && galerieM.beschaeftigt())) detailLaden(); }); } else stopTimer();
 }
 
 function auswertung(probeId){
@@ -95,8 +95,7 @@ function detailZeigen(){
   h += sec(v.status==="abgeschlossen" ? "Ergebnis" : v.status==="laeuft" ? "Zwischenstand (live)" : "Auswertung", (bewertungen.length ? rangTabelle(zeilen,{klick:true}) + `<p class="hint">Ein Bier auswählen zeigt alle Bewertungen und das Geschmacksprofil.${v.status==="laeuft"?" Aktualisiert sich alle 15 Sekunden.":""}</p>` : `<p class="hint">Noch keine Bewertungen.</p>`));
   h += sec("Fotos", `<div class="fotos-admin">${Bilder.feldHtml("titelFeld", v.bild_titel, {art:"frei", beschriftung:"Titelbild"})}</div>
     <h4 class="sub">Galerie (${D.galerie.length})</h4><p class="hint">Nur für Braumeister und Admin sichtbar.</p>
-    <div id="galerieBox">${D.galerie.length ? `<p class="hint">Fotos werden geladen …</p>` : `<p class="hint">Noch keine Fotos. Teilnehmer können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.</p>`}</div>
-    <button type="button" class="add" id="fotoAdd">+ Foto hinzufügen</button>`);
+    <div id="galerieBox"></div>`);
   if(teilnehmer.length) h += sec("Teilnehmer", `<div class="tn">${teilnehmer.map(t=>{const n=bewertungen.filter(b=>b.teilnehmer_id===t.id).length;
     return `<span class="tag tn-tag">${esc(t.name)} · ${n} von ${proben.length} bewertet${isAdmin()?`<button type="button" class="tn-x" data-tn-del="${esc(t.id)}" aria-label="${esc(t.name)} entfernen">✕</button>`:""}</span>`;}).join("")}</div>`);
   main().innerHTML = h;
@@ -126,16 +125,7 @@ function detailZeigen(){
     if(v.bild_titel && v.bild_titel !== p) Bilder.loeschen(v.bild_titel);
     v.bild_titel = p; toast(p ? "Titelbild gespeichert" : "Titelbild entfernt");
   }});
-  galerieZeigen();
-  $("#fotoAdd").onclick = async () => {
-    const erg = await Bilder.waehlen({form:"frei", titel:"Foto hinzufügen"}); if(!erg) return;
-    try{
-      const pfad = await Bilder.galerieHochladen(`verkostungen/${v.id}/galerie/${crypto.randomUUID()}`, erg);
-      const {error} = await sb.from("verkostung_bilder").insert({verkostung_id: v.id, pfad});
-      if(error) throw error;
-      toast("Foto hinzugefügt"); detailLaden();
-    }catch(e){ toast("Hochladen fehlgeschlagen: " + fehlertext(e)); }
-  };
+  galerieZeigen(v);
   main().querySelectorAll("[data-up],[data-down]").forEach(b => b.onclick = () => { const i = +(b.dataset.up ?? b.dataset.down); tauschen(i, b.dataset.up != null ? i-1 : i+1); });
   main().querySelectorAll("[data-raus]").forEach(b => b.onclick = () => {
     const p = proben.find(x=>x.id===b.dataset.raus), n = bewertungen.filter(x=>x.probe_id===p.id).length;
@@ -159,23 +149,23 @@ function detailZeigen(){
   main().querySelectorAll(".rank li[data-id]").forEach(li => { const f = () => probeDetail(li.dataset.id); li.onclick = f; li.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); f(); } }; });
 }
 
-/* Galerie (privater Bucket): signierte URLs nachladen und erst dann zeichnen/verdrahten */
-async function galerieZeigen(){
-  const box = $("#galerieBox"); if(!box || !D.galerie.length) return;
-  const pfade = D.galerie.map(g=>g.pfad);
-  const urls = await Bilder.galerieSignierteUrls(pfade);
-  box.innerHTML = Bilder.galerieHtmlSigniert(pfade, urls, {loeschbar:true});
-  Bilder.galerieVerdrahten(box.querySelector(".galerie"), null, i => {
-    const g = D.galerie[i];
-    bestaetigen("Foto löschen?", "Das Foto wird endgültig gelöscht.", "Löschen", async () => {
-      const {error} = await sb.from("verkostung_bilder").delete().eq("id", g.id);
-      if(error){ toast(fehlertext(error)); return; }
-      await Bilder.galerieLoeschen(g.pfad); toast("Foto gelöscht"); detailLaden();
-    }, true);
+/* Galerie (privater Bucket „verkostung-galerie“): Raster, Ablage für mehrere Fotos, Drag & Drop, Bildunterschrift,
+   Datum und Zuschnitt – auch für Fotos der Gäste – über Bilder.galerieModul (lib/bilder.js). Während Ablage oder
+   Bearbeiten offen sind, setzt das Live-Neuladen (alle 15 s) aus, damit nichts verloren geht. */
+let galerieM = null;
+function galerieZeigen(v){
+  const box = $("#galerieBox"); if(!box) return;
+  const name = id => (D.teilnehmer.find(t=>t.id===id)||{}).name;
+  galerieM = Bilder.galerieModul({el: box, bucket: "verkostung-galerie", zeilen: D.galerie,
+    leer: "Noch keine Fotos. Teilnehmer können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.",
+    info: z => z.teilnehmer_id ? `von ${name(z.teilnehmer_id) || "einem Gast"}` : "",
+    basis: () => `verkostungen/${v.id}/galerie/${crypto.randomUUID()}`,
+    einfuegen: async f => { const {data, error} = await sb.from("verkostung_bilder").insert({verkostung_id: v.id, ...f}).select("id,pfad,teilnehmer_id,bildunterschrift,aufgenommen,angelegt").single(); if(error) throw error; D.galerie.push(data); galerieZahl(); return data; },
+    aendern: async (z, patch) => (await sb.from("verkostung_bilder").update(patch).eq("id", z.id)).error,
+    entfernen: async z => { const {error} = await sb.from("verkostung_bilder").delete().eq("id", z.id); if(!error){ D.galerie = D.galerie.filter(x=>x.id!==z.id); galerieZahl(); } return error; },
   });
-  box.querySelectorAll(".g-zeig").forEach(b => b.onclick = () => Bilder.zeigenSigniert(pfade, urls, +b.dataset.i));
 }
-
+function galerieZahl(){ const h = $("#galerieBox")?.previousElementSibling?.previousElementSibling; if(h && h.classList.contains("sub")) h.textContent = `Galerie (${D.galerie.length})`; }
 
 async function neuNummerieren(liste){
   const rows = liste.map((p,i)=>({id:p.id, verkostung_id:D.v.id, bier_id:p.bier_id, nummer:i+1})).filter((r,i)=>liste[i].nummer!==r.nummer);

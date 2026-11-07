@@ -27,6 +27,9 @@ revoke all on public.bild_ausschnitte from anon;   -- Supabase gibt neuen Tabell
 
 -- TEIL B – nach dem Veröffentlichen: vorhandene Etiketten werden zur Flasche (Entscheidung Nutzer), und Sud und
 -- verknüpftes Bier teilen ab jetzt ihre Kronkorken-/Flaschenbilder (dieselbe Datei, kein Kopieren).
+-- Ausgeführt am 07.11.2026 nach dem Release (PR #87), nur leere Felder befüllt – kein vorhandenes Kronkorken- oder
+-- Flaschenbild wurde überschrieben. Geprüft danach: keine Etiketten mehr in sude/rezepte, Sud und verknüpftes Bier
+-- zeigen überall dieselben Kronkorken. Die Anweisungen unten dokumentieren den Schritt (nicht erneut nötig):
 --
 -- update public.sude set bild_flasche = coalesce(bild_flasche, bild_etikett), bild_etikett = null where bild_etikett is not null;
 -- update public.rezepte set bild_flasche = coalesce(bild_flasche, bild_etikett), bild_etikett = null where bild_etikett is not null;

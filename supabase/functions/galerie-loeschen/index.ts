@@ -43,6 +43,16 @@ Deno.serve(async (req) => {
 
   const { error: delError } = await db.from("verkostung_bilder").delete().eq("id", letztes.id);
   if (delError) return antwort(500, { fehler: "Löschen fehlgeschlagen." });
-  await db.storage.from(BUCKET).remove([letztes.pfad, letztes.pfad.replace(/\.jpg$/, "_t.jpg")]);
+  // Seit 07.11.2026 auch das unbeschnittene Basisbild samt Ausschnitt-Eintrag (falls vorhanden und von nichts anderem benutzt).
+  const weg = [letztes.pfad, letztes.pfad.replace(/\.jpg$/, "_t.jpg")];
+  const { data: aus } = await db.from("bild_ausschnitte").select("basis_pfad").eq("pfad", letztes.pfad).maybeSingle();
+  if (aus) {
+    await db.from("bild_ausschnitte").delete().eq("pfad", letztes.pfad);
+    if (aus.basis_pfad && aus.basis_pfad !== letztes.pfad) {
+      const { count } = await db.from("bild_ausschnitte").select("pfad", { count: "exact", head: true }).eq("basis_pfad", aus.basis_pfad);
+      if (!count) weg.push(aus.basis_pfad, aus.basis_pfad.replace(/\.jpg$/, "_t.jpg"));
+    }
+  }
+  await db.storage.from(BUCKET).remove(weg);
   return antwort(200, { ok: true });
 });

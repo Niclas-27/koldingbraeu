@@ -139,6 +139,10 @@ async function gastFoto(){
   const fd = new FormData();
   fd.append("code", code); fd.append("token", gast().token);
   fd.append("gross", erg.gross, "foto.jpg"); fd.append("klein", erg.klein, "foto_t.jpg");
+  // Für „Ausschnitt ändern“ durch die Braumeister: Zuschnitt + (nur wenn wirklich beschnitten) das ganze Foto.
+  fd.append("ausschnitt", JSON.stringify(erg.ausschnitt));
+  const r = erg.ausschnitt.rahmen, ganz = r.x < 0.002 && r.y < 0.002 && r.w > 0.998 && r.h > 0.998;
+  if(erg.basis && !ganz) fd.append("basis", erg.basis, "foto_b.jpg");
   const {error} = await sb.functions.invoke("galerie-hochladen", {body: fd});
   if(error){
     let msg = "Hochladen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}

@@ -2,6 +2,9 @@
 // Bereitgestellt mit verify_jwt = false: Gäste haben kein Konto. Geprüft werden stattdessen der Code der Verkostung
 // und der persönliche Schlüssel (token) des Gastes – genau wie bei den vk_*-Datenbankfunktionen.
 // Erwartet multipart/form-data mit: code, token, gross (JPEG, max. 1,5 MB), klein (JPEG, max. 200 KB).
+// Seit 07.11.2026 optional: ausschnitt (JSON {rahmen, quadrat}, Anteile 0…1) und basis (JPEG, max. 1,5 MB, das
+// unbeschnittene Foto). Damit können Braumeister später „Ausschnitt ändern“ (Eintrag in bild_ausschnitte).
+// Ohne basis, aber mit ausschnitt = ganzes Foto gewählt: dann ist das Großbild selbst das Basisbild.
 // Seit 27.10.2026: landet im privaten Bucket "verkostung-galerie" (nicht mehr im öffentlichen "bilder") –
 // nur Braumeister/Admin können die Fotos später sehen, siehe lib/bilder.js: galerieSignierteUrls().
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -33,10 +36,17 @@ Deno.serve(async (req) => {
   try { form = await req.formData(); } catch (_) { return antwort(400, { fehler: "Ungültige Anfrage" }); }
   const code = String(form.get("code") ?? "").trim().toLowerCase();
   const token = String(form.get("token") ?? "").trim();
-  const gross = form.get("gross"), klein = form.get("klein");
+  const gross = form.get("gross"), klein = form.get("klein"), basis = form.get("basis");
+  let ausschnitt: { rahmen: Record<string, number>; quadrat: Record<string, number> | null } | null = null;
+  try {
+    const a = JSON.parse(String(form.get("ausschnitt") ?? "null"));
+    const zahl = (o: unknown, k: string[]) => !!o && k.every((x) => typeof (o as Record<string, unknown>)[x] === "number" && (o as Record<string, number>)[x] >= -0.01 && (o as Record<string, number>)[x] <= 1.01);
+    if (a && zahl(a.rahmen, ["x", "y", "w", "h"]) && (a.quadrat == null || zahl(a.quadrat, ["x", "y", "s"])))
+      ausschnitt = { rahmen: { x: a.rahmen.x, y: a.rahmen.y, w: a.rahmen.w, h: a.rahmen.h }, quadrat: a.quadrat ? { x: a.quadrat.x, y: a.quadrat.y, s: a.quadrat.s } : null };
+  } catch (_) { /* ohne Ausschnitt weiter */ }
   if (!code || !/^[0-9a-f-]{36}$/i.test(token)) return antwort(400, { fehler: "Bitte zuerst mit deinem Namen beitreten." });
   if (!(gross instanceof File) || !(klein instanceof File)) return antwort(400, { fehler: "Kein Bild erhalten." });
-  if (gross.size > 1_500_000 || klein.size > 200_000) return antwort(413, { fehler: "Das Bild ist zu groß." });
+  if (gross.size > 1_500_000 || klein.size > 200_000 || (basis instanceof File && basis.size > 1_500_000)) return antwort(413, { fehler: "Das Bild ist zu groß." });
 
   const db = createClient(Deno.env.get("SUPABASE_URL")!, geheimerSchluessel(), { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: v } = await db.from("verkostungen").select("id,status").eq("code", code).maybeSingle();
@@ -58,5 +68,19 @@ Deno.serve(async (req) => {
   if (b.error) { await db.storage.from(BUCKET).remove([pfad]); return antwort(500, { fehler: "Hochladen fehlgeschlagen." }); }
   const { error } = await db.from("verkostung_bilder").insert({ verkostung_id: v.id, pfad, teilnehmer_id: t.id, hochgeladen_von: null });
   if (error) { await db.storage.from(BUCKET).remove([pfad, pfad.replace(/\.jpg$/, "_t.jpg")]); return antwort(500, { fehler: "Speichern fehlgeschlagen." }); }
+
+  // Best effort: ohne Eintrag gilt das Foto später als „Altbild“ (nachschneiden nur enger) – kein Grund zu scheitern.
+  if (ausschnitt) {
+    let basisPfad: string | null = pfad;
+    if (basis instanceof File) {
+      const bb = new Uint8Array(await basis.arrayBuffer());
+      basisPfad = null;
+      if (istJpeg(bb)) {
+        const bp = pfad.replace(/\.jpg$/, "_b.jpg");
+        if (!(await db.storage.from(BUCKET).upload(bp, bb, opt)).error) basisPfad = bp;
+      }
+    }
+    if (basisPfad) await db.from("bild_ausschnitte").insert({ pfad, basis_pfad: basisPfad, rahmen: ausschnitt.rahmen, quadrat: ausschnitt.quadrat, angelegt_von: null });
+  }
   return antwort(200, { ok: true, pfad });
 });
