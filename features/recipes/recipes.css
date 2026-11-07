@@ -63,3 +63,6 @@
 .rz-etikett{padding:0;border:0;background:transparent;cursor:zoom-in;border-radius:10px}
 .rz-foto{display:block;width:100%;max-height:380px;object-fit:cover;border-radius:var(--radius);margin:0 0 18px;cursor:zoom-in;background:var(--line)}
 @media print{.rz-foto{max-height:220px}}
+/* Kopf: Kronkorken (rund) und Flasche (3:4) nebeneinander – wie auf der Sud-Seite */
+.rz-kopf .sud-kk-fl{display:flex;gap:12px;align-items:flex-end;justify-content:center}
+.rz-flasche{width:90px;height:120px;object-fit:cover;border-radius:10px;display:block;background:var(--bg)}

@@ -5,9 +5,9 @@
 const {$, esc, state, isBM, isAdmin, fmtDate, fmtDateTime, personName, todayIso, toast, sheet, openSheet, closeSheet, bestaetigen, kv, sec, fehlertext} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});  // Client entsteht erst beim Start
 // Spalten, die Gäste lesen dürfen (ohne notizen, bewertung); Messwerte seit 25.10.2026 Zahl+Einheit statt Freitext
-const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,einmaischtemperatur,abmaischtemperatur,rasten,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,alkohol_geschaetzt,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett";
+const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,einmaischtemperatur,abmaischtemperatur,rasten,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,alkohol_geschaetzt,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett,bild_kronkorken,bild_flasche";
 // Spalten, die beim Speichern geschrieben werden
-const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_etikett","wasserhaerte","milchsaeure_hauptguss","milchsaeure_nachguss","ph_vorher","ph_nachher","refraktometer_anstellen","refraktometer_restextrakt","karbonisierung","wizard_notizen"];
+const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_kronkorken","bild_flasche","wasserhaerte","milchsaeure_hauptguss","milchsaeure_nachguss","ph_vorher","ph_nachher","refraktometer_anstellen","refraktometer_restextrakt","karbonisierung","wizard_notizen"];
 const CAPS = {rot:"#c23b2b",blau:"#2f5fa8",orange:"#e5862b",silber:"#b9bec4",gruen:"#3f8a3a",gold:"#c9a227",schwarz:"#1c1c1c",weiss:"#f4f4f0",gelb:"#e8c82e"};
 const CAP_LABEL = {rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"Grün",gold:"Gold",schwarz:"Schwarz",weiss:"Weiß",gelb:"Gelb"};
 Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
@@ -25,9 +25,10 @@ function hopfenSum(b){return(b.hopfen||[]).reduce((a,h)=>a+(+hopfenNeu(h).gramm|
 function fmtKg(g){return(g/1000).toLocaleString("de-DE",{maximumFractionDigits:2})+" kg";}
 /* Messwert mit Einheit, oder null (für kv()/kw(), die null-Werte als „–“ bzw. gar nicht zeigen) */
 function fmtNum(v,einheit,stellen=1){return v==null?null:`${Bz.fmtZahl(v,stellen)} ${einheit}`;}
-/* Bild-Vorschau eines Suds: Etikett, sonst Foto, sonst gezeichneter Kronkorken in der gewählten Kronkorken-Farbe (sonst Bierfarbe) */
+/* Bild-Vorschau eines Suds: Kronkorken, sonst Flasche, sonst Foto (alle in Kronkorken-Form), sonst gezeichneter
+   Kronkorken in der gewählten Kronkorken-Farbe (sonst Bierfarbe). bild_etikett nur noch als Rückfall für Altdaten. */
 function sudFarbe(b){const v=b.ausschlag??b.wuerze??b.biermenge??null;return Bz.ebc({ausschlag:v,malze:(b.malz||[]).map(m=>({name:m.sorte,gramm:m.gramm,ebc:m.ebc}))});}
-function sudBild(b){const p=b.bild_etikett||b.bild_foto;
+function sudBild(b){const p=b.bild_kronkorken||b.bild_flasche||b.bild_etikett||b.bild_foto;
   if(p)return`<img class="sud-bild kb-zack" src="${esc(Bilder.url(p,true))}" alt="" loading="lazy">`;
   return`<span class="sud-bild ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;}
 function haystack(b){return JSON.stringify(b).toLowerCase();}
@@ -157,8 +158,9 @@ function zeigeDetail(b){
   ].filter(Boolean);
   const steps=rastZeilen.length?`<ol class="steps">${rastZeilen.join("")}</ol>`:"";
   const hops=(b.hopfen||[]).length?`<div class="hops">${b.hopfen.map(h=>`<div><b style="font-weight:500">${hopfenLinks(h)}</b><span>${hopfenRechts(h)}</span></div>`).join("")}</div>`:"";
-  const kronkorken=b.bild_etikett
-    ?`<button type="button" class="sud-etikett" id="sudEtikett"><img class="sud-bild gross kb-zack" src="${esc(Bilder.url(b.bild_etikett,true))}" alt="Etikett"></button>`
+  const kkPfad=b.bild_kronkorken,flPfad=b.bild_flasche||b.bild_etikett;
+  const kronkorken=(kkPfad||flPfad)
+    ?`<div class="sud-kk-fl">${kkPfad?`<button type="button" class="sud-etikett" data-zeig="${esc(kkPfad)}"><img class="sud-bild gross kb-zack" src="${esc(Bilder.url(kkPfad,true))}" alt="Kronkorken"></button>`:""}${flPfad?`<button type="button" class="sud-etikett" data-zeig="${esc(flPfad)}"><img class="sud-flasche" src="${esc(Bilder.url(flPfad,true))}" alt="Flasche"></button>`:""}</div>`
     :b.bild_foto?""
     :`<span class="sud-bild gross ph">${Bilder.platzhalter({name:title(b),stil:b.stil,ebc:sudFarbe(b),farbe:CAPS[b.etikett]})}</span>`;
   const kw=(label,wert,einheit,cls)=>`<div class="kw"><span>${esc(label)}</span><b class="num${cls?" "+cls:""}">${wert==null||wert===""?"–":esc(wert)}</b>${einheit?`<small>${esc(einheit)}</small>`:""}</div>`;
@@ -214,9 +216,9 @@ function zeigeDetail(b){
     else $("#editBtn").onclick=()=>editInline(b);
     $("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
   }
-  const bp=[b.bild_foto,b.bild_etikett].filter(Boolean);
+  const bp=[b.bild_foto,b.bild_kronkorken,b.bild_flasche||b.bild_etikett].filter(Boolean);
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
-  if($("#sudEtikett"))$("#sudEtikett").onclick=()=>Bilder.zeigen(bp,bp.length-1);
+  $("#list").querySelectorAll(".sud-kk-fl [data-zeig]").forEach(btn=>btn.onclick=()=>Bilder.zeigen(bp,Math.max(0,bp.indexOf(btn.dataset.zeig))));
   if(b.rezept_id)sb.from("rezepte").select("id,name").eq("id",b.rezept_id).maybeSingle().then(({data})=>{const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
   $("#galerieFile").onchange=galerieDateienGewaehlt;
   galerieDragDropVerdrahten($("#sudGalerieSec"));
@@ -373,7 +375,7 @@ function confirmDelete(b){
   bestaetigen("Sud löschen?",`„${title(b)}“ vom ${fmtDate(b.datum)}${b.datum?.slice(0,4)||""} wird endgültig gelöscht.`,"Ja, löschen",async()=>{
     const {data,error}=await sb.from("sude").delete().eq("id",b.id).select("id");
     if(error||!data||!data.length){toast(error?fehlertext(error):"Löschen ist nur dem Admin erlaubt.");return;}
-    Bilder.loeschen(b.bild_foto);Bilder.loeschen(b.bild_etikett);
+    for(const k of ["bild_foto","bild_kronkorken","bild_flasche","bild_etikett"])Bilder.loeschen(b[k]);
     state.brews=state.brews.filter(x=>x.id!==b.id);toast("Sud gelöscht");
     location.href="index.html";
   });
@@ -425,7 +427,7 @@ function openEditor(src,asCopy){
   const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
   if(src&&src.ausRezept){draft=Object.assign({nr:nextNr,datum:todayIso(),oeffentlich:false},src.draft);editingId=null;}
   else if(!src){draft={nr:nextNr,datum:todayIso(),oeffentlich:false,malz:[{sorte:"",gramm:"",ebc:null}],rasten:[{temperatur:"",zeit:""}],hopfen:[hopfenNeu(null)]};editingId=null;}
-  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:null,ausschlag:null,biermenge:null,flaschen:null,alkohol:null,abgefuellt:null,notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null,ph_vorher:null,ph_nachher:null,refraktometer_anstellen:null,refraktometer_restextrakt:null,wizard_notizen:[]});editingId=null;}
+  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:null,ausschlag:null,biermenge:null,flaschen:null,alkohol:null,abgefuellt:null,notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null,bild_kronkorken:null,bild_flasche:null,ph_vorher:null,ph_nachher:null,refraktometer_anstellen:null,refraktometer_restextrakt:null,wizard_notizen:[]});editingId=null;}
   else{draft=JSON.parse(JSON.stringify(src));editingId=src.id;}
   ["malz","rasten","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
   draft.hopfen=draft.hopfen.map(hopfenNeu);
@@ -468,7 +470,7 @@ function drawForm(ziel){
   $(ziel).innerHTML=`<form id="form" novalidate>
     ${fs("Grunddaten",`<div class="grid2">${FIELDS[0][1].map(f=>field(f,d[f[0]])).join("")}</div>
       <label class="check"><input type="checkbox" id="f_oeffentlich" name="oeffentlich"${d.oeffentlich?" checked":""}><span><b>Öffentlich zeigen</b><br><span class="hint">Gäste sehen dann Werte, Schüttung, Hopfen und Hefe – Notizen und Bewertung bleiben intern.</span></span></label>`)}
-    ${fs("Bilder",`<div class="grid2">${Bilder.feldHtml("bf_foto",d.bild_foto,{art:"frei",beschriftung:"Foto vom Sud"})}${Bilder.feldHtml("bf_etikett",d.bild_etikett,{art:"frei",beschriftung:"Etikett"})}</div><p class="hint">Beides freiwillig. Das Foto erscheint oben in der Ansicht, das Etikett als Vorschaubild in der Liste.</p>`)}
+    ${fs("Bilder",`<div class="grid2">${Bilder.feldHtml("bf_foto",d.bild_foto,{art:"frei",beschriftung:"Foto vom Sud"})}${Bilder.feldHtml("bf_kk",d.bild_kronkorken,{art:"rund",beschriftung:"Kronkorken",bier:{name:title(d),stil:d.stil,farbe:CAPS[d.etikett]}})}${Bilder.feldHtml("bf_fl",d.bild_flasche||d.bild_etikett,{art:"hoch",beschriftung:"Flasche mit Etikett",bier:{name:title(d),stil:d.stil,farbe:CAPS[d.etikett]}})}</div><p class="hint">Alles freiwillig. Das Foto erscheint oben in der Ansicht, Kronkorken und Flasche daneben; der Kronkorken (sonst die Flasche) ist das Vorschaubild in der Liste. Ist ein Bier in der Liga mit diesem Sud verknüpft, nutzt es dieselben Bilder.</p>`)}
     ${fs("Schüttung",`<div class="rowlist m3" id="rl_malz">${rowsHTML("malz",d.malz)}</div><button type="button" class="add" data-add="malz">+ Malz</button>`)}
     ${fs("Brauwasser",`<div class="grid2">${FIELDS[1][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
     ${fs("Maischplan",`<div class="grid2">${FIELDS[5][1].map(f=>field(f,d[f[0]])).join("")}</div>${d.maischplan_alt&&d.maischplan_alt.length?`<p class="hint">Vorher (Freitext): ${esc(d.maischplan_alt.join(" · "))}</p>`:""}<div class="rowlist" id="rl_rasten">${rowsHTML("rasten",d.rasten)}</div><button type="button" class="add" data-add="rasten">+ Rast</button>`)}
@@ -481,7 +483,9 @@ function drawForm(ziel){
   </form>`;
   $("#form").onsubmit=e=>{e.preventDefault();save();};
   Bilder.feldVerdrahten("bf_foto",{art:"frei",basis:bildBasis+"/foto",titel:"Foto vom Sud",geaendert:p=>{draft.bild_foto=p;}});
-  Bilder.feldVerdrahten("bf_etikett",{art:"frei",basis:bildBasis+"/etikett",titel:"Etikett",geaendert:p=>{draft.bild_etikett=p;}});
+  const bierV={name:title(draft),stil:draft.stil,farbe:CAPS[draft.etikett]};
+  Bilder.feldVerdrahten("bf_kk",{art:"rund",basis:bildBasis+"/kronkorken",titel:"Kronkorken",bier:bierV,geaendert:p=>{draft.bild_kronkorken=p;}});
+  Bilder.feldVerdrahten("bf_fl",{art:"hoch",basis:bildBasis+"/flasche",titel:"Flasche mit Etikett",bier:bierV,geaendert:p=>{draft.bild_flasche=p;}});
   const scrollTop=()=>bearbeitenInline?window.scrollY:$("#sheetBody").scrollTop;
   const scrollWiederherstellen=top=>{if(bearbeitenInline)window.scrollTo(0,top);else $("#sheetBody").scrollTop=top;};
   $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:"",ebc:null}:k==="hopfen"?hopfenNeu(null):k==="rasten"?{temperatur:"",zeit:""}:"");const top=scrollTop();drawForm(ziel);scrollWiederherstellen(top);});
@@ -557,7 +561,11 @@ async function save(){
   if(error){btn.disabled=false;err.textContent=fehlertext(error);return;}
   if(editingId){const me=await edMessungenSpeichern(editingId);if(me){btn.disabled=false;err.textContent="Sud gespeichert, aber Zwischenmessungen nicht: "+fehlertext(me);return;}}
   const alt=editingId&&state.brews.find(b=>b.id===editingId);
-  if(alt)["bild_foto","bild_etikett"].forEach(k=>{if(alt[k]&&alt[k]!==data[k])Bilder.loeschen(alt[k]);});
+  // Kronkorken/Flasche teilt der Sud mit seinem verknüpften Bier in der Liga (dieselbe Datei) – dort mitziehen,
+  // bevor alte Dateien gelöscht werden (Bilder.loeschen löscht ohnehin nur, was nirgends mehr verwendet wird).
+  if(editingId&&alt&&(alt.bild_kronkorken!==data.bild_kronkorken||(alt.bild_flasche||alt.bild_etikett||null)!==data.bild_flasche))
+    await sb.from("biere").update({bild_kronkorken:data.bild_kronkorken,bild_flasche:data.bild_flasche}).eq("sud_id",editingId);
+  if(alt)["bild_foto","bild_kronkorken","bild_flasche","bild_etikett"].forEach(k=>{if(alt[k]&&alt[k]!==data[k])Bilder.loeschen(alt[k]);});
   state.brews=state.brews.filter(b=>b.id!==data.id).concat([data]);
   if(!bearbeitenInline)closeSheet();
   if(editingId&&aktuellerSud&&aktuellerSud.id===editingId){toast("Gespeichert");zeigeDetail(data);}
