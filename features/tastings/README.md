@@ -117,3 +117,10 @@ erratbar zu werden. Ein späteres Umbenennen ändert den Code nicht mehr.
 ## Offene Punkte
 
 - Verkostung 2 und 3: Datum und Ort nachtragen
+
+## Nach dem Aufdecken: automatisch aufs Ergebnis (seit 07.11.2026)
+Sobald eine Verkostung abgeschlossen ist, springt die Gästeseite (`?v=<code>`, fragt alle 15 s nach) von selbst auf die
+Ergebnisseite (`?e=<id>`) mit Podest und antippbaren Bieren. Vorher legt sie die eigenen Noten je Bier im Browser ab
+(`localStorage` `kb_meine_<id>`); die Ergebnisseite zeigt sie als „deine Note“ – nur auf diesem Gerät. Braumeister
+landen nach „Abschließen“ ebenfalls direkt dort. Dafür liefert `vk_laden` nach dem Abschluss zusätzlich `id` und je
+Probe `bier_id` (`schema/15_ergebnis_wechsel.sql`, angewendet).
