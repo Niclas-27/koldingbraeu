@@ -43,7 +43,7 @@ function detailZeigen(){
   <article class="rz-blatt">
     ${R.bild_foto ? `<img class="titelbild rz-foto" id="rzFoto" src="${esc(Bilder.url(R.bild_foto))}" alt="Foto: ${esc(R.name)}">` : ""}
     <header class="rz-kopf">
-      ${R.bild_etikett ? `<button type="button" class="rz-etikett" id="rzEtikett" aria-label="Etikett groß zeigen">${rezeptBild({...R, bild_foto: null}, k, true)}</button>` : R.bild_foto ? "" : rezeptBild(R, k, true)}
+      ${(R.bild_kronkorken || R.bild_flasche || R.bild_etikett) ? `<div class="sud-kk-fl">${R.bild_kronkorken ? `<button type="button" class="rz-etikett" data-zeig="${esc(R.bild_kronkorken)}" aria-label="Kronkorken groß zeigen"><img class="rz-bild kb-zack gross" src="${esc(Bilder.url(R.bild_kronkorken, true))}" alt="Kronkorken"></button>` : ""}${(R.bild_flasche || R.bild_etikett) ? `<button type="button" class="rz-etikett" data-zeig="${esc(R.bild_flasche || R.bild_etikett)}" aria-label="Flasche groß zeigen"><img class="rz-flasche" src="${esc(Bilder.url(R.bild_flasche || R.bild_etikett, true))}" alt="Flasche"></button>` : ""}</div>` : R.bild_foto ? "" : rezeptBild(R, k, true)}
       <p class="kicker">${esc(R.stil || "Rezept")}</p>
       <h2>${esc(R.name)}</h2>
       <p class="hint">${esc([R.autor && "Autor: " + R.autor, R.quelle].filter(Boolean).join(" · "))}${isBM() ? (R.oeffentlich ? ` <span class="tag pub">öffentlich</span>` : ` <span class="tag intern">intern</span>`) : ""}</p>
@@ -112,9 +112,9 @@ function detailZeigen(){
     detailZeigen();
   });
   $("#rzDruck").onclick = () => window.print();
-  const bp = [R.bild_foto, R.bild_etikett].filter(Boolean);
+  const bp = [R.bild_foto, R.bild_kronkorken, R.bild_flasche || R.bild_etikett].filter(Boolean);
   if($("#rzFoto")) $("#rzFoto").onclick = () => Bilder.zeigen(bp, 0);
-  if($("#rzEtikett")) $("#rzEtikett").onclick = () => Bilder.zeigen(bp, bp.length - 1);
+  rMain().querySelectorAll(".sud-kk-fl [data-zeig]").forEach(b => b.onclick = () => Bilder.zeigen(bp, Math.max(0, bp.indexOf(b.dataset.zeig))));
   if(!isBM()) return;
   $("#sudAnlegen").onclick = () => sudAusRezept(aktuell());
   $("#rzEdit").onclick = () => rezeptEditInline(R);
@@ -145,7 +145,7 @@ function stammbaumHtml(){
 
 async function klonen(){
   const kopie = {...R}; ["id", "angelegt", "angelegt_von", "geaendert", "geaendert_von", "original", "aus_sud_id"].forEach(k => delete kopie[k]);
-  Object.assign(kopie, {name: R.name + " (Variante)", eltern_id: R.id, oeffentlich: false, bild_foto: null, bild_etikett: null});
+  Object.assign(kopie, {name: R.name + " (Variante)", eltern_id: R.id, oeffentlich: false, bild_foto: null, bild_etikett: null, bild_kronkorken: null, bild_flasche: null});
   const {data, error} = await sb.from("rezepte").insert(kopie).select("id").single();
   if(error){ toast(fehlertext(error)); return; }
   toast("Kopie angelegt – sie steht als Variante im Stammbaum"); location.href = "rezepte.html?id=" + data.id;
@@ -155,7 +155,7 @@ function loeschen(){
   bestaetigen("Rezept löschen?", `„${R.name}“ wird endgültig gelöscht.${n ? ` Die ${n} daraus gebrauten Sude bleiben erhalten, verlieren aber den Verweis aufs Rezept.` : ""}${baum.kinder.length ? " Varianten bleiben erhalten." : ""}`, "Endgültig löschen", async () => {
     const {data, error} = await sb.from("rezepte").delete().eq("id", R.id).select("id");
     if(error || !data?.length){ toast(error ? fehlertext(error) : "Löschen ist nur dem Admin erlaubt."); return; }
-    await Promise.all([Bilder.loeschen(R.bild_foto), Bilder.loeschen(R.bild_etikett)]);
+    await Promise.all(["bild_foto", "bild_kronkorken", "bild_flasche", "bild_etikett"].map(k => Bilder.loeschen(R[k])));
     location.href = "rezepte.html";
   });
 }

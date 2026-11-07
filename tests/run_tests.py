@@ -57,11 +57,15 @@ async def wische(pg, selector, dx):
     }""", [selector, dx])
 
 async def bild_waehlen(pg, ausloeser, zuschneiden=False):
-    """Öffnet den Bild-Dialog, wählt tests/data/foto.jpg und übernimmt (bei rund/hoch nach dem Zuschneiden)."""
+    """Öffnet den Bild-Dialog, wählt tests/data/foto.jpg und übernimmt den Ausschnitt. Seit 07.11.2026 schneidet
+    jedes Bildfeld zu: rund/hoch in einem Schritt, frei in zwei (Ausschnitt, dann Vorschau-Quadrat) – bis der
+    Dialog zu ist, wird einfach „Weiter“/„Übernehmen“ gedrückt. (zuschneiden bleibt aus Kompatibilität.)"""
     await pg.click(ausloeser); await pg.wait_for_selector(".bilddialog")
     await pg.set_input_files(".bilddialog input[type=file] >> nth=1", FOTO)
-    if zuschneiden:
-        await pg.wait_for_selector(".bilddialog [data-a=ok]:not([hidden])"); await pg.click(".bilddialog [data-a=ok]")
+    for _ in range(3):
+        if await pg.locator(".bilddialog").count() == 0: break
+        await pg.wait_for_selector(".bilddialog [data-a=ok]:not([hidden]):not([disabled])", timeout=5000)
+        await pg.click(".bilddialog [data-a=ok]"); await pg.wait_for_timeout(250)
     await pg.wait_for_selector(".bilddialog", state="detached", timeout=5000); await pg.wait_for_timeout(200)
 
 def pruefe(name, bedingung):
@@ -75,7 +79,7 @@ async def main():
             ctx = await br.new_context(viewport={"width": w, "height": h}, has_touch=True)
             await ctx.route("**/vendor/supabase.js", lambda r: r.fulfill(body=FAKE, content_type="text/javascript"))
             await ctx.route("**/fonts/*.woff2", lambda r: r.fulfill(status=204, body=""))
-            await ctx.route("**/storage/v1/object/public/**", lambda r: r.fulfill(body=FOTO_BYTES, content_type="image/jpeg"))
+            await ctx.route("**/storage/v1/object/public/**", lambda r: r.fulfill(body=FOTO_BYTES, content_type="image/jpeg", headers={"Access-Control-Allow-Origin": "*"}))
             pg = await ctx.new_page()
             pg.on("pageerror", lambda e: fehler.append(f"{name}: JS-Fehler {e}"))
             await pg.goto(BASE + "rezepte.html"); await pg.evaluate(f"localStorage.setItem('test_rolle','{rolle}')")
@@ -208,9 +212,10 @@ async def main():
             await pg.screenshot(path=str(SHOTS / "rz_editor.png"))
             await pg.click("#berechnen"); await pg.wait_for_timeout(100)
             pruefe("Kennwerte berechnen trägt Stammwürze ein", (await pg.input_value("#r_stammwuerze")) != "")
-            await bild_waehlen(pg, "#rf_etikett [data-bf=neu]")
+            await bild_waehlen(pg, "#rf_kk [data-bf=neu]")
+            await bild_waehlen(pg, "#rf_fl [data-bf=neu]")
             await pg.click("#rzSave"); await pg.wait_for_timeout(700)
-            pruefe("Rezept mit Etikett gespeichert und gezeigt", await pg.locator("#rzEtikett img").count() == 1)
+            pruefe("Rezept mit Kronkorken und Flasche gespeichert und gezeigt", await pg.locator(".sud-kk-fl img").count() == 2)
             await pg.click("#rzKlon"); await pg.wait_for_timeout(900)
             pruefe("Klon zeigt „Abgeleitet von“", "Abgeleitet von" in await pg.inner_text("#rz"))
         await seite("bm", "rezepte.html?id=r1", "rz_detail_bm", bearbeiten)
@@ -235,6 +240,38 @@ async def main():
             await pg.click("#saveBtn"); await pg.wait_for_timeout(500)
             pruefe("Sud mit Foto gespeichert und oben gezeigt", await pg.locator("#sudFoto").count() == 1)
         await seite("bm", "index.html?sud=s1", "sud_foto", sud_foto)
+        async def zuschnitt(pg):
+            await pg.click("#editBtn"); await pg.wait_for_selector("#bf_foto")
+            await pg.click("#bf_foto [data-bf=neu]"); await pg.wait_for_selector(".bilddialog")
+            await pg.set_input_files(".bilddialog input[type=file] >> nth=1", FOTO)
+            await pg.wait_for_selector(".bd-crop:not([hidden])")
+            pruefe("Freier Zuschnitt zeigt Schnellknöpfe", await pg.locator(".bd-schnell button").count() == 5)
+            cv = pg.locator(".bd-stage canvas"); bb = await cv.bounding_box()
+            # rechte untere Ecke nach innen ziehen → Rahmen wird kleiner
+            await pg.mouse.move(bb["x"] + bb["width"] - 2, bb["y"] + bb["height"] - 2); await pg.mouse.down()
+            await pg.mouse.move(bb["x"] + bb["width"] * 0.6, bb["y"] + bb["height"] * 0.6, steps=5); await pg.mouse.up()
+            await pg.click(".bd-schnell button:has-text('1:1')"); await pg.wait_for_timeout(100)
+            await pg.click(".bilddialog [data-a=ok]"); await pg.wait_for_timeout(200)
+            pruefe("Zweiter Schritt: Quadrat für die Vorschau", "Schritt 2 von 2" in await pg.inner_text(".bd-schritt"))
+            await pg.click(".bilddialog [data-a=ok]"); await pg.wait_for_selector(".bilddialog", state="detached")
+            await pg.wait_for_timeout(300)
+            up = await pg.evaluate("JSON.stringify(window.__uploads||[])")
+            pruefe("Großbild, Vorschau und unbeschnittenes Basisbild hochgeladen", "_t.jpg" in up and "_b.jpg" in up)
+            aus = await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='bild_ausschnitte'))")
+            pruefe("Ausschnitt gespeichert (Rahmen + Quadrat)", '"rahmen"' in aus and '"quadrat"' in aus)
+            pruefe("Bildfeld bietet „Ausschnitt ändern“", await pg.locator("#bf_foto [data-bf=schnitt]").count() == 1)
+            await pg.click("#bf_foto [data-bf=schnitt]"); await pg.wait_for_selector(".bd-crop:not([hidden])", timeout=5000)
+            pruefe("„Ausschnitt ändern“ öffnet den Zuschnitt direkt, ohne Dateiauswahl", await pg.locator(".bd-start").is_hidden())
+            await pg.click(".bilddialog [data-a=ok]"); await pg.click(".bilddialog [data-a=ok]"); await pg.wait_for_selector(".bilddialog", state="detached")
+            await pg.wait_for_timeout(300)
+            pruefe("Neuer Ausschnitt bekommt einen neuen Dateinamen", len(set(await pg.evaluate("(window.__uploads||[]).filter(p=>/foto-[^_]*\\.jpg$/.test(p))"))) >= 2)
+            pruefe("Sud-Editor hat Kronkorken und Flasche statt Etikett", await pg.locator("#bf_kk").count() == 1 and await pg.locator("#bf_fl").count() == 1 and await pg.locator("#bf_etikett").count() == 0)
+            await bild_waehlen(pg, "#bf_kk [data-bf=neu]")
+            await pg.click("#saveBtn"); await pg.wait_for_timeout(600)
+            pruefe("Kronkorken oben auf der Sudseite", await pg.locator(".sud-kk-fl img.kb-zack").count() == 1)
+            biere = await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='biere'&&c[1]==='update'))")
+            pruefe("Verknüpfte Biere bekommen dieselben Bilder", "bild_kronkorken" in biere)
+        await seite("bm", "index.html?sud=s1", "sud_zuschnitt", zuschnitt, 390, 844)
         async def sud_galerie_gast(pg):
             pruefe("Gast sieht Anmelde-Hinweis statt Fotos", "an, um die Fotos" in await pg.inner_text("#sudGalerieSec"))
             pruefe("Gast sieht kein Foto", await pg.locator("#sudGalerie .g-item").count() == 0)

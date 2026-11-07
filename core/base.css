@@ -406,15 +406,17 @@ img.bb{object-fit:cover;background:var(--surface)}
 .bd-kopf b{font-family:var(--font-display);font-size:1.2rem}
 .bd-start{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .bd-start .hint{flex-basis:100%}
-.bd-stage{position:relative;width:100%;aspect-ratio:1;touch-action:none;border-radius:8px;overflow:hidden}
-.bd-stage canvas{width:100%;height:100%;display:block;cursor:grab}
-.bd-maske{position:absolute;inset:0;pointer-events:none}
-.bd-maske.rund::after,.bd-maske.hoch::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 999px rgba(0,0,0,.55);border:2px solid #fff}
-.bd-maske.rund::after{width:86%;height:86%;border-radius:50%}
-.bd-maske.hoch::after{height:86%;aspect-ratio:3/4;border-radius:10px}
-.bd-zoom{display:flex;gap:10px;align-items:center;font-size:.85rem;color:var(--muted)}
-.bd-zoom input{flex:1;accent-color:var(--amber)}
-.bd-fuss{display:flex;justify-content:flex-end;gap:8px}
+/* Zuschnitt (lib/bilder.js waehlen): das ganze Foto, darüber der Rahmen – Canvas behält sein Seitenverhältnis,
+   passt sich in Breite und Höhe an (max. 60 % der Bildschirmhöhe), touch-action:none fürs Ziehen am Handy. */
+.bd-stage{display:flex;justify-content:center;background:#222;border-radius:8px;overflow:hidden}
+.bd-stage canvas{display:block;max-width:100%;max-height:60vh;width:auto;height:auto;touch-action:none;cursor:move}
+.bd-schritt{margin:0;font-weight:600;font-size:.9rem}
+.bd-schritt:empty{display:none}
+.bd-schnell{display:flex;flex-wrap:wrap;gap:6px}
+.bd-schnell .tag{cursor:pointer;font:inherit;font-size:.85rem;padding:6px 12px;min-height:36px}
+.bd-schnell .tag.an{background:var(--amber);border-color:var(--amber);color:#fff}
+.bd-fuss{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bd-fuss .spacer{flex:1}
 .lightbox{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 .lightbox img{max-width:96vw;max-height:84vh;border-radius:6px}
 .lb-cap{color:#f1ece2;font-size:.92rem;max-width:560px;text-align:center;padding:0 16px;margin:0}
