@@ -61,7 +61,7 @@ Datenbank selbst setzt durch, wer was darf.
   – nur ein erfolgreicher Lauf mit `head_branch: production` **nach** dem Merge-Zeitpunkt zählt.
   Ungefähr eine Minute nach dem Merge nach `production` ist die Änderung auf kolding.de sichtbar.
 
-Der Workflow läuft außerdem **automatisch alle vier Stunden** (`schedule: cron: "17 */4 * * *"`),
+Der Workflow läuft außerdem **automatisch jede Stunde** (`schedule: cron: "17 * * * *"`) und per Hand (GitHub → Actions → „Veröffentlichen“ → „Run workflow“),
 auch ohne dass Code geändert wurde – dazu gleich mehr (2.2).
 
 ### 2.2 Vorschaubilder für geteilte Links
@@ -80,7 +80,7 @@ dort sofort zur eigentlichen Seite weiter.
   Liga immer, sofern ein Kronkorken-Bild hinterlegt ist.
 - Läuft rein lesend mit dem öffentlichen Supabase-Schlüssel (demselben, der auch im Browser
   steht) und bricht den Gesamt-Build bei einem Fehler nicht ab.
-- **Deshalb der Zeitplan alle 4 Stunden:** Ein neuer Sud bekommt ohne diesen automatischen Lauf
+- **Deshalb der Zeitplan (stündlich):** Ein neuer Sud bekommt ohne diesen automatischen Lauf
   erst dann eine Vorschauseite, wenn wieder jemand etwas veröffentlicht (`main`→`production`) –
   das kann tagelang nicht passieren. Der Zeitplan-Lauf checkt deshalb bewusst **fest `production`**
   aus (nicht den Default-Branch `main`), siehe Kommentar im Workflow.

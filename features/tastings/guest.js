@@ -77,8 +77,9 @@ function gastZeigen(){
   const darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < 3;
   const kannLoeschen = ich && v.status !== "abgeschlossen" && (ich.bilder||0) > 0;
   if(ich && v.status !== "abgeschlossen") h += sec("Fotos vom Abend", (darf
-      ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von 3)</button><span class="err" id="fotoErr"></span><p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sie sind nur für die Braumeister sichtbar.</p>`
+      ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von 3)</button><span class="err" id="fotoErr"></span><p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sie sind nur für die Braumeister sichtbar – nach dem Neuladen siehst du sie hier nicht mehr.</p>`
       : `<p class="hint">Du hast deine drei Fotos hochgeladen – danke! Sie sind nur für die Braumeister sichtbar.</p>`)
+      + (eigeneFotos.length && ich.bilder ? `<div class="g-eigene" aria-label="Von dir in dieser Sitzung hochgeladen">${eigeneFotos.slice(-ich.bilder).map(u => `<img src="${u}" alt="Hochgeladenes Foto">`).join("")}</div><p class="hint">Angekommen – nur für die Braumeister sichtbar.</p>` : "")
       + (kannLoeschen ? `<button type="button" class="linkbtn" id="fotoLoeschBtn">Zuletzt hochgeladenes Foto entfernen</button><span class="err" id="fotoLoeschErr"></span>` : ""));
   main().innerHTML = h;
 
@@ -131,6 +132,7 @@ async function bmHinweis(){
 }
 
 /* Gast lädt ein Foto für die Galerie hoch – über die Edge Function „galerie-hochladen“ (prüft Code, Schlüssel, max. 3) */
+let eigeneFotos = []; // Vorschauen der in dieser Sitzung hochgeladenen Fotos (nur im Speicher; die Galerie selbst ist privat)
 async function gastFoto(){
   const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend"});
   if(!erg) return;
@@ -148,6 +150,7 @@ async function gastFoto(){
     let msg = "Hochladen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}
     btn.disabled = false; btn.textContent = "+ Foto hinzufügen"; err.textContent = msg; return;
   }
+  eigeneFotos.push(URL.createObjectURL(erg.klein));
   toast("Foto hochgeladen"); gastLaden();
 }
 
@@ -160,5 +163,6 @@ async function gastFotoLoeschen(){
     let msg = "Löschen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}
     btn.disabled = false; err.textContent = msg; return;
   }
+  eigeneFotos.pop();
   toast("Foto entfernt"); gastLaden();
 }

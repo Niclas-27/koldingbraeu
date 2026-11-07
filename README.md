@@ -76,7 +76,7 @@ Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repo
   und kommen per Pull Request nach `main`. Auf `main` ist noch nichts live.
 - **`production`** ist das, was tatsächlich auf kolding.de steht. Soll etwas veröffentlicht werden, geht `main`
   per Pull Request nach `production` – etwa eine Minute nach dem Mergen ist die Seite live.
-- Der Veröffentlichen-Workflow (`.github/workflows/pages.yml`) läuft außerdem alle vier Stunden von selbst, damit
+- Der Veröffentlichen-Workflow (`.github/workflows/pages.yml`) läuft außerdem jede Stunde von selbst (und lässt sich auf GitHub unter Actions → „Veröffentlichen“ → „Run workflow“ sofort von Hand starten), damit
   neue öffentliche Sude, Rezepte, Verkostungen und Biere ihre Vorschauseite bekommen (siehe unten).
 
 - **Erst lokal testen, dann veröffentlichen:** Neue Funktionen werden auf ihrem Branch im Mac-Ordner ausgecheckt und
