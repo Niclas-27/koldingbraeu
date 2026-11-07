@@ -80,6 +80,11 @@ const rpcs={
  vk_admin_teilnehmer(a){const t={id:"tx"+Math.random(),verkostung_id:a.p_verkostung,name:a.p_name};db.teilnehmer.push(t);return {data:t.id,error:null};},
  vk_vorschlagen(){return {data:{ok:true},error:null};},
  vk_angekuendigt(){return {data:[],error:null};},
+ vk_ankuendigung({p_id}){const v=db.verkostungen.find(x=>x.id===p_id);if(!v)return {data:null,error:{code:"P0002",message:"Diese Verkostung gibt es nicht (mehr)."}};
+   if(v.status==="abgeschlossen")return {data:{id:v.id,status:v.status},error:null};
+   const pr=db.proben.filter(p=>p.verkostung_id===v.id).sort((a,b)=>a.nummer-b.nummer);
+   return {data:{id:v.id,titel:v.titel,datum:v.datum,uhrzeit:v.uhrzeit||null,ort:v.ort,blind:v.blind,status:v.status,bild_titel:v.bild_titel||null,einladungstext:v.einladungstext||null,anzahlProben:pr.length,
+     proben:v.blind?[]:pr.map(p=>{const b=biere.find(x=>x.id===p.bier_id);return {nummer:p.nummer,name:b.name,brauerei:b.brauerei,stil:stile.find(s=>s.id===b.stil_id)?.name,alkohol:b.alkohol};})},error:null};},
  vk_archiv(){return {data:[{id:"v0",titel:"Frühjahrsrunde",bild_titel:"verkostungen/v0/titel-a.jpg",datum:"2026-04-01",ort:"Hamburg",teilnehmer:7,namen:["Niels","Carsten","Jan"],proben:[{nummer:2,name:"Augustiner Hell",brauerei:"Augustiner",stil:"Helles",alkohol:5.2,schnitt:8.14,anzahl:7,nochmal:6},{nummer:1,name:"Kolding Kölsch",brauerei:"Koldingbräu",stil:"Pils",schnitt:7.5,anzahl:6,nochmal:3}]},{id:"v9",titel:"Pils & Lager",datum:"2026-10-18",ort:null,teilnehmer:3,namen:["Niels","Carsten","Jan"],proben:[{nummer:2,name:"Einbecker",schnitt:9,anzahl:3,nochmal:3}]}],error:null};},
  vk_ergebnis(){const P=(nr,n,s,no,nm,ext)=>Object.assign({nummer:nr,bier_id:"b"+nr,name:n,brauerei:n.split(" ")[0],eigen:false,stil:s,alkohol:null,schnitt:no,anzahl:3,nochmal:nm,noten:[no,no,no],merkmale:{},geruch:{},fehler:{},kommentare:[]},ext||{});
    return {data:{verkostung:{id:"v9",titel:"Pils & Lager",datum:"2026-10-18",ort:"Röntbarg",blind:false,bild_titel:"verkostungen/v9/titel-a.jpg"},galerie:["verkostungen/v9/galerie/a.jpg","verkostungen/v9/galerie/b.jpg"],teilnehmer:["Niels","Carsten","Jan"],proben:[

@@ -9,6 +9,7 @@ KB.seite = {
     if(ansicht === "gast"){ await ladeStile(); await gastLaden(); if(isBM()) bmHinweis(); }
     else if(ansicht === "detail") await detailLaden();
     else if(ansicht === "ergebnis") await ergebnisLaden();
+    else if(ansicht === "ankuendigung") await ankuendigungLaden();
     else await listeLaden();
   },
 };

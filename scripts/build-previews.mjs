@@ -10,8 +10,10 @@
    Anmeldung, nur was RLS für "oeffentlich=true" freigibt) – interne bleiben unsichtbar und zeigen beim
    Teilen nur das allgemeine Koldingbräu-Logo (assets/og-default.png), weil dafür schlicht keine Seite
    entsteht und die normale App-Seite selbst nur die allgemeinen og-Tags trägt (siehe <head> der *.html).
-   Verkostungen bekommen nur dann eine Vorschauseite, wenn sie abgeschlossen sind (das Ergebnis ist dann
-   laut App ausdrücklich öffentlich, siehe verkostung.html?e=<id> / vk_archiv). Biere aus der Biersammlung
+   Abgeschlossene Verkostungen zeigen aufs Ergebnis (verkostung.html?e=<id> / vk_archiv), anstehende seit
+   07.11.2026 auf die Ankündigungsseite (verkostung.html?a=<id> / vk_angekuendigt) – das ist das Ziel des
+   Einladungslinks; dafür immer eine Seite, notfalls mit dem allgemeinen Bild. Was noch keine Seite hat, fängt
+   404.html ab und leitet passend weiter. Biere aus der Biersammlung
    sind in der App grundsätzlich öffentlich (Liga) und bekommen daher alle eine Vorschauseite, sofern ein
    Kronkorken-Bild hinterlegt ist.
    Läuft rein lesend mit dem öffentlichen Supabase-Schlüssel (dem gleichen, der auch im Browser steht) und
@@ -40,7 +42,8 @@ async function supa(pfad, { rpc } = {}) {
   return res.json();
 }
 
-async function stub({ ordner, id, titel, beschreibung, bild, zielpfad }) {
+async function stub({ ordner, id, titel, beschreibung, bild, zielpfad, immer }) {
+  if (!bild && immer) bild = `${SITE_URL}/assets/og-default.png`; // Einladungen bekommen auch ohne Titelbild eine Vorschau
   if (!bild) return false; // ohne Bild bringt eine eigene Vorschauseite nichts – die App-Seite selbst zeigt dann das allgemeine Logo
   const ziel = `${SITE_URL}${zielpfad}`;
   const eigeneUrl = `${SITE_URL}/${ordner}/${id}/`;
@@ -112,6 +115,25 @@ async function main() {
       if (ok) erzeugt++;
     }
   } catch (e) { console.warn("Verkostungs-Vorschauen übersprungen:", e.message); }
+
+  // Anstehende Verkostungen (Vorbereitung/läuft): Ziel des Einladungslinks /verkostung/<id>/ ist die
+  // Ankündigungsseite, nicht das Ergebnis. Immer eine Vorschau, notfalls mit dem allgemeinen Bild, damit eine
+  // geteilte Einladung in WhatsApp & Co. eine Karte zeigt. Gibt es die Seite noch nicht (neu angelegt, noch kein
+  // Build gelaufen), leitet 404.html dorthin weiter.
+  try {
+    const anstehend = await supa("vk_angekuendigt", { rpc: true });
+    const wochentag = iso => { const [y, m, d] = iso.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }); };
+    for (const v of anstehend) {
+      const wann = [v.datum ? wochentag(v.datum) + (v.uhrzeit ? `, ${v.uhrzeit} Uhr` : "") : "", v.ort].filter(Boolean).join(" · ");
+      const ok = await stub({
+        ordner: "verkostung", id: v.id, titel: v.titel, immer: true,
+        beschreibung: `Einladung zur Verkostung bei Koldingbräu${wann ? ` – ${wann}` : ""}.`,
+        bild: bildUrl(v.bild_titel),
+        zielpfad: `/verkostung.html?a=${encodeURIComponent(v.id)}`,
+      });
+      if (ok) erzeugt++;
+    }
+  } catch (e) { console.warn("Einladungs-Vorschauen übersprungen:", e.message); }
 
   try {
     const zeilen = await supa("liga_daten", { rpc: true });

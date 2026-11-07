@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Koldingbräu</title>
+<meta name="robots" content="noindex">
+<!-- GitHub Pages liefert diese Seite für jede unbekannte Adresse aus. Die schönen Adressen /verkostung/<id>/,
+     /sud/<id>/, /rezept/<id>/, /bier/<id>/ sind sonst statische Vorschauseiten (scripts/build-previews.mjs),
+     die nur beim Deploy bzw. alle 4 Stunden entstehen. Fehlt eine (z. B. eine gerade angelegte Verkostung, deren
+     Einladung schon geteilt wurde), leitet diese Seite trotzdem zum richtigen Ziel weiter. -->
+<script>
+(function () {
+  var m = location.pathname.match(/^\/(verkostung|sud|rezept|bier)\/([0-9a-f-]{36})\/?$/i);
+  if (!m) return;
+  var id = encodeURIComponent(m[2]);
+  var ziel = { verkostung: "/verkostung.html?a=" + id, sud: "/index.html?sud=" + id, rezept: "/rezepte.html?id=" + id, bier: "/liga.html?bier=" + id }[m[1]];
+  location.replace(ziel);
+})();
+</script>
+<style>body{font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 20px;color:#2a2219;background:#f3f4ef}a{color:#b8650f}</style>
+</head><body>
+<h1>Seite nicht gefunden</h1>
+<p>Diese Adresse gibt es bei Koldingbräu nicht (mehr). <a href="/">Zur Startseite</a></p>
+</body></html>
