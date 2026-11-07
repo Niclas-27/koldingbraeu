@@ -161,3 +161,7 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .fotos-admin{max-width:420px}
 h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:16px 0 8px;font-family:var(--font-body)}
 .bildfelder .bildfeld{align-self:stretch}
+
+/* Podest-Karten öffnen die Details des Biers (Ergebnisseite) */
+button.stufe{font:inherit;color:inherit;cursor:pointer;width:100%}
+button.stufe:hover{border-color:var(--muted)}

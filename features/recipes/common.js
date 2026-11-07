@@ -2,7 +2,7 @@
    Die Dateien dieses Bereichs teilen sich den globalen Gültigkeitsbereich der Seite rezepte.html;
    Reihenfolge: common → list → detail → editor → import → main. Rechnen: lib/brau.js (window.Brau). */
 "use strict";
-const {$, esc, isBM, isAdmin, fmtDateLong, toast, notice, sheet, closeSheet, sec, fehlertext, lsGet, lsSet} = KB;
+const {$, esc, isBM, isAdmin, fmtDateLong, toast, notice, sheet, closeSheet, bestaetigen, sec, fehlertext, lsGet, lsSet} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});
 const B = window.Brau;
 

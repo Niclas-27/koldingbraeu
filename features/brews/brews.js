@@ -2,12 +2,12 @@
    Übersicht, Liste, Details, Editor und CSV-Export. Anmeldung und Menü kommen aus kern.js. */
 (function () {
 "use strict";
-const {$, esc, state, isBM, isAdmin, fmtDate, fmtDateTime, personName, todayIso, toast, sheet, openSheet, closeSheet, kv, sec, fehlertext} = KB;
+const {$, esc, state, isBM, isAdmin, fmtDate, fmtDateTime, personName, todayIso, toast, sheet, openSheet, closeSheet, bestaetigen, kv, sec, fehlertext} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});  // Client entsteht erst beim Start
 // Spalten, die Gäste lesen dürfen (ohne notizen, bewertung); Messwerte seit 25.10.2026 Zahl+Einheit statt Freitext
 const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,einmaischtemperatur,abmaischtemperatur,rasten,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,alkohol_geschaetzt,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett";
 // Spalten, die beim Speichern geschrieben werden
-const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_etikett"];
+const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_etikett","wasserhaerte","milchsaeure_hauptguss","milchsaeure_nachguss","ph_vorher","ph_nachher","refraktometer_anstellen","refraktometer_restextrakt","karbonisierung","wizard_notizen"];
 const CAPS = {rot:"#c23b2b",blau:"#2f5fa8",orange:"#e5862b",silber:"#b9bec4",gruen:"#3f8a3a",gold:"#c9a227",schwarz:"#1c1c1c",weiss:"#f4f4f0",gelb:"#e8c82e"};
 const CAP_LABEL = {rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"Grün",gold:"Gold",schwarz:"Schwarz",weiss:"Weiß",gelb:"Gelb"};
 Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
@@ -165,7 +165,7 @@ function zeigeDetail(b){
   const posten=[["Stammwürze",b.stammwuerze!=null?Bz.fmtZahl(b.stammwuerze):null,"°P"],["Alkohol",b.alkohol!=null?Bz.fmtZahl(b.alkohol):null,"% Vol."]];
   if(bm)posten.push(["Bewertung",b.bewertung!=null?Bz.fmtZahl(b.bewertung,1):null,"/ 10",gradeCls(b.bewertung)]);
   posten.push(["Ausschlagwürze",b.ausschlag!=null?Bz.fmtZahl(b.ausschlag):null,"l"]);
-  const kennzahlen=`<div class="kws" style="grid-template-columns:repeat(${posten.length},minmax(0,1fr))">${posten.map(p=>kw(...p)).join("")}</div>`;
+  const kennzahlen=`<div class="kws k${posten.length}">${posten.map(p=>kw(...p)).join("")}</div>`;
   const header=`<header class="sud-kopf">
       ${kronkorken}
       <p class="kicker">Sud Nr. ${esc(b.nr)}</p>
@@ -207,12 +207,12 @@ function zeigeDetail(b){
       <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div><input type="file" id="galerieFile" accept="image/*" multiple hidden></section>
       ${changed}
     </article>
-    ${bm?`<div class="top-actions noprint sud-aktionen">${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}<button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="dupBtn">Als Vorlage nutzen</button><button class="btn" id="checklisteBtn">Checkliste</button>${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}</div>`:""}`;
+    ${bm?`<div class="top-actions noprint sud-aktionen">${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}<button class="btn" id="dupBtn">Kopie anlegen</button><button class="btn" id="rzBtn">Als Rezept speichern</button>${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}</div>`:""}`;
   $("#list").innerHTML=body;
   if(bm){
     if(b.status!=="dokumentiert")$("#wzFortBtn").onclick=async()=>{wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.findIndex(s=>s[0]==="gaerung"):0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();};
     else $("#editBtn").onclick=()=>editInline(b);
-    $("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);$("#checklisteBtn").onclick=()=>zeigeChecklist(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
+    $("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
   }
   const bp=[b.bild_foto,b.bild_etikett].filter(Boolean);
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
@@ -279,7 +279,7 @@ function galerieZeichnen(){
   if(!bm){el.innerHTML=`<p class="hint">Melde dich als Braumeister an, um die Fotos vom Brautag zu sehen.</p>`;return;}
   const addKachel=bm?`<button type="button" class="g-add" id="galerieAdd" aria-label="Fotos hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M8 6h2l1-2h2l1 2h2"/></svg>Fotos hinzufügen</button>`:"";
   const items=galerie.map(g=>({...g,datum:fotoDatum(g)}));
-  el.innerHTML=Bilder.galerieHtml(items,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel})+(bm?`<p class="hint sg-drophint">oder Fotos direkt hierher ziehen</p>`:"");
+  el.innerHTML=Bilder.galerieHtml(items,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel})+(bm?`<p class="hint sg-drophint nur-maus">oder Fotos direkt hierher ziehen</p>`:"");
   Bilder.galerieVerdrahten(el,items,bm?galerieLoeschenBestaetigen:null,bm?galerieBearbeiten:null);
   const add=$("#galerieAdd");if(add)add.onclick=()=>$("#galerieFile").click();
   galerieTrayZeichnen();
@@ -312,17 +312,13 @@ function galerieBearbeiten(i){
 }
 function galerieLoeschenBestaetigen(i){
   const g=galerie[i];
-  sheet("Foto löschen?",`<p>Dieses Foto${g.bildunterschrift?` („${esc(g.bildunterschrift)}“)`:""} wird endgültig gelöscht.</p>`,
-    `<span class="spacer"></span><button class="btn" id="noDelFoto">Abbrechen</button><button class="btn danger" id="yesDelFoto">Ja, löschen</button>`);
-  $("#noDelFoto").onclick=closeSheet;
-  $("#yesDelFoto").onclick=async()=>{
-    $("#yesDelFoto").disabled=true;
+  bestaetigen("Foto löschen?",`Dieses Foto${g.bildunterschrift?` („${g.bildunterschrift}“)`:""} wird endgültig gelöscht.`,"Ja, löschen",async()=>{
     const {error}=await sb.from("sud_bilder").delete().eq("id",g.id);
-    if(error){toast(fehlertext(error));closeSheet();return;}
+    if(error){toast(fehlertext(error));return;}
     Bilder.loeschen(g.pfad);
     galerie=galerie.filter(x=>x.id!==g.id);
-    closeSheet();galerieZeichnen();toast("Foto gelöscht");
-  };
+    galerieZeichnen();toast("Foto gelöscht");
+  });
 }
 /* Dateien hinzufügen (per Dateiauswahl ODER per Drag & Drop aus z. B. der Mac-Fotos-Mediathek): jedes Bild
    sofort verkleinern (noch nicht hochladen), in die Ablage legen – dort je Bild eine optionale Bildunterschrift
@@ -373,140 +369,22 @@ async function galerieHochladen(){
   galerieZeichnen();
   if(neu.length)toast(`${neu.length} Foto${neu.length===1?"":"s"} hochgeladen`);
 }
-/* --- Checkliste zum Brautag ---
-   Schritte werden aus den Sud-Daten abgeleitet (Rasten, Hopfengaben, Kochzeit) – schritteAbleiten(), kein
-   eigenes Datenmodell dafür. sud_schritte hält nur den Fortschritt: ein abgeleiteter Schritt (schluessel
-   gesetzt) existiert als Zeile nur, solange er abgehakt ist (Abhaken=anlegen, Abwählen=löschen); ein eigener
-   Zusatzschritt (schluessel NULL, text gesetzt) existiert dauerhaft ab dem Anlegen, mit eigenem erledigt-
-   Status zum Umschalten. Nur Braumeister/Admin – reines Arbeitswerkzeug, wie die Fotogalerie. */
-const PHASEN=[["schuettung","Schüttung"],["maischen","Maischen"],["laeutern","Läutern"],["kochen","Kochen"],["kuehlen","Kühlen & Anstellen"],["gaerung","Gärung"]];
-function hopfenLabel(h){return[h.gramm!=null?Bz.fmtGramm(h.gramm):"",h.sorte].filter(Boolean).join(" ")||"Hopfengabe";}
-function schritteAbleiten(b){
-  const g={schuettung:[],maischen:[],laeutern:[],kochen:[],kuehlen:[],gaerung:[]};
-  const total=malzSum(b);
-  if(total)g.schuettung.push({schluessel:"schuettung",label:`Schüttung abwiegen (${fmtKg(total)})`});
-  if(b.einmaischtemperatur!=null)g.maischen.push({schluessel:"einmaischen",label:`Einmaischen auf ${Bz.fmtZahl(b.einmaischtemperatur)} °C`});
-  (b.rasten||[]).forEach((r,i)=>{if(r.temperatur==null&&r.zeit==null)return;
-    g.maischen.push({schluessel:`rast-${i}`,label:`Rast ${i+1}${r.temperatur!=null?": "+Bz.fmtZahl(r.temperatur)+" °C":""}${r.zeit!=null?" · "+Bz.fmtZahl(r.zeit,0)+" min":""}`});});
-  if(b.abmaischtemperatur!=null)g.maischen.push({schluessel:"abmaischen",label:`Abmaischen auf ${Bz.fmtZahl(b.abmaischtemperatur)} °C`});
-  const hopfen=(b.hopfen||[]).map((h,i)=>({...hopfenNeu(h),i})).filter(h=>h.sorte||h.gramm);
-  g.laeutern.push({schluessel:"laeutern",label:"Läutern"+(b.laeutern?" – "+b.laeutern:"")});
-  hopfen.filter(h=>h.typ==="Vorderwuerze").forEach(h=>g.laeutern.push({schluessel:`hopfen-${h.i}`,label:`Vorderwürze zugeben: ${hopfenLabel(h)}`}));
-  g.kochen.push({schluessel:"kochbeginn",label:"Kochbeginn"+(b.kochzeit!=null?` (${Bz.fmtZahl(b.kochzeit,0)} min)`:"")});
-  hopfen.filter(h=>h.typ==="Kochen").sort((a,c)=>(c.zeit??-1)-(a.zeit??-1))
-    .forEach(h=>g.kochen.push({schluessel:`hopfen-${h.i}`,label:`${hopfenLabel(h)} zugeben${h.zeit!=null?` (kocht noch ${Bz.fmtZahl(h.zeit,0)} min mit)`:""}`}));
-  g.kochen.push({schluessel:"kochende",label:"Kochende"});
-  hopfen.filter(h=>h.typ==="Whirlpool").forEach(h=>g.kochen.push({schluessel:`hopfen-${h.i}`,label:`Whirlpool: ${hopfenLabel(h)} zugeben`}));
-  g.kuehlen.push({schluessel:"kuehlen",label:"Kühlen & Ausschlagen"+(b.wuerze!=null?` auf ${Bz.fmtZahl(b.wuerze)} l`:"")});
-  g.kuehlen.push({schluessel:"hefe",label:"Hefe anstellen"+(b.hefe?": "+b.hefe:"")});
-  hopfen.filter(h=>h.typ==="Stopfen").forEach(h=>g.gaerung.push({schluessel:`hopfen-${h.i}`,label:`Stopfhopfen zugeben: ${hopfenLabel(h)}`}));
-  return PHASEN.map(([k,titel])=>({k,titel,schritte:g[k]})).filter(p=>p.schritte.length);
-}
-let checklisteSud=null,checklisteSchritte=[],checklisteGruppen=[];
-async function zeigeChecklist(b){
-  checklisteSud=b;checklisteGruppen=schritteAbleiten(b);
-  $("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;
-  $("#list").innerHTML=`<p class="noprint"><a class="back" id="checklisteZurueck" href="index.html?sud=${esc(b.id)}">← ${esc(title(b))}</a></p>
-    <article class="sud-blatt">
-      <h2>Checkliste: ${esc(title(b))}</h2>
-      <p class="hint" id="checklisteFortschritt"></p>
-      <div id="checklisteBody"></div>
-    </article>`;
-  $("#checklisteZurueck").onclick=e=>{e.preventDefault();zeigeDetail(b);};
-  const {data,error}=await sb.from("sud_schritte").select("*").eq("sud_id",b.id).order("angelegt");
-  if(error)toast(fehlertext(error));
-  checklisteSchritte=error?[]:(data||[]);
-  checklisteZeichnen();
-}
-function checklisteZeichnen(){
-  if(!checklisteGruppen.length){$("#checklisteFortschritt").textContent="";$("#checklisteBody").innerHTML=`<p class="empty">Für diesen Sud ergeben sich noch keine Schritte – trag zuerst Maischplan und/oder Hopfengaben ein.</p>`;return;}
-  const erledigteSchluessel=new Set(checklisteSchritte.filter(s=>s.schluessel).map(s=>s.schluessel));
-  const eigeneNachGruppe={};
-  checklisteSchritte.filter(s=>!s.schluessel).forEach(c=>{(eigeneNachGruppe[c.gruppe]=eigeneNachGruppe[c.gruppe]||[]).push(c);});
-  let gesamt=0,offen=0;
-  const item=(schluessel,id,label,erl)=>{gesamt++;if(!erl)offen++;
-    return`<div class="chk-item"><label class="chk-row${erl?" done":""}"><input type="checkbox" data-schluessel="${esc(schluessel||"")}" data-id="${esc(id||"")}"${erl?" checked":""}><span>${esc(label)}</span></label>${schluessel?"":`<button type="button" class="x" data-del-eigen="${esc(id)}" aria-label="Schritt entfernen">✕</button>`}</div>`;};
-  const body=checklisteGruppen.map(p=>{
-    const rows=p.schritte.map(s=>item(s.schluessel,null,s.label,erledigteSchluessel.has(s.schluessel)))
-      .concat((eigeneNachGruppe[p.k]||[]).map(c=>item(null,c.id,c.text,c.erledigt)))
-      .join("");
-    return`<fieldset class="chk-gruppe" data-gruppe="${esc(p.k)}"><legend>${esc(p.titel)}</legend>${rows}<button type="button" class="add" data-eigen="${esc(p.k)}">+ Eigener Schritt</button></fieldset>`;
-  }).join("");
-  $("#checklisteBody").innerHTML=body;
-  $("#checklisteFortschritt").textContent=`${gesamt-offen} von ${gesamt} erledigt`;
-  $("#checklisteBody").querySelectorAll("input[type=checkbox]").forEach(cb=>cb.onchange=()=>checklisteUmschalten(cb));
-  $("#checklisteBody").querySelectorAll("[data-del-eigen]").forEach(btn=>btn.onclick=()=>eigenenSchrittLoeschen(btn.dataset.delEigen));
-  $("#checklisteBody").querySelectorAll("[data-eigen]").forEach(btn=>btn.onclick=()=>eigenerSchrittEingabe(btn));
-}
-async function checklisteUmschalten(cb){
-  cb.disabled=true;
-  const schluessel=cb.dataset.schluessel,id=cb.dataset.id,erl=cb.checked;
-  if(schluessel){
-    if(erl){
-      const{data,error}=await sb.from("sud_schritte").insert({sud_id:checklisteSud.id,schluessel,erledigt:true,erledigt_am:new Date().toISOString(),erledigt_von:state.profile?.id}).select().single();
-      if(error){toast(fehlertext(error));cb.checked=false;cb.disabled=false;return;}
-      checklisteSchritte.push(data);
-    }else{
-      const{error}=await sb.from("sud_schritte").delete().eq("sud_id",checklisteSud.id).eq("schluessel",schluessel);
-      if(error){toast(fehlertext(error));cb.checked=true;cb.disabled=false;return;}
-      checklisteSchritte=checklisteSchritte.filter(s=>s.schluessel!==schluessel);
-    }
-  }else{
-    const{error}=await sb.from("sud_schritte").update({erledigt:erl,erledigt_am:erl?new Date().toISOString():null,erledigt_von:erl?state.profile?.id:null}).eq("id",id);
-    if(error){toast(fehlertext(error));cb.checked=!erl;cb.disabled=false;return;}
-    const c=checklisteSchritte.find(s=>s.id===id);if(c)c.erledigt=erl;
-  }
-  checklisteZeichnen();
-}
-function eigenerSchrittEingabe(btn){
-  const gruppe=btn.dataset.eigen,wrap=btn.closest("fieldset");
-  btn.outerHTML=`<div class="chk-eigen-eingabe"><input type="text" placeholder="Eigener Schritt" maxlength="200" aria-label="Eigener Schritt"><button type="button" class="btn" data-abbrechen-eigen>Abbrechen</button><button type="button" class="btn primary" data-speichern-eigen>Hinzufügen</button></div>`;
-  const row=wrap.querySelector(".chk-eigen-eingabe"),input=row.querySelector("input");
-  input.focus();
-  const abbrechen=()=>checklisteZeichnen();
-  const speichern=async()=>{
-    const text=input.value.trim();if(!text)return;
-    row.querySelector("[data-speichern-eigen]").disabled=true;
-    const{data,error}=await sb.from("sud_schritte").insert({sud_id:checklisteSud.id,text,gruppe,erledigt:false}).select().single();
-    if(error){toast(fehlertext(error));abbrechen();return;}
-    checklisteSchritte.push(data);checklisteZeichnen();
-  };
-  row.querySelector("[data-abbrechen-eigen]").onclick=abbrechen;
-  row.querySelector("[data-speichern-eigen]").onclick=speichern;
-  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();speichern();}if(e.key==="Escape")abbrechen();});
-}
-function eigenenSchrittLoeschen(id){
-  const c=checklisteSchritte.find(s=>s.id===id);if(!c)return;
-  sheet("Schritt entfernen?",`<p>„${esc(c.text)}“ wird aus der Checkliste entfernt.</p>`,
-    `<span class="spacer"></span><button class="btn" id="noDelSchritt">Abbrechen</button><button class="btn danger" id="yesDelSchritt">Ja, entfernen</button>`);
-  $("#noDelSchritt").onclick=closeSheet;
-  $("#yesDelSchritt").onclick=async()=>{
-    $("#yesDelSchritt").disabled=true;
-    const{error}=await sb.from("sud_schritte").delete().eq("id",id);
-    if(error){toast(fehlertext(error));closeSheet();return;}
-    checklisteSchritte=checklisteSchritte.filter(s=>s.id!==id);
-    closeSheet();checklisteZeichnen();
-  };
-}
 function confirmDelete(b){
-  sheet("Sud löschen?",`<p>„${esc(title(b))}“ vom ${esc(fmtDate(b.datum))}${esc(b.datum?.slice(0,4)||"")} wird endgültig gelöscht.</p>`,
-    `<span class="spacer"></span><button class="btn" id="noDel">Abbrechen</button><button class="btn danger" id="yesDel">Ja, löschen</button>`);
-  $("#noDel").onclick=closeSheet;
-  $("#yesDel").onclick=async()=>{$("#yesDel").disabled=true;
+  bestaetigen("Sud löschen?",`„${title(b)}“ vom ${fmtDate(b.datum)}${b.datum?.slice(0,4)||""} wird endgültig gelöscht.`,"Ja, löschen",async()=>{
     const {data,error}=await sb.from("sude").delete().eq("id",b.id).select("id");
-    if(error||!data||!data.length){toast(error?fehlertext(error):"Löschen ist nur dem Admin erlaubt.");closeSheet();return;}
+    if(error||!data||!data.length){toast(error?fehlertext(error):"Löschen ist nur dem Admin erlaubt.");return;}
     Bilder.loeschen(b.bild_foto);Bilder.loeschen(b.bild_etikett);
-    state.brews=state.brews.filter(x=>x.id!==b.id);closeSheet();toast("Sud gelöscht");
+    state.brews=state.brews.filter(x=>x.id!==b.id);toast("Sud gelöscht");
     location.href="index.html";
-  };
+  });
 }
 /* --- Editor --- */
 const FIELDS=[
  ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (0–10, 10 = beste Note)","note"]]],
- ["Brauwasser",[["hauptguss","Hauptguss in Litern","number"],["nachguss","Nachguss in Litern","number"],["wasser","Wasserbehandlung (Milchsäure, pH)"]]],
- ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["stammwuerze","Stammwürze in °P","number"]]],
- ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge"],["messungen","Messungen"],["restextrakt","Restextrakt in °P","number"]]],
- ["Abfüllung",[["ausschlag","Ausschlagwürze in Litern","number"],["biermenge","Biermenge in Litern","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],["alkohol","Alkohol in % vol","number"],["abgefuellt","Abgefüllt am","date"]]],
+ ["Brauwasser",[["wasserhaerte","Wasserhärte in °dH","number"],["hauptguss","Hauptguss in Litern","number"],["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],["nachguss","Nachguss in Litern","number"],["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],["ph_vorher","pH-Wert vorher","number"],["ph_nachher","pH-Wert nachher","number"],["wasser","Weitere Hinweise zum Brauwasser (frei)"]]],
+ ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["stammwuerze","Stammwürze in °P – Spindel","number"],["refraktometer_anstellen","Stammwürze Refraktometer in °Brix","number"]]],
+ ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge"],["restextrakt","Restextrakt in °P – Spindel","number"],["refraktometer_restextrakt","Restextrakt Refraktometer in °Brix","number"]]],
+ ["Abfüllung",[["ausschlag","Ausschlagwürze in Litern","number"],["biermenge","Biermenge in Litern","number"],["karbonisierung","Karbonisierung in g/l","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],["alkohol","Alkohol in % vol","number"],["abgefuellt","Abgefüllt am","date"]]],
  ["Maischplan",[["einmaischtemperatur","Einmaischtemperatur in °C","number"],["abmaischtemperatur","Abmaischtemperatur in °C","number"]]],
 ];
 function field([k,label,type],v){
@@ -547,13 +425,13 @@ function openEditor(src,asCopy){
   const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
   if(src&&src.ausRezept){draft=Object.assign({nr:nextNr,datum:todayIso(),oeffentlich:false},src.draft);editingId=null;}
   else if(!src){draft={nr:nextNr,datum:todayIso(),oeffentlich:false,malz:[{sorte:"",gramm:"",ebc:null}],rasten:[{temperatur:"",zeit:""}],hopfen:[hopfenNeu(null)]};editingId=null;}
-  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:null,ausschlag:null,biermenge:null,flaschen:null,alkohol:null,abgefuellt:null,notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null});editingId=null;}
+  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:null,ausschlag:null,biermenge:null,flaschen:null,alkohol:null,abgefuellt:null,notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null,ph_vorher:null,ph_nachher:null,refraktometer_anstellen:null,refraktometer_restextrakt:null,wizard_notizen:[]});editingId=null;}
   else{draft=JSON.parse(JSON.stringify(src));editingId=src.id;}
   ["malz","rasten","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
   draft.hopfen=draft.hopfen.map(hopfenNeu);
   bildBasis=`sude/${editingId||"neu-"+crypto.randomUUID()}`;
-  $("#sheetTitle").textContent=editingId?`Sud ${draft.nr} bearbeiten`:asCopy?`Neuer Sud nach Vorlage`:src&&src.ausRezept?`Neuer Sud nach „${src.name}“`:"Neuer Sud";
-  drawForm("#sheetBody");
+  $("#sheetTitle").textContent=editingId?`Sud ${draft.nr} bearbeiten`:asCopy?`Kopie von Sud ${src.nr}`:src&&src.ausRezept?`Neuer Sud nach „${src.name}“`:"Neuer Sud";
+  edMessungen=null;drawForm("#sheetBody");if(editingId)edMessungenLaden(editingId);
   $("#sheetFoot").innerHTML=`<span class="err" id="formErr"></span><span class="spacer"></span><button class="btn" id="cancelEdit">Abbrechen</button><button class="btn primary" id="saveBtn">${editingId?"Änderungen speichern":"Sud anlegen"}</button>`;
   $("#cancelEdit").onclick=closeSheet;
   $("#saveBtn").onclick=save;
@@ -570,16 +448,16 @@ function editInline(b){
   draft.hopfen=draft.hopfen.map(hopfenNeu);
   bildBasis=`sude/${editingId}`;
   $("#list").innerHTML=`<p class="noprint"><a class="back" href="index.html">← Alle Sude</a></p>
-    <article class="sud-blatt">
+    <article class="sud-blatt mit-fuss">
       <h2>Sud ${esc(draft.nr)} bearbeiten</h2>
       <div id="sudEditBody"></div>
-      <div class="sheet-foot noprint" style="border-top:1px solid var(--line);margin-top:4px">
+      <div class="sheet-foot noprint edit-fuss">
         <span class="err" id="formErr"></span><span class="spacer"></span>
         <button type="button" class="btn" id="cancelEdit">Abbrechen</button>
         <button type="button" class="btn primary" id="saveBtn">Änderungen speichern</button>
       </div>
     </article>`;
-  drawForm("#sudEditBody");
+  edMessungen=null;drawForm("#sudEditBody");edMessungenLaden(b.id);
   $("#cancelEdit").onclick=()=>zeigeDetail(b);
   $("#saveBtn").onclick=save;
   window.scrollTo({top:0,behavior:"smooth"});
@@ -595,9 +473,10 @@ function drawForm(ziel){
     ${fs("Brauwasser",`<div class="grid2">${FIELDS[1][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
     ${fs("Maischplan",`<div class="grid2">${FIELDS[5][1].map(f=>field(f,d[f[0]])).join("")}</div>${d.maischplan_alt&&d.maischplan_alt.length?`<p class="hint">Vorher (Freitext): ${esc(d.maischplan_alt.join(" · "))}</p>`:""}<div class="rowlist" id="rl_rasten">${rowsHTML("rasten",d.rasten)}</div><button type="button" class="add" data-add="rasten">+ Rast</button>`)}
     ${fs("Läutern & Kochen",`<div class="grid2">${FIELDS[2][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
-    ${fs("Hopfen",`<label class="f" for="f_hopfensorten">Hopfensorten mit Alphasäure<input id="f_hopfensorten" name="hopfensorten" value="${esc(d.hopfensorten??"")}"></label><div class="rowlist h5" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-add="hopfen">+ Hopfengabe</button><p class="hint">Zeit = Kochzeit der Gabe in Minuten; bei Stopfhopfen leer lassen.</p>`)}
-    ${fs("Gärung",`<div class="grid2">${FIELDS[3][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
+    ${fs("Hopfen",`${altFeld("hopfensorten","Hopfen",d)}<div class="rowlist h5" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-add="hopfen">+ Hopfengabe</button><p class="hint">Zeit = Kochzeit der Gabe in Minuten; bei Stopfhopfen leer lassen.</p>`)}
+    ${fs("Gärung",`<div class="grid2">${FIELDS[3][1].map(f=>field(f,d[f[0]])).join("")}</div>${altFeld("messungen","Messungen",d)}${editingId?`<p class="f-titel">Zwischenmessungen</p><div id="edMessungen"><p class="hint">Lädt …</p></div>`:""}`)}
     ${fs("Abfüllung",`<div class="grid2">${FIELDS[4][1].map(f=>field(f,d[f[0]])).join("")}</div>`)}
+    ${fs("Eigene Angaben",`<div class="rowlist" id="rl_notizen">${(d.wizard_notizen||[]).map((n,i)=>`<div class="r">${rf("Bezeichnung",`<input value="${esc(n.label||"")}" aria-label="Bezeichnung" data-nz-label="${i}">`)}${rf("Wert",`<input value="${esc(n.wert||"")}" aria-label="Wert" data-nz-wert="${i}">`)}<button type="button" class="x" data-nz-del="${i}" aria-label="Angabe entfernen">✕</button></div>`).join("")}</div><button type="button" class="add" id="btnNotizNeu">+ Eigene Angabe</button>`)}
     ${fs("Notizen (intern)",`<label class="f" for="f_notizen">Was ist aufgefallen?<textarea id="f_notizen" name="notizen">${esc(d.notizen??"")}</textarea></label>`)}
   </form>`;
   $("#form").onsubmit=e=>{e.preventDefault();save();};
@@ -607,6 +486,46 @@ function drawForm(ziel){
   const scrollWiederherstellen=top=>{if(bearbeitenInline)window.scrollTo(0,top);else $("#sheetBody").scrollTop=top;};
   $("#form").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{collect();const k=b.dataset.add;draft[k].push(k==="malz"?{sorte:"",gramm:"",ebc:null}:k==="hopfen"?hopfenNeu(null):k==="rasten"?{temperatur:"",zeit:""}:"");const top=scrollTop();drawForm(ziel);scrollWiederherstellen(top);});
   $("#form").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{collect();draft[b.dataset.del].splice(+b.dataset.i,1);const top=scrollTop();drawForm(ziel);scrollWiederherstellen(top);});
+  $("#btnNotizNeu").onclick=()=>{collect();draft.wizard_notizen=(draft.wizard_notizen||[]).concat([{schritt:"",label:"",wert:""}]);const top=scrollTop();drawForm(ziel);scrollWiederherstellen(top);};
+  $("#form").querySelectorAll("[data-nz-del]").forEach(b=>b.onclick=()=>{collect();draft.wizard_notizen.splice(+b.dataset.nzDel,1);const top=scrollTop();drawForm(ziel);scrollWiederherstellen(top);});
+  if(editingId)edMessungenZeichnen();
+}
+/* Alter Freitext (hopfensorten, messungen): stammt aus der Zeit vor den strukturierten Feldern. Nur zeigen,
+   wenn er befüllt ist – sonst steht er verwirrend neben den Hopfengaben bzw. Zwischenmessungen. */
+function altFeld(k,label,d){
+  if(!(d[k]??"").toString().trim())return"";
+  return`<label class="f" for="f_${k}">${label} (alter Freitext)<input id="f_${k}" name="${k}" value="${esc(d[k])}"></label>`;
+}
+/* Zwischenmessungen im normalen Editor (Tabelle sud_messungen) – dieselben Werte wie im Braugang-Assistenten,
+   damit sie auch nach "Sud abschließen" noch korrigierbar sind. Gespeichert wird erst mit "Speichern". */
+let edMessungen=null;
+async function edMessungenLaden(sudId){
+  edMessungen=null;
+  const {data,error}=await sb.from("sud_messungen").select("*").eq("sud_id",sudId).order("angelegt");
+  edMessungen=error?[]:(data||[]).map(m=>({...m}));
+  if($("#edMessungen"))edMessungenZeichnen();
+}
+function edMessungenZeichnen(){
+  const el=$("#edMessungen");if(!el||edMessungen===null)return;
+  const sicht=edMessungen.map((m,i)=>m._weg?"":`<div class="r">${rf("Bezeichnung",`<input placeholder="z. B. Tag 4" value="${esc(m.bezeichnung||"")}" data-em-bez="${i}" aria-label="Bezeichnung">`)}${rf("°P",`<input type="number" step="0.1" inputmode="decimal" value="${esc(m.plato??"")}" data-em-plato="${i}" aria-label="Grad Plato">`)}${rf("°Brix",`<input type="number" step="0.1" inputmode="decimal" value="${esc(m.refraktometer??"")}" data-em-refr="${i}" aria-label="Refraktometer in Grad Brix">`)}<button type="button" class="x" data-em-del="${i}" aria-label="Messung entfernen">✕</button></div>`).join("");
+  el.innerHTML=`<div class="rowlist m3">${sicht}</div><button type="button" class="add" id="btnEmNeu">+ Zwischenmessung</button>`;
+  el.querySelectorAll("input").forEach(inp=>inp.oninput=()=>{const i=+(inp.dataset.emBez??inp.dataset.emPlato??inp.dataset.emRefr);const m=edMessungen[i];
+    if(inp.dataset.emBez!=null)m.bezeichnung=inp.value;else{const v=inp.value===""?null:Bz.zahl(inp.value);if(inp.dataset.emPlato!=null)m.plato=v;else m.refraktometer=v;}m._geaendert=true;});
+  el.querySelectorAll("[data-em-del]").forEach(b=>b.onclick=()=>{edMessungen[+b.dataset.emDel]._weg=true;edMessungenZeichnen();});
+  $("#btnEmNeu").onclick=()=>{edMessungen.push({bezeichnung:"",plato:null,refraktometer:null,_neu:true});edMessungenZeichnen();};
+}
+async function edMessungenSpeichern(sudId){
+  if(!edMessungen)return null;
+  for(const m of edMessungen){
+    const leer=!(m.bezeichnung||"").trim()&&m.plato==null&&m.refraktometer==null;
+    const werte={bezeichnung:(m.bezeichnung||"").trim()||null,plato:m.plato,refraktometer:m.refraktometer};
+    let r=null;
+    if(m._neu){if(!m._weg&&!leer)r=await sb.from("sud_messungen").insert({...werte,sud_id:sudId});}
+    else if(m._weg||leer)r=await sb.from("sud_messungen").delete().eq("id",m.id);
+    else if(m._geaendert)r=await sb.from("sud_messungen").update(werte).eq("id",m.id);
+    if(r&&r.error)return r.error;
+  }
+  return null;
 }
 function collect(){
   const f=$("#form");if(!f)return;
@@ -619,6 +538,7 @@ function collect(){
   draft.malz=draft.malz.map((_,i)=>({sorte:($("#malz_s_"+i)?.value||"").trim(),gramm:nz("#malz_g_"+i),ebc:nz("#malz_e_"+i)}));
   draft.hopfen=draft.hopfen.map((h,i)=>({sorte:($("#hop_s_"+i)?.value||"").trim(),gramm:nz("#hop_g_"+i),alpha:nz("#hop_a_"+i),zeit:nz("#hop_z_"+i),typ:$("#hop_t_"+i)?.value||"Kochen",alt:h.alt}));
   draft.rasten=draft.rasten.map((_,i)=>({temperatur:nz("#rast_t_"+i),zeit:nz("#rast_z_"+i)}));
+  if($("#rl_notizen"))draft.wizard_notizen=(draft.wizard_notizen||[]).map((n,i)=>({...n,label:($(`[data-nz-label="${i}"]`)?.value||"").trim(),wert:($(`[data-nz-wert="${i}"]`)?.value||"").trim()}));
 }
 async function save(){
   collect();
@@ -628,13 +548,14 @@ async function save(){
   if(draft.bewertung!=null&&(draft.bewertung<0||draft.bewertung>10)){err.textContent="Bitte eine Bewertung zwischen 0 und 10 eintragen.";$("#f_bewertung")?.focus();return;}
   const out={};WRITE_COLS.forEach(k=>{let v=draft[k];if(v==="")v=null;if(v!==undefined)out[k]=v;});
   out.malz=(draft.malz||[]).filter(m=>m.sorte||m.gramm);out.hopfen=(draft.hopfen||[]).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>({...h,zeit:h.typ==="Stopfen"?null:h.zeit}));out.rasten=(draft.rasten||[]).filter(r=>r.temperatur!=null||r.zeit!=null);
-  out.oeffentlich=!!draft.oeffentlich;out.datum_geschaetzt=!!draft.datum_geschaetzt;out.alkohol_geschaetzt=!!draft.alkohol_geschaetzt;
+  out.wizard_notizen=(draft.wizard_notizen||[]).filter(n=>n.label||n.wert);out.oeffentlich=!!draft.oeffentlich;out.datum_geschaetzt=!!draft.datum_geschaetzt;out.alkohol_geschaetzt=!!draft.alkohol_geschaetzt;
   if(editingId&&out.datum!==state.brews.find(b=>b.id===editingId)?.datum)out.datum_geschaetzt=false;
   if(editingId&&out.alkohol!==state.brews.find(b=>b.id===editingId)?.alkohol)out.alkohol_geschaetzt=false;
   const btn=$("#saveBtn");btn.disabled=true;err.textContent="";
   const q=editingId?sb.from("sude").update(out).eq("id",editingId):sb.from("sude").insert(out);
   const {data,error}=await q.select().single();
   if(error){btn.disabled=false;err.textContent=fehlertext(error);return;}
+  if(editingId){const me=await edMessungenSpeichern(editingId);if(me){btn.disabled=false;err.textContent="Sud gespeichert, aber Zwischenmessungen nicht: "+fehlertext(me);return;}}
   const alt=editingId&&state.brews.find(b=>b.id===editingId);
   if(alt)["bild_foto","bild_etikett"].forEach(k=>{if(alt[k]&&alt[k]!==data[k])Bilder.loeschen(alt[k]);});
   state.brews=state.brews.filter(b=>b.id!==data.id).concat([data]);
@@ -661,8 +582,11 @@ async function neuerSud(){
   const f=$("#ausRz");if(!f)return;
   // Zeigt, mit welcher Ausbeute für das gewählte Rezept gerechnet wird
   const shaZeigen=()=>{const el=$("#nr_sha");if(!el)return;const r=liste.find(x=>x.id===$("#nr_rz").value)||{};const cb=$("#nr_anl");
-    if(!r.sudhausausbeute){el.textContent="Rezept nennt keine Ausbeute – nur die Menge wird umgerechnet";cb.checked=false;cb.disabled=true;return;}
-    cb.disabled=false;el.textContent=`${Bz.fmtZahl(Bz.zielAusbeute(r,anl))} % Ausbeute${r.eigene_ausbeute?" für dieses Rezept":""} statt ${Bz.fmtZahl(r.sudhausausbeute)} % laut Quelle`;};
+    if(!r.sudhausausbeute){cb.closest("label").hidden=false;el.textContent="Rezept nennt keine Ausbeute – nur die Menge wird umgerechnet";cb.checked=false;cb.disabled=true;return;}
+    const za=Bz.zielAusbeute(r,anl),lbl=cb.closest("label");
+    // Gleiche Ausbeute wie im Rezept: Umrechnen auf die Anlage ändert nichts – Haken ausblenden statt „65 % statt 65 %“.
+    if(Math.round(za*10)===Math.round(r.sudhausausbeute*10)){lbl.hidden=true;cb.checked=false;return;}
+    lbl.hidden=false;cb.disabled=false;el.textContent=`${Bz.fmtZahl(za)} % Ausbeute${r.eigene_ausbeute?" für dieses Rezept":""} statt ${Bz.fmtZahl(r.sudhausausbeute)} % laut Quelle`;};
   $("#nr_rz").onchange=shaZeigen;shaZeigen();
   f.onsubmit=async e=>{e.preventDefault();
     const id=$("#nr_rz").value,ziel=Bz.zahl($("#nr_menge").value);
@@ -709,8 +633,7 @@ async function rezeptAusSud(b){
   toast("Rezept angelegt");location.href="rezepte.html?id="+data.id;
 }
 /* --- Braugang-Assistent ---
-   Eigenständiges Werkzeug (siehe features/brews/README.md), getrennt von der Checkliste: die Checkliste hakt
-   vorgegebene Aufgaben ab, der Assistent erfasst die tatsächlichen Werte eines aus einem Rezept gestarteten
+   Eigenständiges Werkzeug (siehe features/brews/README.md): der Assistent erfasst die tatsächlichen Werte eines aus einem Rezept gestarteten
    Braugangs, Schritt für Schritt. Es gibt kein eigenes Datenmodell dafür – jedes Feld schreibt direkt in die
    schon bestehende Spalte von public.sude (dieselben, die auch der normale Editor benutzt), nur Wasserhärte/
    Milchsäure/pH/Refraktometer und die Zwischenmessungen während der Gärung sind neu (Migration 08).
@@ -861,7 +784,7 @@ async function wizardMessungenLaden(){
   wizard.messungen=error?[]:data;
 }
 function wizardMessungenHtml(){
-  const rows=(wizard.messungen||[]).map((m,i)=>`<div class="r"><input placeholder="z. B. Tag 4" value="${esc(m.bezeichnung)}" data-mz-bez="${i}" aria-label="Bezeichnung"><input type="number" step="0.1" inputmode="decimal" placeholder="°P" value="${esc(m.plato??"")}" data-mz-plato="${i}" aria-label="Grad Plato"><input type="number" step="0.1" inputmode="decimal" placeholder="°Brix" value="${esc(m.refraktometer??"")}" data-mz-refr="${i}" aria-label="Refraktometer"><button type="button" class="x" data-mz-del="${i}" aria-label="Messung entfernen">✕</button></div>`).join("");
+  const rows=(wizard.messungen||[]).map((m,i)=>`<div class="r">${rf("Bezeichnung",`<input placeholder="z. B. Tag 4" value="${esc(m.bezeichnung)}" data-mz-bez="${i}" aria-label="Bezeichnung">`)}${rf("°P",`<input type="number" step="0.1" inputmode="decimal" value="${esc(m.plato??"")}" data-mz-plato="${i}" aria-label="Grad Plato">`)}${rf("°Brix",`<input type="number" step="0.1" inputmode="decimal" value="${esc(m.refraktometer??"")}" data-mz-refr="${i}" aria-label="Refraktometer">`)}<button type="button" class="x" data-mz-del="${i}" aria-label="Messung entfernen">✕</button></div>`).join("");
   return `<div class="rowlist m3" id="rl_messungen">${rows}</div><button type="button" class="add" id="btnMessungHinzufuegen">+ Zwischenmessung</button>`;
 }
 function wizardWireMessungen(){
@@ -881,11 +804,8 @@ function wizardWireMessungen(){
   $("#rl_messungen")?.querySelectorAll("[data-mz-del]").forEach(b=>b.onclick=()=>{
     const i=+b.dataset.mzDel,m=wizard.messungen[i];
     if(!m.id){wizard.messungen.splice(i,1);wizardRenderStep();return;}
-    sheet("Zwischenmessung entfernen?",`<p>„${esc(m.bezeichnung)}“ wird entfernt.</p>`,
-      `<span class="spacer"></span><button class="btn" id="noDelMz">Abbrechen</button><button class="btn danger" id="yesDelMz">Ja, entfernen</button>`);
-    $("#noDelMz").onclick=closeSheet;
-    $("#yesDelMz").onclick=async()=>{const{error}=await sb.from("sud_messungen").delete().eq("id",m.id);if(error){toast(fehlertext(error));closeSheet();return;}
-      wizard.messungen.splice(i,1);closeSheet();wizardRenderStep();};
+    bestaetigen("Zwischenmessung entfernen?",`„${m.bezeichnung||"Ohne Bezeichnung"}“ wird entfernt.`,"Ja, entfernen",async()=>{const{error}=await sb.from("sud_messungen").delete().eq("id",m.id);if(error){toast(fehlertext(error));return;}
+      wizard.messungen.splice(i,1);wizardRenderStep();});
   });
 }
 /* --- Wasserhärte-Rechner: vereinfachte Beispielformel (Härte × Wassermenge × Faktor), keine geprüfte
@@ -1024,7 +944,7 @@ function wizardRenderStep(){
 function wizardAnzeigen(){
   kopfzeileZeigen(false);
   $("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;
-  $("#list").innerHTML=`<p class="noprint"><a class="back" id="wzZurueck" href="index.html?sud=${esc(wizard.sud.id)}">← ${esc(title(wizard.sud))}</a></p>
+  $("#list").innerHTML=`<p class="noprint"><a class="back" id="wzZurueck" href="index.html?sud=${esc(wizard.sud.id)}">← Zurück zum Sud</a></p>
     <article class="sud-blatt wz">
       <div class="wz-kopf"><p class="kicker">${esc(title(wizard.sud))}</p><span class="num" id="wzStatus">gespeichert</span></div>
       <h2 id="wzStepTitel" class="wz-schritt-titel"></h2>

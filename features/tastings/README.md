@@ -81,6 +81,20 @@ Der Beitritts-Code (Spalte `code`) wird beim Anlegen per Trigger `vk_code_setzen
 einem kurzen Zufallsteil gebildet (z. B. `craftbier-q7x2pmz4`), damit der Mitmach-Link lesbarer ist, ohne
 erratbar zu werden. Ein späteres Umbenennen ändert den Code nicht mehr.
 
+## Zwischenstand, Reihenfolge, Ergebnisseite (seit 07.11.2026)
+
+- **Kein Live-Zwischenstand für Gäste:** Gäste sehen Noten und Rangliste erst nach dem Aufdecken
+  (`guest.js` zeigt den Abschnitt nur bei `status = abgeschlossen`). Zusätzlich liefert `vk_laden()` ab
+  `schema/12_zwischenstand_nur_braumeister.sql` die Durchschnittsnoten vorher gar nicht mehr aus – diese
+  Migration erst nach dem Veröffentlichen des Frontends ausführen (SECURITY DEFINER, ggf. SQL Editor).
+  Braumeister/Admin sehen den Zwischenstand weiter auf der Verwaltungsseite.
+- **Reihenfolge nur in der Vorbereitung änderbar:** die ↑↓-Knöpfe verschwinden, sobald die Verkostung läuft,
+  damit sich die Nummern vor den Gästen nicht ändern. Im Zwischenstand steht die Probennummer als „Nr. 2 · …“
+  in der Unterzeile statt vor dem Namen.
+- **Ergebnisseite ohne Dopplung:** Platz 1–3 stehen nur auf dem Podest; ein Tipp auf eine Podest-Karte öffnet
+  deren Details im Seitenblatt. Die Liste darunter heißt „Weitere Plätze“ und beginnt bei Platz 4.
+- Rückfragen vor dem Löschen laufen über das gemeinsame `bestaetigen()` aus `core/core.js`.
+
 ## Offene Punkte
 
 - Verkostung 2 und 3: Datum und Ort nachtragen

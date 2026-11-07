@@ -74,7 +74,7 @@ function detailZeigen(){
           <span class="pn num">${p.nummer}</span>${Bilder.bier(p.bier)}
           <span class="pt"><b>${esc(p.bier.name)}</b><small>${esc(bierZeile(p.bier))}${p.bier.eigen&&!/kolding/i.test(p.bier.brauerei||"")?" · selbst gebraut":""}</small></span>
           <span class="pa">${n?`<small class="hint">${n} Bew.</small>`:""}
-            <button class="x" data-up="${i}" aria-label="Nach oben"${i===0?" disabled":""}>↑</button><button class="x" data-down="${i}" aria-label="Nach unten"${i===proben.length-1?" disabled":""}>↓</button><button class="x" data-raus="${esc(p.id)}" aria-label="Aus der Verkostung nehmen">✕</button></span>
+            ${v.status==="vorbereitung"?`<button class="x" data-up="${i}" aria-label="Nach oben"${i===0?" disabled":""}>↑</button><button class="x" data-down="${i}" aria-label="Nach unten"${i===proben.length-1?" disabled":""}>↓</button>`:""}<button class="x" data-raus="${esc(p.id)}" aria-label="Aus der Verkostung nehmen">✕</button></span>
         </li>`;}).join("")}</ol>`:`<p class="hint">Noch keine Biere. Etwa sechs sind ideal.</p>`}
         <button type="button" class="add" id="addBier">+ Bier hinzufügen</button>
         ${offeneVs.length?`<div class="vs"><h4>Vorschläge von Gästen</h4>${offeneVs.map(x=>`<div class="vs-row"><span><b>${esc(x.name)}</b><small class="hint">${esc([x.brauerei,x.stil,"von "+tnName(x.teilnehmer_id)].filter(Boolean).join(" · "))}</small></span>
@@ -82,14 +82,14 @@ function detailZeigen(){
       </section>
     </div>`;
 
-  const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:`${p.nummer}. ${p.bier.name}`, unter:bierZeile(p.bier), bild:Bilder.bier(p.bier), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
-  h += sec(v.status==="abgeschlossen" ? "Ergebnis" : v.status==="laeuft" ? "Zwischenstand (live)" : "Auswertung", (bewertungen.length ? rangTabelle(zeilen,{klick:true}) + `<p class="hint">Antippen zeigt alle Bewertungen und das Geschmacksprofil.${v.status==="laeuft"?" Aktualisiert sich alle 15 Sekunden.":""}</p>` : `<p class="hint">Noch keine Bewertungen.</p>`));
+  const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:p.bier.name, unter:["Nr. "+p.nummer, bierZeile(p.bier)].filter(Boolean).join(" · "), bild:Bilder.bier(p.bier), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
+  h += sec(v.status==="abgeschlossen" ? "Ergebnis" : v.status==="laeuft" ? "Zwischenstand (live)" : "Auswertung", (bewertungen.length ? rangTabelle(zeilen,{klick:true}) + `<p class="hint">Ein Bier auswählen zeigt alle Bewertungen und das Geschmacksprofil.${v.status==="laeuft"?" Aktualisiert sich alle 15 Sekunden.":""}</p>` : `<p class="hint">Noch keine Bewertungen.</p>`));
   h += sec("Fotos", `<div class="fotos-admin">${Bilder.feldHtml("titelFeld", v.bild_titel, {art:"frei", beschriftung:"Titelbild"})}</div>
-    <h4 class="sub">Galerie (${D.galerie.length}) <small class="hint">nur für Braumeister/Admin sichtbar</small></h4>
+    <h4 class="sub">Galerie (${D.galerie.length})</h4><p class="hint">Nur für Braumeister und Admin sichtbar.</p>
     <div id="galerieBox">${D.galerie.length ? `<p class="hint">Fotos werden geladen …</p>` : `<p class="hint">Noch keine Fotos. Teilnehmer können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.</p>`}</div>
     <button type="button" class="add" id="fotoAdd">+ Foto hinzufügen</button>`);
   if(teilnehmer.length) h += sec("Teilnehmer", `<div class="tn">${teilnehmer.map(t=>{const n=bewertungen.filter(b=>b.teilnehmer_id===t.id).length;
-    return `<span class="tag tn-tag">${esc(t.name)} · ${n}/${proben.length}${isAdmin()?`<button type="button" class="tn-x" data-tn-del="${esc(t.id)}" aria-label="${esc(t.name)} entfernen">✕</button>`:""}</span>`;}).join("")}</div>`);
+    return `<span class="tag tn-tag">${esc(t.name)} · ${n} von ${proben.length} bewertet${isAdmin()?`<button type="button" class="tn-x" data-tn-del="${esc(t.id)}" aria-label="${esc(t.name)} entfernen">✕</button>`:""}</span>`;}).join("")}</div>`);
   main().innerHTML = h;
 
   const setStatus = async s => { const {error} = await sb.from("verkostungen").update({status: s}).eq("id", v.id); if(error){ toast(fehlertext(error)); return; } toast({laeuft:"Verkostung läuft",abgeschlossen:"Abgeschlossen – Ergebnis ist aufgedeckt",vorbereitung:"Zurück in Vorbereitung"}[s]); detailLaden(); };
@@ -166,11 +166,6 @@ async function galerieZeigen(){
   box.querySelectorAll(".g-zeig").forEach(b => b.onclick = () => Bilder.zeigenSigniert(pfade, urls, +b.dataset.i));
 }
 
-function bestaetigen(titel, text, knopf, ok, gefahr){
-  sheet(titel, `<p>${esc(text)}</p>`, `<span class="spacer"></span><button class="btn" id="bNein">Abbrechen</button><button class="btn ${gefahr?"danger":"primary"}" id="bJa">${esc(knopf)}</button>`);
-  $("#bNein").onclick = closeSheet;
-  $("#bJa").onclick = async () => { $("#bJa").disabled = true; closeSheet(); await ok(); };
-}
 
 async function neuNummerieren(liste){
   const rows = liste.map((p,i)=>({id:p.id, verkostung_id:D.v.id, bier_id:p.bier_id, nummer:i+1})).filter((r,i)=>liste[i].nummer!==r.nummer);

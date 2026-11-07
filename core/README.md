@@ -20,6 +20,17 @@ KB.seite = {
 Wichtige Helfer: `KB.sb` (Supabase), `KB.state` (session, profile), `KB.isBM()`, `KB.isAdmin()`, `KB.sheet()`,
 `KB.toast()`, `KB.notice()`, `KB.fehlertext()`, `KB.esc()`.
 
+## Gemeinsame Bausteine (seit 07.11.2026)
+
+- `KB.bestaetigen(titel, text, knopf, ok, gefahr = true)` – die eine Rückfrage vor dem Löschen/Entfernen für
+  alle Seiten. Eigenes kleines Fenster (`.frage`), funktioniert also auch über einem offenen Seitenblatt.
+- `.nur-maus` – blendet Hinweise aus, die nur mit Maus/Trackpad Sinn ergeben (Dateien hierher ziehen), auf
+  Touch-Geräten aus.
+- `.toast` rückt automatisch über feste untere Knopfleisten (Sud bearbeiten, Assistent, Seitenblatt).
+- `details.mehr` – „Mehr …“-Menü für seltene Aktionen (zuerst im Rezept-Detail).
+- Fußzeile auf allen Seiten: „Koldingbräu · JFNLNF · Eimsbüttel · Sereetz“. Abschnittsüberschriften überall
+  in `--amber`.
+
 ## Regeln
 
 - Bereiche greifen nur auf `core/` und `lib/` zu, nie direkt auf einen anderen Bereich. Verbindungen laufen über Links
