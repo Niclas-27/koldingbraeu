@@ -23,7 +23,8 @@ function gastZeigen(){
       ${statusTag(v.status)}
     </div>${v.bild_titel?`<img class="titelbild" src="${esc(Bilder.url(v.bild_titel))}" alt="Titelbild der Verkostung">`:""}`;
 
-  if(!ich && v.status !== "abgeschlossen"){
+  // Mitmachen erst, wenn die Verkostung läuft (seit 07.11.2026; serverseitig über vk_beitreten, schema/13 Teil B)
+  if(!ich && v.status === "laeuft"){
     h += `<form id="joinForm" class="vk-card stack" novalidate>
         <h3>Mitmachen</h3>
         <p class="hint">Gib deinen Vornamen oder Spitznamen ein. Er gilt nur für diesen Abend und erscheint nach dem Abschluss in der Teilnehmerliste der Ergebnisseite; deine Kommentare werden dort ohne Namen gezeigt.</p>
@@ -36,7 +37,7 @@ function gastZeigen(){
   }
 
   if(v.status === "vorbereitung"){
-    h += `<div class="vk-card"><h3>Bald geht’s los</h3><p class="hint">Sobald die Braumeister die Verkostung starten, kannst du hier die Biere bewerten. Die Seite aktualisiert sich von selbst.</p>
+    h += `<div class="vk-card"><h3>Bald geht’s los</h3><p class="hint">Sobald die Braumeister die Verkostung starten, kannst du hier mitmachen und die Biere bewerten. Die Seite aktualisiert sich von selbst.</p>
       ${offen && d.proben.length ? `<ul class="plain">${d.proben.map(p=>`<li><b>${p.nummer}.</b> ${esc(p.bier.name)} <small class="hint">${esc(bierZeile(p.bier))}</small></li>`).join("")}</ul>` : d.proben.length?`<p class="hint">${d.proben.length} Biere stehen bereit – welche, wird erst am Ende verraten.</p>`:""}
     </div>`;
     if(ich){

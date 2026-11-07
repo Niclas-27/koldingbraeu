@@ -32,8 +32,8 @@ async function listeLaden(){
       h += sec("Demnächst", `<div class="ankuendigungen">${data.map(v => `<div class="vk-card">
           ${v.bild_titel ? `<div class="ank-bild"><img src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy"></div>` : (v.blind ? `<div class="ank-bild">${Bilder.titelPlatzhalter()}</div>` : "")}
           <div class="ank-inhalt">
-            <div class="vk-head"><div><b>${esc(v.titel)}</b><p class="hint">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}</p></div>${statusTag(v.status)}</div>
-            <p class="hint">${v.status==="laeuft" ? "Läuft schon – mit dem Code oder QR-Link von den Braumeistern kannst du noch mitmachen." : "Bald geht’s los – mit dem Code oder QR-Link von den Braumeistern bist du dabei."}</p>
+            <div class="vk-head"><div><b><a href="verkostung.html?a=${esc(v.id)}">${esc(v.titel)}</a></b><p class="hint">${esc(wannWo(v))}</p></div>${statusTag(v.status)}</div>
+            <p class="hint">${v.status==="laeuft" ? "Läuft schon – mit dem Code oder QR-Code vor Ort kannst du noch mitmachen." : "Bald geht’s los – den Code zum Mitmachen gibt es am Abend vor Ort."}</p>
             ${v.blind
               ? `<p class="hint">${v.anzahlProben} ${v.anzahlProben===1?"Bier steht":"Biere stehen"} bereit – welche, wird erst am Ende verraten.</p>`
               : (v.proben.length ? `<ul class="plain">${v.proben.map(p=>`<li><b>${p.nummer}.</b> ${esc(p.name)} <small class="hint">${esc(bierZeile(p))}</small></li>`).join("")}</ul>` : "")}
@@ -57,7 +57,7 @@ async function listeLaden(){
         : `<a class="vk-tile" href="verkostung.html?e=${esc(v.id)}">${inhalt}</a>`;
       }).join("")}</div>`);
   main().innerHTML = h;
-  $("#codeForm").onsubmit = e => { e.preventDefault(); const c = $("#c_code").value.trim().toLowerCase().replace(/.*[?&]v=/, "").replace(/[^a-z0-9]/g, ""); if(c) location.href = "verkostung.html?v="+encodeURIComponent(c); };
+  $("#codeForm").onsubmit = e => { e.preventDefault(); const c = $("#c_code").value.trim().toLowerCase().replace(/.*[?&]v=/, "").replace(/[^a-z0-9-]/g, ""); if(c) location.href = "verkostung.html?v="+encodeURIComponent(c); };
   if(isBM()){ $("#neuBtn").onclick = () => vkForm(null); $("#bierBtn").onclick = bierKatalog; }
 }
 

@@ -20,7 +20,8 @@ const params = new URLSearchParams(location.search);
 const code = (params.get("v") || "").trim().toLowerCase();
 const detailId = params.get("id") || "";
 const ergebnisId = params.get("e") || "";
-const ansicht = code ? "gast" : detailId ? "detail" : ergebnisId ? "ergebnis" : "liste";
+const ankuendigungId = params.get("a") || "";
+const ansicht = code ? "gast" : detailId ? "detail" : ergebnisId ? "ergebnis" : ankuendigungId ? "ankuendigung" : "liste";
 const main = () => $("#vk");
 let stile = [];            // Bierstile (für Formulare)
 let timer = null;
@@ -57,3 +58,34 @@ async function ladeStile(){
   stile = data || []; return stile;
 }
 function gastLink(c){ return siteUrl()+"verkostung.html?v="+encodeURIComponent(c); }
+/* Link für die Einladung: führt auf die Ankündigung, NICHT zum Mitmachen (der Code kommt erst am Abend).
+   Auf kolding.de die schöne Adresse /verkostung/<id>/ – dort liegt eine Vorschauseite fürs WhatsApp-Bild
+   (scripts/build-previews.mjs) bzw. leitet 404.html weiter, solange sie noch nicht gebaut ist. Lokal
+   (localhost) gibt es beides nicht, dort direkt die Ankündigungsseite. */
+function ankuendigungLink(id){
+  return /(^|\.)kolding\.de$/.test(location.hostname) ? "https://kolding.de/verkostung/"+encodeURIComponent(id)+"/" : siteUrl()+"verkostung.html?a="+encodeURIComponent(id);
+}
+function wochentagDatum(iso){
+  if(!iso) return "";
+  const [y,m,d] = iso.split("-").map(Number);
+  return new Date(y, m-1, d).toLocaleDateString("de-DE", {weekday:"long", day:"numeric", month:"long"});
+}
+function wannWo(v){ // „Samstag, 21. November, 19:30 Uhr · Werkstatt“
+  const uhr = v.uhrzeit ? String(v.uhrzeit).slice(0,5) : "";
+  return [wochentagDatum(v.datum) + (uhr ? `, ${uhr} Uhr` : ""), v.ort].filter(Boolean).join(" · ");
+}
+function einladungsNachricht(v){
+  const zeilen = [`${v.titel} – Koldingbräu lädt ein`, wannWo(v)];
+  if((v.einladungstext||"").trim()) zeilen.push("", v.einladungstext.trim());
+  zeilen.push("", ankuendigungLink(v.id));
+  return zeilen.join("\n");
+}
+async function einladungTeilen(v){
+  const text = einladungsNachricht(v);
+  if(navigator.share){
+    try{ await navigator.share({title: v.titel, text}); return; }
+    catch(e){ if(e && e.name === "AbortError") return; }
+  }
+  try{ await navigator.clipboard.writeText(text); toast("Einladung kopiert – jetzt im Messenger einfügen"); }
+  catch(_){ toast("Kopieren ging nicht – bitte den Text markieren und kopieren"); }
+}

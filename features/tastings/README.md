@@ -95,6 +95,25 @@ erratbar zu werden. Ein späteres Umbenennen ändert den Code nicht mehr.
   deren Details im Seitenblatt. Die Liste darunter heißt „Weitere Plätze“ und beginnt bei Platz 4.
 - Rückfragen vor dem Löschen laufen über das gemeinsame `bestaetigen()` aus `core/core.js`.
 
+## Einladung (seit 07.11.2026)
+
+- **Felder:** `verkostungen.uhrzeit` und `verkostungen.einladungstext` (max. 1000 Zeichen), beide freiwillig, im
+  Formular „Bearbeiten“. Beides ist öffentlich lesbar (Ankündigungsseite).
+- **Verwaltung:** Box „Gäste einladen“ mit Vorschau der Nachricht und „Einladung teilen“ (`einladungTeilen()` in
+  `common.js`: `navigator.share`, sonst Zwischenablage). Die bisherige QR-Box heißt „Mitmachen am Abend“.
+- **Link in der Einladung** = Ankündigung, nicht Mitmachen: auf kolding.de `/verkostung/<id>/` (Vorschauseite
+  mit WhatsApp-Bild aus `scripts/build-previews.mjs`, Ziel `verkostung.html?a=<id>`), lokal direkt `?a=<id>`
+  (`ankuendigungLink()`). Neue Verkostungen haben bis zum nächsten Build (spätestens 4 h) noch keine
+  Vorschauseite – `404.html` leitet `/verkostung/<id>/` (auch `/sud/`, `/rezept/`, `/bier/`) dann trotzdem
+  zum richtigen Ziel weiter.
+- **Ankündigungsseite** (`announce.js`, RPC `vk_ankuendigung(id)`): Titel, Wochentag/Datum/Uhrzeit, Ort, Text,
+  Titelbild, Biere (bei blind nur die Anzahl), Code-Feld für den Abend. Abgeschlossen → Weiterleitung aufs
+  Ergebnis. Der Einladungstext steht bewusst nur hier, nicht in der Liste „Demnächst“.
+- **Mitmachen erst ab „Läuft“:** Gästeseite zeigt das Beitrittsformular nur noch bei laufender Verkostung;
+  serverseitig über `vk_beitreten` in `schema/13_einladung.sql` Teil B (erst nach dem Veröffentlichen ausführen).
+- Nebenbei behoben: Das Code-Feld der Übersicht entfernte Bindestriche – lesbare Codes wie
+  `helles-im-dunkeln-…` funktionierten dort nicht.
+
 ## Offene Punkte
 
 - Verkostung 2 und 3: Datum und Ort nachtragen
