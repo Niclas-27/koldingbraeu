@@ -65,6 +65,13 @@ Jeder Sud kann ein **Foto**, einen **Kronkorken** (rund) und eine **Flasche mit 
 
 ## Fotogalerie „Fotos vom Brautag” (seit 25.10.2026)
 
+> **Stand 07.11.2026:** Die Galerie-Oberfläche steckt jetzt im gemeinsamen Modul `Bilder.galerieModul` (`lib/bilder.js`),
+> das auch die Verkostungs-Galerie nutzt. `brews.js` liefert nur noch Laden/Einfügen/Ändern/Löschen für `sud_bilder`
+> (`galerieLaden()`). Neu: In der Ablage kann jedes Foto vor dem Hochladen zugeschnitten werden („Zuschneiden“), beim
+> Bearbeiten eines vorhandenen Fotos gibt es „Ausschnitt ändern“. Ohne Zuschneiden wird das ganze Foto übernommen –
+> dann wird **kein** zusätzliches Basisbild gespeichert (Großbild = Basisbild, Speicher sparen). Die Abschnitte unten
+> beschreiben die Entstehung; Funktionsnamen wie `galerieDateienHinzufuegen`/`galerieTrayZeichnen` gibt es nicht mehr.
+
 Eigener Abschnitt auf der Sud-Detailseite, unterhalb der übrigen Werte. Tabelle `sud_bilder`
 (`features/brews/schema/02_sud_fotos.sql`): Pfad, optionale Bildunterschrift, wer hochgeladen hat.
 Anders als bei den Verkostungsfotos gibt es hier **keine Gäste-Uploads** – nur Braumeister/Admin laden

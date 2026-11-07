@@ -206,7 +206,7 @@ function zeigeDetail(b){
         ["Abgefüllt am",b.abgefuellt?fmtDate(b.abgefuellt)+b.abgefuellt.slice(0,4):null]]))}
       ${sec("Eigene Angaben",(b.wizard_notizen||[]).length?kv(b.wizard_notizen.map(n=>[n.label||"(ohne Bezeichnung)",n.wert])):"")}
       ${sec("Notizen",b.notizen?`<div class="note">${esc(b.notizen)}</div>`:"")}
-      <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div><input type="file" id="galerieFile" accept="image/*" multiple hidden></section>
+      <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div></section>
       ${changed}
     </article>
     ${bm?`<div class="top-actions noprint sud-aktionen">${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}<button class="btn" id="dupBtn">Kopie anlegen</button><button class="btn" id="rzBtn">Als Rezept speichern</button>${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}</div>`:""}`;
@@ -220,8 +220,6 @@ function zeigeDetail(b){
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
   $("#list").querySelectorAll(".sud-kk-fl [data-zeig]").forEach(btn=>btn.onclick=()=>Bilder.zeigen(bp,Math.max(0,bp.indexOf(btn.dataset.zeig))));
   if(b.rezept_id)sb.from("rezepte").select("id,name").eq("id",b.rezept_id).maybeSingle().then(({data})=>{const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
-  $("#galerieFile").onchange=galerieDateienGewaehlt;
-  galerieDragDropVerdrahten($("#sudGalerieSec"));
   galerieLaden(b.id);
   messungenDetailLaden(b.id);
 }
@@ -237,139 +235,25 @@ function messungenDetailLaden(sudId){
     $("#sudMessungenListe").innerHTML=`<ul class="steps">${data.map(m=>`<li><b>${esc(m.bezeichnung)}</b><span class="num">${esc([m.plato!=null?Bz.fmtZahl(m.plato)+" °P":"",m.refraktometer!=null?Bz.fmtZahl(m.refraktometer)+" °Brix":""].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>`;
   });
 }
-/* Drag & Drop auf die ganze Galerie-Fläche, z. B. direkt aus der Mac-Fotos-Mediathek. Nur für Braumeister/Admin;
-   Zähler statt einfachem Ein/Aus, weil dragenter/dragleave beim Überqueren von Kind-Elementen sonst flackert. */
-function galerieDragDropVerdrahten(abschnitt){
-  if(!abschnitt)return;
-  let tiefe=0;
-  abschnitt.ondragenter=e=>{if(!isBM())return;e.preventDefault();tiefe++;abschnitt.classList.add("sg-dragover");};
-  abschnitt.ondragover=e=>{if(!isBM())return;e.preventDefault();};
-  abschnitt.ondragleave=()=>{if(!isBM())return;tiefe=Math.max(0,tiefe-1);if(!tiefe)abschnitt.classList.remove("sg-dragover");};
-  abschnitt.ondrop=e=>{
-    e.preventDefault();tiefe=0;abschnitt.classList.remove("sg-dragover");
-    if(!isBM())return;
-    const dateien=[...e.dataTransfer.files].filter(f=>/^image\//i.test(f.type)||/\.hei[cf]$/i.test(f.name));
-    if(dateien.length)galerieDateienHinzufuegen(dateien);
-    else if(e.dataTransfer.files.length)toast("Das sind keine Bilddateien.");
-  };
-}
-
-/* --- Fotos vom Brautag: eigene Galerie je Sud, mit optionaler Bildunterschrift.
-   Hochladen/Löschen/Bearbeiten nur Braumeister/Admin (anders als bei Verkostungen keine Gäste-Uploads).
-   Seit 25.10.2026 auch das Ansehen nur Braumeister/Admin vorbehalten (RLS: features/brews/schema/04_sud_fotos_nur_braumeister.sql),
-   unabhängig vom „Öffentlich zeigen"-Status des Suds – Gäste sehen stattdessen einen Anmelde-Hinweis. --- */
-let galerie=[],galerieSudId=null,galeriePending=[];
-/* Aufnahmedatum (aus Exif) bzw. ersatzweise Hochlade-Datum, klein auf dem Vorschaubild: DD.MM.JJ */
-function fotoDatum(g){
-  const iso=g.aufgenommen||(g.angelegt?g.angelegt.slice(0,10):null);
-  if(!iso)return null;
-  const [y,m,d]=iso.split("-");
-  return `${d.padStart(2,"0")}.${m.padStart(2,"0")}.${y.slice(-2)}`;
-}
+/* --- Fotos vom Brautag: eigene Galerie je Sud, mit optionaler Bildunterschrift und Aufnahmedatum.
+   Ansehen, Hochladen, Zuschneiden, Bearbeiten und Löschen nur Braumeister/Admin (RLS: features/brews/schema/04_sud_fotos_nur_braumeister.sql),
+   unabhängig vom „Öffentlich zeigen"-Status des Suds – Gäste sehen stattdessen einen Anmelde-Hinweis.
+   Oberfläche (Raster, Ablage, Drag & Drop, Zuschnitt) kommt seit 07.11.2026 aus Bilder.galerieModul (lib/bilder.js). --- */
+let galerieModul=null;
 async function galerieLaden(sudId){
-  galerieSudId=sudId;galeriePending=[];
-  if(!isBM()){galerie=[];if(aktuellerSud&&aktuellerSud.id===sudId)galerieZeichnen();return;}
-  const {data,error}=await sb.from("sud_bilder").select("id,pfad,bildunterschrift,aufgenommen,angelegt").eq("sud_id",sudId).order("angelegt");
-  galerie=error?[]:(data||[]);
-  if(aktuellerSud&&aktuellerSud.id===sudId)galerieZeichnen();
-}
-function galerieZeichnen(){
   const abschnitt=$("#sudGalerieSec"),el=$("#sudGalerie");
   if(!abschnitt||!el)return;
-  const bm=isBM();
   abschnitt.hidden=false;
-  if(!bm){el.innerHTML=`<p class="hint">Melde dich als Braumeister an, um die Fotos vom Brautag zu sehen.</p>`;return;}
-  const addKachel=bm?`<button type="button" class="g-add" id="galerieAdd" aria-label="Fotos hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M9 13a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z"/><path d="M8 6h2l1-2h2l1 2h2"/></svg>Fotos hinzufügen</button>`:"";
-  const items=galerie.map(g=>({...g,datum:fotoDatum(g)}));
-  el.innerHTML=Bilder.galerieHtml(items,{loeschbar:bm,bearbeitbar:bm,beschriftet:true,extra:addKachel})+(bm?`<p class="hint sg-drophint nur-maus">oder Fotos direkt hierher ziehen</p>`:"");
-  Bilder.galerieVerdrahten(el,items,bm?galerieLoeschenBestaetigen:null,bm?galerieBearbeiten:null);
-  const add=$("#galerieAdd");if(add)add.onclick=()=>$("#galerieFile").click();
-  galerieTrayZeichnen();
-}
-/* Bildunterschrift UND Aufnahmedatum bearbeiten (z. B. wenn ein Foto kein/ein falsches Exif-Datum hat).
-   Leeres Datum = wieder automatisch (Exif, sonst Hochlade-Datum wie bisher). */
-function galerieBearbeiten(i){
-  const g=galerie[i],items=$("#sudGalerie").querySelectorAll(".g-item"),item=items[i];
-  if(!item)return;
-  item.querySelector(".g-cap").outerHTML=`<div class="g-edit-row">
-    <input type="text" value="${esc(g.bildunterschrift||"")}" placeholder="Bildunterschrift (optional)" maxlength="200" aria-label="Bildunterschrift">
-    <div class="g-edit-foot">
-      <input type="date" value="${esc(g.aufgenommen||"")}" aria-label="Aufnahmedatum (leer = automatisch)">
-      <button type="button" style="background:var(--hop)" data-save aria-label="Speichern">✓</button>
-      <button type="button" style="background:var(--muted)" data-cancel aria-label="Abbrechen">✕</button>
-    </div></div>`;
-  const row=item.querySelector(".g-edit-row"),input=row.querySelector('input[type=text]'),datumInput=row.querySelector('input[type=date]');
-  input.focus();input.select();
-  const speichern=async()=>{
-    const wert=input.value.trim()||null,aufgenommen=datumInput.value||null;
-    row.querySelector("[data-save]").disabled=true;
-    const {error}=await sb.from("sud_bilder").update({bildunterschrift:wert,aufgenommen}).eq("id",g.id);
-    if(error){toast(fehlertext(error));galerieZeichnen();return;}
-    g.bildunterschrift=wert;g.aufgenommen=aufgenommen;galerieZeichnen();toast("Gespeichert");
-  };
-  row.querySelector("[data-save]").onclick=speichern;
-  row.querySelector("[data-cancel]").onclick=()=>galerieZeichnen();
-  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();speichern();}if(e.key==="Escape")galerieZeichnen();});
-  datumInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();speichern();}if(e.key==="Escape")galerieZeichnen();});
-}
-function galerieLoeschenBestaetigen(i){
-  const g=galerie[i];
-  bestaetigen("Foto löschen?",`Dieses Foto${g.bildunterschrift?` („${g.bildunterschrift}“)`:""} wird endgültig gelöscht.`,"Ja, löschen",async()=>{
-    const {error}=await sb.from("sud_bilder").delete().eq("id",g.id);
-    if(error){toast(fehlertext(error));return;}
-    Bilder.loeschen(g.pfad);
-    galerie=galerie.filter(x=>x.id!==g.id);
-    galerieZeichnen();toast("Foto gelöscht");
+  if(!isBM()){galerieModul=null;el.innerHTML=`<p class="hint">Melde dich als Braumeister an, um die Fotos vom Brautag zu sehen.</p>`;return;}
+  const {data,error}=await sb.from("sud_bilder").select("id,pfad,bildunterschrift,aufgenommen,angelegt").eq("sud_id",sudId).order("angelegt");
+  if(!aktuellerSud||aktuellerSud.id!==sudId)return;
+  if(error){el.innerHTML=`<p class="err">${esc(fehlertext(error))}</p>`;return;}
+  galerieModul=Bilder.galerieModul({el,bucket:"bilder",zeilen:data||[],
+    basis:()=>`sude/${sudId}/galerie/foto`,
+    einfuegen:async f=>{const {data:z,error:e}=await sb.from("sud_bilder").insert({sud_id:sudId,...f}).select("id,pfad,bildunterschrift,aufgenommen,angelegt").single();if(e)throw e;return z;},
+    aendern:async(z,patch)=>(await sb.from("sud_bilder").update(patch).eq("id",z.id)).error,
+    entfernen:async z=>(await sb.from("sud_bilder").delete().eq("id",z.id)).error,
   });
-}
-/* Dateien hinzufügen (per Dateiauswahl ODER per Drag & Drop aus z. B. der Mac-Fotos-Mediathek): jedes Bild
-   sofort verkleinern (noch nicht hochladen), in die Ablage legen – dort je Bild eine optionale Bildunterschrift
-   eintragen. HEIC/HEIF wird dafür zuerst nach JPEG umgewandelt (Bilder.alsJpegDatei) – das Exif-Aufnahmedatum
-   wird aber vom Original gelesen, bevor die Umwandlung es verliert. */
-async function galerieDateienHinzufuegen(dateien){
-  for(const original of dateien){
-    try{
-      const [aufgenommen,datei]=await Promise.all([Bilder.exifDatum(original),Bilder.alsJpegDatei(original)]);
-      const bild=await Bilder.ladeBild(datei);
-      const blobs=await Bilder.verkleinern(bild);
-      galeriePending.push({url:URL.createObjectURL(datei),blobs,caption:"",aufgenommen});
-    }catch(e){toast(e.message);}
-  }
-  galerieTrayZeichnen();
-}
-async function galerieDateienGewaehlt(){
-  const dateien=[...$("#galerieFile").files];$("#galerieFile").value="";
-  await galerieDateienHinzufuegen(dateien);
-}
-function galerieTrayZeichnen(){
-  const abschnitt=$("#sudGalerieSec");if(!abschnitt)return;
-  let tray=$("#galerieTray");
-  if(!galeriePending.length){if(tray)tray.remove();return;}
-  if(!tray){tray=document.createElement("div");tray.className="sg-tray";tray.id="galerieTray";abschnitt.appendChild(tray);}
-  tray.innerHTML=`<h4>${galeriePending.length} Foto${galeriePending.length===1?"":"s"} ausgewählt – Bildunterschrift optional</h4>
-    <div class="sg-pending">${galeriePending.map((p,i)=>`<div class="sg-pend-row"><img src="${p.url}" alt=""><input type="text" data-pend="${i}" placeholder="Bildunterschrift (optional)" value="${esc(p.caption)}" maxlength="200" aria-label="Bildunterschrift Foto ${i+1}"><button type="button" class="x" data-pendweg="${i}" aria-label="Dieses Foto nicht hochladen">✕</button></div>`).join("")}</div>
-    <div class="sg-tray-foot"><button type="button" class="btn" id="galerieTrayAbbrechen">Abbrechen</button><button type="button" class="btn primary" id="galerieTrayHochladen">Hochladen</button></div>`;
-  tray.querySelectorAll("[data-pend]").forEach(inp=>inp.oninput=()=>{galeriePending[+inp.dataset.pend].caption=inp.value;});
-  tray.querySelectorAll("[data-pendweg]").forEach(b=>b.onclick=()=>{galeriePending.splice(+b.dataset.pendweg,1);galerieTrayZeichnen();});
-  $("#galerieTrayAbbrechen").onclick=()=>{galeriePending.forEach(p=>URL.revokeObjectURL(p.url));galeriePending=[];galerieTrayZeichnen();};
-  $("#galerieTrayHochladen").onclick=galerieHochladen;
-}
-async function galerieHochladen(){
-  const btn=$("#galerieTrayHochladen");btn.disabled=true;btn.textContent="Wird hochgeladen …";
-  const basis=`sude/${galerieSudId}/galerie/foto`,anzahl=galeriePending.length;
-  const neu=[];
-  for(const p of galeriePending){
-    try{
-      const pfad=await Bilder.hochladen(basis,p.blobs);
-      const {data,error}=await sb.from("sud_bilder").insert({sud_id:galerieSudId,pfad,bildunterschrift:p.caption.trim()||null,aufgenommen:p.aufgenommen||null}).select().single();
-      if(error)throw error;
-      neu.push(data);
-    }catch(e){toast(fehlertext(e));}
-    URL.revokeObjectURL(p.url);
-  }
-  galerie=galerie.concat(neu);galeriePending=[];
-  galerieZeichnen();
-  if(neu.length)toast(`${neu.length} Foto${neu.length===1?"":"s"} hochgeladen`);
 }
 function confirmDelete(b){
   bestaetigen("Sud löschen?",`„${title(b)}“ vom ${fmtDate(b.datum)}${b.datum?.slice(0,4)||""} wird endgültig gelöscht.`,"Ja, löschen",async()=>{
