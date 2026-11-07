@@ -4,14 +4,17 @@ function vkForm(v){
   sheet(v ? "Verkostung bearbeiten" : "Neue Verkostung", `<form id="vkForm" class="stack" novalidate>
       <label class="f" for="v_titel">Titel<input id="v_titel" maxlength="100" value="${esc(v?.titel||"")}" placeholder="z. B. Herbstverkostung 2026" required></label>
       <div class="grid2"><label class="f" for="v_datum">Datum<input id="v_datum" type="date" value="${esc(v?.datum||KB.todayIso())}"></label>
-      <label class="f" for="v_ort">Ort<input id="v_ort" maxlength="100" value="${esc(v?.ort||"")}"></label></div>
+      <label class="f" for="v_uhrzeit">Uhrzeit (freiwillig)<input id="v_uhrzeit" type="time" value="${esc((v?.uhrzeit||"").slice(0,5))}"></label></div>
+      <label class="f" for="v_ort">Ort<input id="v_ort" maxlength="100" value="${esc(v?.ort||"")}"></label>
+      <label class="f" for="v_text">Einladungstext (freiwillig)<textarea id="v_text" maxlength="1000" rows="3" placeholder="z. B. Bringt Hunger mit, es gibt Flammkuchen.">${esc(v?.einladungstext||"")}</textarea></label>
+      <p class="hint">Steht in der Einladung und auf der Ankündigungsseite. Beides ist für jeden mit dem Link lesbar – also keine Privatadresse.</p>
       <label class="check"><input type="checkbox" id="v_blind"${v?.blind?" checked":""}><span><b>Blind verkosten</b><br><span class="hint">Gäste sehen nur Probennummern; die Biere werden beim Abschließen aufgedeckt.</span></span></label>
       <span class="err" id="vErr"></span>
     </form>`,
     `<span class="spacer"></span><button class="btn" id="vAbbr">Abbrechen</button><button class="btn primary" id="vSave" form="vkForm" type="submit">${v?"Speichern":"Anlegen"}</button>`);
   $("#vAbbr").onclick = closeSheet;
   $("#vkForm").onsubmit = async e => { e.preventDefault();
-    const out = {titel: $("#v_titel").value.trim(), datum: $("#v_datum").value || KB.todayIso(), ort: $("#v_ort").value.trim() || null, blind: $("#v_blind").checked};
+    const out = {titel: $("#v_titel").value.trim(), datum: $("#v_datum").value || KB.todayIso(), uhrzeit: $("#v_uhrzeit").value || null, ort: $("#v_ort").value.trim() || null, einladungstext: $("#v_text").value.trim() || null, blind: $("#v_blind").checked};
     if(!out.titel){ $("#vErr").textContent = "Bitte einen Titel eingeben."; return; }
     $("#vSave").disabled = true;
     const q = v ? sb.from("verkostungen").update(out).eq("id", v.id) : sb.from("verkostungen").insert(out);
@@ -59,15 +62,21 @@ function detailZeigen(){
   if(v.status==="abgeschlossen") aktion = `<button class="btn" id="stWieder">Wieder öffnen</button>`;
   let h = `<p><a class="back" href="verkostung.html">← Alle Verkostungen</a></p>
     <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
-      <p class="hint">${esc([fmtDateLong(v.datum), v.ort, v.blind?"blind":"offen", teilnehmer.length+" Teilnehmer"].filter(Boolean).join(" · "))}</p></div>
+      <p class="hint">${esc([fmtDateLong(v.datum)+(v.uhrzeit?`, ${v.uhrzeit.slice(0,5)} Uhr`:""), v.ort, v.blind?"blind":"offen", teilnehmer.length+" Teilnehmer"].filter(Boolean).join(" · "))}</p></div>
       ${statusTag(v.status)}</div>
     <div class="top-actions">${aktion}${v.status==="abgeschlossen"?`<a class="btn" href="verkostung.html?e=${esc(v.id)}">Ergebnisseite</a>`:""}<button class="btn" id="vkEdit">Bearbeiten</button>${isAdmin()?`<button class="btn danger" id="vkDel">Löschen</button>`:""}</div>
     <div class="vk-grid">
-      <section class="vk-card qrbox"><h3>Einladung</h3>
+      ${v.status!=="abgeschlossen"?`<section class="vk-card einladen"><h3>Gäste einladen</h3>
+        <p class="hint">Die Einladung führt auf eine Ankündigungsseite – ohne Code. Mitmachen geht erst am Abend.</p>
+        <pre class="einladung-vorschau">${esc(einladungsNachricht(v))}</pre>
+        <div class="top-actions"><button class="btn primary" id="einladungTeilen">Einladung teilen</button><a class="btn" href="verkostung.html?a=${esc(v.id)}" target="_blank" rel="noopener">Ankündigung ansehen</a></div>
+        ${!v.uhrzeit||!v.einladungstext?`<p class="hint">${!v.uhrzeit?"Noch keine Uhrzeit. ":""}${!v.einladungstext?"Noch kein Einladungstext. ":""}Beides unter „Bearbeiten“.</p>`:""}
+      </section>`:""}
+      <section class="vk-card qrbox"><h3>${v.status==="abgeschlossen"?"Link zur Verkostung":"Mitmachen am Abend"}</h3>
         <div class="qr" id="qrKlein">${QR.svg(link)}</div>
         <p class="num linktext">${esc(link)}</p>
         <div class="top-actions"><button class="btn" id="qrGross">Groß zeigen</button><button class="btn" id="copyLink">Link kopieren</button><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">Selbst mitbewerten</a></div>
-        <p class="hint">${v.status==="abgeschlossen"?"Die Verkostung ist abgeschlossen – über den Link sieht man jetzt das Ergebnis.":"Der Code gilt nur für diese Verkostung. Nach dem Abschließen kann niemand mehr beitreten oder bewerten."}</p>
+        <p class="hint">${v.status==="vorbereitung"?"Diesen QR-Code bzw. Code erst am Abend zeigen. Mitmachen geht, sobald du die Verkostung startest. ":""}${v.status==="abgeschlossen"?"Die Verkostung ist abgeschlossen – über den Link sieht man jetzt das Ergebnis.":"Der Code gilt nur für diese Verkostung. Nach dem Abschließen kann niemand mehr beitreten oder bewerten."}</p>
       </section>
       <section class="vk-card"><h3>Biere (${proben.length})</h3>
         ${proben.length?`<ol class="plist">${proben.map((p,i)=>{const n=bewertungen.filter(b=>b.probe_id===p.id).length;return `<li>
@@ -108,6 +117,7 @@ function detailZeigen(){
     sheet(v.titel, `<div class="qr gross">${QR.svg(link)}</div><p class="num linktext" style="text-align:center">${esc(link)}</p><p class="hint" style="text-align:center">Mit der Handykamera scannen und mitmachen.</p>`, `<span class="spacer"></span><button class="btn" id="qrZu">Schließen</button>`);
     $("#qrZu").onclick = closeSheet;
   };
+  if($("#einladungTeilen")) $("#einladungTeilen").onclick = () => einladungTeilen(v);
   $("#copyLink").onclick = async () => { try{ await navigator.clipboard.writeText(link); toast("Link kopiert"); }catch(_){ toast("Kopieren ging nicht – bitte den Link markieren"); } };
   $("#addBier").onclick = () => bierWaehlen();
   Bilder.feldVerdrahten("titelFeld", {art:"frei", basis:`verkostungen/${v.id}/titel`, titel:"Titelbild", geaendert: async p => {
