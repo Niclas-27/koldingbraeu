@@ -3,7 +3,7 @@
 let rListe = [], rSuche = "";
 
 async function listeZeigen(){
-  const {data, error} = await sb.from("rezepte").select("id,name,stil,autor,quelle,ausschlag,sudhausausbeute,stammwuerze,bittere,farbe,alkohol,malze,hopfen,kochzeit,endvergaerungsgrad,oeffentlich,eltern_id,geaendert,bild_foto,bild_etikett").order("name");
+  const {data, error} = await sb.from("rezepte").select("id,name,stil,autor,quelle,ausschlag,sudhausausbeute,stammwuerze,bittere,farbe,alkohol,malze,hopfen,kochzeit,endvergaerungsgrad,oeffentlich,eltern_id,geaendert,bild_foto,bild_etikett,bild_kronkorken,bild_flasche").order("name");
   if(error){ rMain().innerHTML = `<p class="empty">${esc(fehlertext(error))}</p>`; return; }
   rListe = data || [];
   let gebraut = new Map();

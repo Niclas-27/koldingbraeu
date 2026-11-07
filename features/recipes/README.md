@@ -60,7 +60,7 @@ Import-Fläche „JSON-Datei hierher ziehen“ ist auf Touch-Geräten ausgeblend
 
 ## Bilder
 
-Rezepte haben wie Sude optional **Foto** und **Etikett** (Editor → „Bilder“). Das Foto steht über dem Rezeptblatt, das Etikett im Kopf und als Vorschaubild auf der Karte – in Kronkorken-Form zugeschnitten (gezackter Kreis); ohne Bild gibt es einen gezeichneten Kronkorken in der Rezeptfarbe (EBC). Varianten (Klonen) übernehmen keine Bilder. Pfade: `rezepte/<id>/foto-…jpg`, `rezepte/<id>/etikett-…jpg`.
+Rezepte haben wie Sude optional **Foto**, **Kronkorken** (rund) und **Flasche mit Etikett** (3:4) (Editor → „Bilder“; bis 07.11.2026 „Foto“ und „Etikett“). Das Foto steht über dem Rezeptblatt, Kronkorken und Flasche im Kopf; Vorschaubild auf der Rezeptkarte ist der Kronkorken, sonst die Flasche, sonst das Foto. Zuschnitt wie überall (`lib/bilder.js`).
 
 ## Offene Punkte
 

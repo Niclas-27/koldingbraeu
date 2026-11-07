@@ -77,13 +77,13 @@ async function main() {
   let erzeugt = 0;
 
   try {
-    const sude = await supa("sude?select=id,nr,stil,bild_etikett,bild_foto&oeffentlich=eq.true");
+    const sude = await supa("sude?select=id,nr,stil,bild_kronkorken,bild_flasche,bild_etikett,bild_foto&oeffentlich=eq.true");
     for (const s of sude) {
       const titel = s.stil || `Sud ${s.nr}`;
       const ok = await stub({
         ordner: "sud", id: s.id, titel,
         beschreibung: `Sud Nr. ${s.nr} im Braubuch von Koldingbräu.`,
-        bild: bildUrl(s.bild_etikett || s.bild_foto),
+        bild: bildUrl(s.bild_kronkorken || s.bild_flasche || s.bild_etikett || s.bild_foto),
         zielpfad: `/index.html?sud=${encodeURIComponent(s.id)}`,
       });
       if (ok) erzeugt++;
@@ -91,12 +91,12 @@ async function main() {
   } catch (e) { console.warn("Sude-Vorschauen übersprungen:", e.message); }
 
   try {
-    const rezepte = await supa("rezepte?select=id,name,bild_etikett,bild_foto&oeffentlich=eq.true");
+    const rezepte = await supa("rezepte?select=id,name,bild_kronkorken,bild_flasche,bild_etikett,bild_foto&oeffentlich=eq.true");
     for (const r of rezepte) {
       const ok = await stub({
         ordner: "rezept", id: r.id, titel: r.name,
         beschreibung: `Rezept „${r.name}“ im Braubuch von Koldingbräu.`,
-        bild: bildUrl(r.bild_etikett || r.bild_foto),
+        bild: bildUrl(r.bild_kronkorken || r.bild_flasche || r.bild_etikett || r.bild_foto),
         zielpfad: `/rezepte.html?id=${encodeURIComponent(r.id)}`,
       });
       if (ok) erzeugt++;
