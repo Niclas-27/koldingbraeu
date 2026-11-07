@@ -29,7 +29,7 @@ function gastZeigen(){
         <p class="hint">Gib deinen Vornamen oder Spitznamen ein. Er gilt nur für diesen Abend und erscheint nach dem Abschluss in der Teilnehmerliste der Ergebnisseite; deine Kommentare werden dort ohne Namen gezeigt.</p>
         <label class="f" for="j_name">Dein Name<input id="j_name" maxlength="40" autocomplete="given-name" required></label>
         <span class="err" id="joinErr"></span>
-        <button class="btn primary" type="submit" id="joinBtn" style="align-self:flex-start">Los geht’s</button>
+        <button class="btn primary" type="submit" id="joinBtn" style="align-self:flex-start">Mitmachen</button>
       </form>`;
   } else if(ich){
     h += `<p class="hint">Du bist dabei als <b>${esc(ich.name)}</b>. <button class="linkbtn" id="notMe">Nicht du?</button></p>`;
@@ -65,11 +65,12 @@ function gastZeigen(){
       </button>`;}).join("")}</div>`);
   }
 
-  if(v.status !== "vorbereitung" && d.proben.length){
+  // Zwischenstand erst nach dem Aufdecken: ein Live-Ranking beeinflusst die eigene Bewertung. Die Noten
+  // kommen seit schema/12 für Gäste auch gar nicht mehr vorher aus der Datenbank.
+  if(v.status === "abgeschlossen" && d.proben.length){
     const zeilen = d.proben.map(p=>({id:p.id, nummer:p.nummer, titel: offen ? p.bier.name : "Probe "+p.nummer,
       unter: offen ? bierZeile(p.bier) : "", schnitt:p.schnitt, anzahl:p.anzahl, nochmal:p.nochmal, bild: offen ? Bilder.bier(p.bier) : ""}));
-    h += sec(v.status==="abgeschlossen" ? "Ergebnis" : "Zwischenstand (live)", rangTabelle(zeilen)
-      + (v.status==="laeuft" ? `<p class="hint">Aktualisiert sich alle 15 Sekunden.${v.blind?" Die Namen werden am Ende aufgedeckt.":""}</p>` : ""));
+    h += sec("Ergebnis", rangTabelle(zeilen));
   }
   if(v.status === "abgeschlossen" && !ich) h += `<p class="hint">Diese Verkostung ist abgeschlossen.</p>`;
   const darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < 3;

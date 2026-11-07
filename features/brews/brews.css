@@ -50,6 +50,13 @@
    Art + Löschen – feste Zuordnung über grid-template-areas statt Auto-Flow, da die Kind-Elemente
    jetzt rf-Wrapper sind (Label + Feld) und nicht mehr bloße <input>/<select> (siehe rf() in brews.js). */
 @media (max-width:560px){
+  /* Malz/Zwischenmessungen: erstes Feld (Sorte/Bezeichnung) oben über die volle Breite, damit die Zahlenfelder
+     darunter breit genug für vierstellige Werte sind (vorher wurde "4000" Gramm abgeschnitten). */
+  .rowlist.m3 .r{grid-template-columns:1fr 1fr 36px;grid-template-areas:"a a a" "b c del"}
+  .rowlist.m3 .r .rf:nth-child(1){grid-area:a}
+  .rowlist.m3 .r .rf:nth-child(2){grid-area:b}
+  .rowlist.m3 .r .rf:nth-child(3){grid-area:c}
+  .rowlist.m3 .r .x{grid-area:del}
   .rowlist.h5 .r{grid-template-columns:1fr 1fr 1fr 36px;grid-template-areas:"sorte sorte sorte sorte" "gramm alpha zeit del" "art art art art"}
   .rowlist.h5 .r .rf:nth-child(1){grid-area:sorte}
   .rowlist.h5 .r .rf:nth-child(2){grid-area:gramm}
@@ -103,19 +110,6 @@ button.wahl-k:hover{border-color:var(--muted)}
 .g-edit-foot input[type=date]{flex:1;min-width:0;color-scheme:light dark}
 .g-edit-row button{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;color:#fff;display:inline-flex;align-items:center;justify-content:center;padding:0;font-size:.78rem;flex:none}
 
-/* Checkliste zum Brautag */
-#checklisteBody{display:flex;flex-direction:column;gap:22px}
-.chk-gruppe{border-bottom:1px solid var(--line);padding-bottom:16px}
-.chk-item{display:flex;align-items:center;gap:6px}
-.chk-row{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer;flex:1;min-width:0;padding:5px 0}
-.chk-row input[type=checkbox]{width:19px;height:19px;flex:none;accent-color:var(--hop)}
-.chk-row span{overflow-wrap:anywhere}
-.chk-row.done span{color:var(--muted);text-decoration:line-through}
-.chk-eigen-eingabe{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-/* font-size mindestens 16px: sonst zoomt iOS Safari beim Antippen automatisch hinein */
-.chk-eigen-eingabe input{flex:1;min-width:140px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:1rem}
-#checklisteFortschritt{font-weight:600}
-
 /* Braugang-Assistent: Kopf klein (Braugang-Titel + Schrittname), Fußleiste wie beim Verkostungs-Bewertungsbogen
    (features/tastings/form.js: .bogen-fuss/.fortschritt/.punkte/.bogen-knoepfe) – hier noch mal definiert, weil
    index.html nur brews.css lädt, nicht tastings.css. Formularfelder/Rowlists nutzen dieselben Klassen
@@ -151,3 +145,12 @@ button.wahl-k:hover{border-color:var(--muted)}
 /* Status-Badge für laufende Braugänge (Liste + Detailseite), analog zu .tag.intern/.tag.pub */
 .tag.entwurf{border-color:var(--amber);color:var(--amber)}
 .tag.gaerung{border-color:var(--hop);color:var(--hop)}
+
+/* Zwischentitel innerhalb eines Editor-Abschnitts (z. B. „Zwischenmessungen“ unter Gärung) */
+.f-titel{font-size:.85rem;font-weight:600;margin:14px 0 6px}
+/* Sud bearbeiten (auf der Detailseite): Speichern-Leiste bleibt unten am Bildschirm stehen, statt erst nach
+   rund 3.400 px Formular aufzutauchen. position:fixed statt sticky aus demselben Grund wie beim Assistenten
+   (#wzFuss, siehe oben: overflow-x:hidden auf html/body macht sticky wirkungslos). */
+.edit-fuss{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bg);border-top:1px solid var(--line);
+  padding:10px max(16px,calc((100vw - 760px)/2)) calc(10px + env(safe-area-inset-bottom,0px));margin:0}
+.sud-blatt.mit-fuss{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}

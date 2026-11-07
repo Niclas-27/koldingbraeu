@@ -146,27 +146,27 @@ Seite genutzt wird (Sud-Fotos, Verkostungs-Galerie, Liga-Bilder), profitieren au
 - Playwright-Test löst dafür eigene `TouchEvent`/`Touch`-Objekte aus (`wische()` in `tests/run_tests.py`);
   der Browser-Kontext braucht dafür `has_touch=True` beim `new_context(...)`.
 
-## Checkliste zum Brautag (seit 27.10.2026)
+## Checkliste zum Brautag (27.10.2026 – 07.11.2026, entfernt)
 
-Eigener Modus auf der Sud-Detailseite (Knopf „Checkliste“, nur Braumeister/Admin – reines Arbeitswerkzeug wie
-die Fotogalerie, keine Gäste-Sicht). Gedacht, um während des Brauens Schritt für Schritt abzuhaken, ohne etwas
-zu vergessen.
+Gab es bis 7.11.2026 als eigenen Modus auf der Sud-Detailseite (abhakbare Schritte, abgeleitet aus Maischplan
+und Hopfengaben). Auf Wunsch des Nutzers komplett aus dem Code entfernt – der Braugang-Assistent deckt den
+Brautag ab. Die Tabelle `sud_schritte` (`schema/05_sud_schritte.sql`) und ihre Daten liegen bewusst
+unverändert in der Datenbank, werden aber von keinem Code mehr gelesen; sie kann bei Gelegenheit im
+Supabase SQL Editor gelöscht werden.
 
-- **Schritte kommen aus den Sud-Daten, nicht aus einem eigenen Formular:** `schritteAbleiten()` in `brews.js`
-  baut aus Maischplan (Einmaischen/Rasten/Abmaischen), Hopfengaben (nach Art und Kochzeit sortiert: Vorderwürze
-  beim Läutern, Kochgaben absteigend nach Kochzeit, Whirlpool nach Kochende, Stopfhopfen bei der Gärung) und
-  Kochzeit automatisch sechs Phasen: Schüttung, Maischen, Läutern, Kochen, Kühlen & Anstellen, Gärung. Nichts
-  davon wird doppelt gepflegt – ändert sich der Maischplan, ändert sich beim nächsten Öffnen auch die Checkliste.
-- **Fortschritt** liegt in `sud_schritte` (`features/brews/schema/05_sud_schritte.sql`): ein abgeleiteter Schritt
-  existiert als Zeile nur, solange er abgehakt ist (Abhaken = anlegen, Abwählen = löschen, mit `erledigt_von`/
-  `erledigt_am`); überlebt Neuladen und Gerätewechsel, anders als ein rein lokaler Zustand im Browser.
-- **Eigene Zusatzschritte** (z. B. „Milchsäure zugeben“) lassen sich je Phase über „+ Eigener Schritt“ frei
-  ergänzen, abhaken und wieder entfernen (mit Lösch-Bestätigung) – für alles, was nicht aus den strukturierten
-  Feldern kommt.
-- **Bewusst nicht enthalten (Stand jetzt):** Timer/Erinnerungen für Rasten oder Hopfengaben – war explizit
-  zurückgestellt, kann bei Bedarf nachträglich ergänzt werden.
-- Playwright-Test `sud_checkliste` in `tests/run_tests.py` deckt Ableitung, Abhaken/Abwählen, eigene
-  Zusatzschritte und Persistenz über einen Seitenwechsel ab.
+## Normaler Editor = alle Werte des Assistenten (seit 07.11.2026)
+
+Vorher gab es Wasserhärte, Milchsäure je Guss, pH vorher/nachher, Refraktometer (Anstellen/Restextrakt),
+Karbonisierung, „Eigene Angaben“ (`wizard_notizen`) und Zwischenmessungen (`sud_messungen`) nur im
+Braugang-Assistenten. Nach „Sud abschließen“ führt „Bearbeiten“ aber in den normalen Editor – Tippfehler
+waren dann nicht mehr korrigierbar. Jetzt hat der normale Editor alle diese Felder (`FIELDS`, `WRITE_COLS`),
+Zwischenmessungen werden beim Speichern abgeglichen (`edMessungenSpeichern`: neu/geändert/entfernt).
+- Alte Freitextfelder „Hopfensorten“ und „Messungen“ erscheinen nur noch, wenn sie befüllt sind
+  (`altFeld()`), gekennzeichnet als „(alter Freitext)“.
+- Speichern-Leiste beim Bearbeiten auf der Detailseite bleibt unten am Bildschirm stehen (`.edit-fuss`).
+- Malz- und Messungszeilen am Handy zweizeilig (Sorte/Bezeichnung oben), damit vierstellige Grammangaben passen.
+- Detailseite: „Bearbeiten“/„Braugang-Assistent“ zuerst, dann „Kopie anlegen“ (hieß „Als Vorlage nutzen“),
+  „Als Rezept speichern“, „Löschen“. Kennzahlen am Handy 2 × 2, wenn es vier sind.
 
 ## Offene Punkte
 
@@ -174,8 +174,7 @@ zu vergessen.
 
 ## Braugang-Assistent (seit 31.10.2026, Schritt „Abfüllung” + Alkohol-Berechnung 31.10.2026 ergänzt)
 
-Eigenständiges Werkzeug, getrennt von der Checkliste oben: die Checkliste hakt vorgegebene Aufgaben ab, der
-Assistent erfasst während des Brauens die tatsächlichen Werte eines aus einem Rezept gestarteten Braugangs,
+Der Assistent erfasst während des Brauens die tatsächlichen Werte eines aus einem Rezept gestarteten Braugangs,
 in neun Schritten (Rezept & Start, Wasser & Milchsäure, Schüttung, Maischen, Läutern, Kochen, Kühlen &
 Anstellen, Gärung, Abfüllung). Kopf/Fuß sind bewusst wie beim Verkostungs-Bewertungsbogen gehalten
 (`features/tastings/form.js`): oben klein nur der Braugang-Titel, darunter groß der aktuelle Schrittname;
@@ -262,7 +261,7 @@ ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt wa
   (Logo/Menü/Konto), die Seiten-Fußzeile (Impressum/Datenschutz-Links) und die „Sude“-Titelzeile samt
   „+ Neuer Sud“-Knopf ausgeblendet (`kopfzeileZeigen()` plus `#sudeActions` in `brews.js`) – es bleibt nur der
   kleine „← Zurück“-Link oben, das spart auf dem Handy spürbar Höhe. Alle drei werden beim Verlassen
-  (Detailansicht, Checkliste, „Sud nicht gefunden“) wieder eingeblendet.
+  (Detailansicht, „Sud nicht gefunden“) wieder eingeblendet.
 - **Wasser-Schritt mit getrennter Milchsäure je Guss:** Hauptguss und Nachguss haben jeweils ein eigenes
   Milchsäure-Feld direkt daneben (`milchsaeure_hauptguss`/`milchsaeure_nachguss`, ersetzt die zu grobe erste
   Fassung mit nur einem gemeinsamen Feld – siehe `schema/10_milchsaeure_getrennt.sql`), mit je einem eigenen

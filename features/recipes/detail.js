@@ -53,13 +53,13 @@ function detailZeigen(){
         <label for="zielMenge">für</label>
         <input id="zielMenge" type="number" min="1" max="500" step="0.5" value="${esc(sicht.ziel)}" inputmode="decimal">
         <span>Liter Ausschlagwürze</span>
-        ${anlage ? `<label class="check klein"><input type="checkbox" id="mitAnlage"${sicht.mitAnlage ? " checked" : ""}${anlageMoeglich ? "" : " disabled"}><span>auf Anlage ${esc(anlage.name)} (${zf(zA)} % Ausbeute${R.eigene_ausbeute ? " für dieses Rezept" : ""})</span></label>` : ""}
+        ${anlage && !(anlageMoeglich && zA != null && Math.round(zA*10) === Math.round(R.sudhausausbeute*10)) ? `<label class="check klein"><input type="checkbox" id="mitAnlage"${sicht.mitAnlage ? " checked" : ""}${anlageMoeglich ? "" : " disabled"}><span>auf Anlage ${esc(anlage.name)} (${zf(zA)} % Ausbeute${R.eigene_ausbeute ? " für dieses Rezept" : ""})</span></label>` : ""}
         ${geaendert ? `<button class="linkbtn" id="zurueck">Originalwerte</button>` : ""}
       </div>
       ${anlage && !R.sudhausausbeute ? `<p class="hint noprint">Das Rezept nennt keine Sudhausausbeute laut Quelle – auf eure Anlage kann nur die Menge umgerechnet werden.</p>` : ""}
       ${anlage && baum.ausbeute && zA && Math.abs(baum.ausbeute.wert - zA) >= 3 ? `<p class="hint noprint">Eure Sude ${esc(baum.ausbeute.basis)} kamen im Schnitt auf ${zf(baum.ausbeute.wert)} % Ausbeute (${sudeText(baum.ausbeute.anzahl)}), gerechnet wird mit ${zf(zA)} %. Unter „Bearbeiten“ lässt sich der Wert fürs Rezept übernehmen.</p>` : ""}
       ${geaendert ? `<p class="hint">Umgerechnet für ${zf(sicht.ziel)} l${sicht.mitAnlage ? `, Schüttung für ${zf(zA)} % statt ${zf(R.sudhausausbeute)} % Ausbeute` : ""}${Object.keys(sicht.alpha).length ? ", Hopfen auf euren Alphawert" : ""} – Stammwürze, Bittere und Farbe bleiben wie im Rezept.</p>` : ""}
-      ${R.stammwuerze != null ? `<p class="hint noprint" title="Eigene Nachrechnung aus den Zutaten: Stammwürze aus Schüttung und Sudhausausbeute, Bittere nach Tinseth, Farbe als Faustformel">Nachgerechnet: ${esc([zf(k.stammwuerze) + " °P", zf(k.bittere, 0) + " IBU", zf(k.farbe, 0) + " EBC", zf(k.alkohol) + " %"].join(" · "))}</p>` : ""}
+      ${R.stammwuerze != null ? `<p class="hint noprint" title="Eigene Nachrechnung aus den Zutaten: Stammwürze aus Schüttung und Sudhausausbeute, Bittere nach Tinseth, Farbe als Faustformel">Zur Kontrolle aus den Zutaten nachgerechnet (oben stehen die Werte laut Rezept): ${esc([zf(k.stammwuerze) + " °P", zf(k.bittere, 0) + " IBU", zf(k.farbe, 0) + " EBC", zf(k.alkohol) + " %"].join(" · "))}</p>` : ""}
     </header>
 
     ${(u.hauptguss != null || u.nachguss != null) ? `<section class="rz-sec"><h3>Brauwasser</h3>
@@ -94,10 +94,11 @@ function detailZeigen(){
 
   ${isBM() ? `<div class="top-actions noprint rz-aktionen">
       <button class="btn primary" id="sudAnlegen">Sud aus diesem Rezept anlegen</button>
-      <button class="btn" id="rzEdit">Bearbeiten</button><button class="btn" id="rzName">Umbenennen</button><button class="btn" id="rzKlon">Klonen</button>
-      <button class="btn" id="rzExport">Export (MMuM-JSON)</button><button class="btn" id="rzDruck">Drucken</button>
-      <button class="btn" id="rzPub">${R.oeffentlich ? "Nicht mehr öffentlich" : "Öffentlich zeigen"}</button>
-      ${isAdmin() ? `<button class="btn danger" id="rzDel">Löschen</button>` : ""}
+      <button class="btn" id="rzEdit">Bearbeiten</button><button class="btn" id="rzKlon">Kopie anlegen</button>
+      <details class="mehr"><summary class="btn">Mehr …</summary><div class="mehr-menue">
+        <button class="btn ghost" id="rzPub">${R.oeffentlich ? "Nicht mehr öffentlich zeigen" : "Öffentlich zeigen"}</button>
+        <button class="btn ghost" id="rzExport">Export (MMuM-JSON)</button><button class="btn ghost" id="rzDruck">Drucken</button>
+        ${isAdmin() ? `<button class="btn ghost danger" id="rzDel">Löschen</button>` : ""}</div></details>
     </div>` : `<div class="top-actions noprint"><button class="btn" id="rzDruck">Drucken</button></div>`}`;
   rMain().innerHTML = h;
 
@@ -117,7 +118,6 @@ function detailZeigen(){
   if(!isBM()) return;
   $("#sudAnlegen").onclick = () => sudAusRezept(aktuell());
   $("#rzEdit").onclick = () => rezeptEditInline(R);
-  $("#rzName").onclick = umbenennen;
   $("#rzKlon").onclick = klonen;
   $("#rzExport").onclick = () => { download(dateiname(R.name) + (geaendert ? `_${zf(sicht.ziel)}l` : "") + ".json", JSON.stringify(B.zuMMuM(aktuell()), null, 2)); toast("Exportiert"); };
   $("#rzPub").onclick = async () => { const {error} = await sb.from("rezepte").update({oeffentlich: !R.oeffentlich}).eq("id", R.id); if(error){ toast(fehlertext(error)); return; } R.oeffentlich = !R.oeffentlich; toast(R.oeffentlich ? "Rezept ist jetzt öffentlich" : "Rezept ist jetzt intern"); detailZeigen(); };
@@ -143,37 +143,21 @@ function stammbaumHtml(){
   return `<section class="rz-sec noprint"><h3>Stammbaum</h3><ul class="plain baum">${teile.map(t => `<li>${t}</li>`).join("")}</ul></section>`;
 }
 
-function umbenennen(){
-  sheet("Rezept umbenennen", `<form id="nmForm" class="stack" novalidate><label class="f" for="nm">Name<input id="nm" maxlength="100" value="${esc(R.name)}"></label><span class="err" id="nmErr"></span></form>`,
-    `<span class="spacer"></span><button class="btn" id="nmAbbr">Abbrechen</button><button class="btn primary" id="nmSave" form="nmForm" type="submit">Speichern</button>`);
-  $("#nmAbbr").onclick = closeSheet;
-  setTimeout(() => $("#nm")?.select(), 50);
-  $("#nmForm").onsubmit = async e => { e.preventDefault();
-    const n = $("#nm").value.trim(); if(!n){ $("#nmErr").textContent = "Bitte einen Namen eingeben."; return; }
-    $("#nmSave").disabled = true;
-    const {error} = await sb.from("rezepte").update({name: n}).eq("id", R.id);
-    if(error){ $("#nmSave").disabled = false; $("#nmErr").textContent = fehlertext(error); return; }
-    R.name = n; closeSheet(); toast("Umbenannt"); detailZeigen();
-  };
-}
 async function klonen(){
   const kopie = {...R}; ["id", "angelegt", "angelegt_von", "geaendert", "geaendert_von", "original", "aus_sud_id"].forEach(k => delete kopie[k]);
   Object.assign(kopie, {name: R.name + " (Variante)", eltern_id: R.id, oeffentlich: false, bild_foto: null, bild_etikett: null});
   const {data, error} = await sb.from("rezepte").insert(kopie).select("id").single();
   if(error){ toast(fehlertext(error)); return; }
-  toast("Variante angelegt"); location.href = "rezepte.html?id=" + data.id;
+  toast("Kopie angelegt – sie steht als Variante im Stammbaum"); location.href = "rezepte.html?id=" + data.id;
 }
 function loeschen(){
   const n = baum.sude.length;
-  sheet("Rezept löschen?", `<p>„${esc(R.name)}“ wird endgültig gelöscht.${n ? ` Die ${n} daraus gebrauten Sude bleiben erhalten, verlieren aber den Verweis aufs Rezept.` : ""}${baum.kinder.length ? " Varianten bleiben erhalten." : ""}</p>`,
-    `<span class="spacer"></span><button class="btn" id="dNein">Abbrechen</button><button class="btn danger" id="dJa">Endgültig löschen</button>`);
-  $("#dNein").onclick = closeSheet;
-  $("#dJa").onclick = async () => { $("#dJa").disabled = true;
+  bestaetigen("Rezept löschen?", `„${R.name}“ wird endgültig gelöscht.${n ? ` Die ${n} daraus gebrauten Sude bleiben erhalten, verlieren aber den Verweis aufs Rezept.` : ""}${baum.kinder.length ? " Varianten bleiben erhalten." : ""}`, "Endgültig löschen", async () => {
     const {data, error} = await sb.from("rezepte").delete().eq("id", R.id).select("id");
-    if(error || !data?.length){ toast(error ? fehlertext(error) : "Löschen ist nur dem Admin erlaubt."); closeSheet(); return; }
+    if(error || !data?.length){ toast(error ? fehlertext(error) : "Löschen ist nur dem Admin erlaubt."); return; }
     await Promise.all([Bilder.loeschen(R.bild_foto), Bilder.loeschen(R.bild_etikett)]);
     location.href = "rezepte.html";
-  };
+  });
 }
 
 /* Übergabe an die Sud-Seite: das umgerechnete Rezept wird kurz im Browser abgelegt, die Sud-Seite öffnet damit den Editor */

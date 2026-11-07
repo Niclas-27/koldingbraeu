@@ -3,7 +3,7 @@
    Reihenfolge: common → form → guest → overview → results → admin → main.
    Gäste haben keinen Tabellenzugriff, sondern nutzen nur die vk_*-Funktionen der Datenbank. */
 "use strict";
-const {$, esc, state, isBM, isAdmin, siteUrl, fmtDateLong, fmtZahl, gradeCls, toast, notice, sheet, closeSheet, sec, fehlertext, lsGet, lsSet} = KB;
+const {$, esc, state, isBM, isAdmin, siteUrl, fmtDateLong, fmtZahl, gradeCls, toast, notice, sheet, closeSheet, bestaetigen, sec, fehlertext, lsGet, lsSet} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});
 
 const STATUS = {vorbereitung:"In Vorbereitung", laeuft:"Läuft", abgeschlossen:"Abgeschlossen"};

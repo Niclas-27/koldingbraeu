@@ -14,7 +14,7 @@ async function listeZeigen(){
   rMain().innerHTML = `
     <div class="vk-head"><div><h2>Rezepte</h2><p class="hint">${isBM() ? "Importiere Rezepte von maischemalzundmehr.de, rechne sie auf eure Anlage um und braue daraus einen Sud." : "Rezepte von Koldingbräu."}</p></div>
       ${isBM() ? `<div class="top-actions"><button class="btn" id="anlageBtn">Anlagenprofil</button><button class="btn" id="importBtn">Importieren</button><button class="btn primary" id="neuRezeptBtn">+ Neues Rezept</button></div>` : ""}</div>
-    ${isBM() ? `<label class="dropzone" id="dropzone"><input type="file" id="importDatei" accept=".json,application/json" hidden>
+    ${isBM() ? `<label class="dropzone nur-maus" id="dropzone"><input type="file" id="importDatei" accept=".json,application/json" hidden>
         <b>JSON-Datei hierher ziehen</b> oder <span class="linkbtn">auswählen</span><small>Export von maischemalzundmehr.de (⋮ → Export JSON)</small></label>` : ""}
     ${rListe.length > 4 ? `<input class="search" id="rzSuche" type="search" autocomplete="off" placeholder="Suchen: Name, Stil, Malz, Hopfen …" aria-label="Rezepte durchsuchen" value="${esc(rSuche)}">` : ""}
     <div class="rz-cards" id="rzKarten"></div>`;

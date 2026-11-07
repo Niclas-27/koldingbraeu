@@ -19,7 +19,7 @@
 .rz-skala{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin-top:4px}
 .rz-skala input[type=number]{width:84px;text-align:center;border:1px solid var(--hop);background:var(--hop-soft);color:var(--hop);border-radius:999px;padding:6px 8px;font-weight:700;font-family:var(--font-data)}
 .check.klein{font-size:.85rem;align-items:center}
-.rz-sec h3{font-size:.85rem;font-family:var(--font-body);font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--warn);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px}
+.rz-sec h3{font-size:.85rem;font-family:var(--font-body);font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px}
 .rz-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
 .rz-row.summe{border-bottom:0;font-weight:600}
 .rz-row small{color:var(--muted)}

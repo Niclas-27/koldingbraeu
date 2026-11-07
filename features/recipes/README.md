@@ -37,6 +37,14 @@ umrechenbar auf jede Menge und auf die eigene Anlage. Aus einem Rezept wird ein 
   (`Brau.istAusbeute`), „Rezept aus Sud“ übernimmt sie als Quell- und eigenen Wert.
 - Schema: `schema/01_eigene_ausbeute.sql`.
 
+## Knöpfe im Detail (seit 07.11.2026)
+
+Hauptknopf „Sud aus diesem Rezept anlegen“, daneben „Bearbeiten“ (inkl. Name – der eigene Umbenennen-Knopf ist
+entfallen) und „Kopie anlegen“ (legt eine Variante im Stammbaum an, hieß vorher „Klonen“). Seltenes liegt im
+„Mehr …“-Menü: Öffentlich zeigen/zurücknehmen, Export (MMuM-JSON), Drucken, Löschen (Admin). Der Haken „auf
+Anlage … umrechnen“ erscheint nur, wenn sich die Ausbeute der Anlage von der des Rezepts unterscheidet. Die
+Import-Fläche „JSON-Datei hierher ziehen“ ist auf Touch-Geräten ausgeblendet (dort reicht „Importieren“).
+
 ## Dateien
 
 | Datei | Inhalt |
