@@ -495,3 +495,57 @@ details.mehr>summary::-webkit-details-marker{display:none}
 .bf-leiste .search{flex:none;width:100%;box-sizing:border-box}
 .bf-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .bf-chips select{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:5px 10px;font-size:.84rem;max-width:100%}
+
+/* Ladeanimation (seit 08.11.2026): Flasche aus dem Logo – wackelt, staucht sich, Korken schießt hoch, Bier wird
+   ausgetrunken, schnell wieder aufgefüllt, Korken landet wieder. Endlosschleife, solange geladen wird.
+   Erscheint erst nach 0,3 s (Einblenden mit Verzögerung) – bei schnellem Laden blitzt nichts auf.
+   Markup: KB.ladeHtml(text) bzw. <div class="kb-lade" role="status"><span>…</span></div> (core.js ergänzt die Flasche). */
+.kb-lade{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:42vh;color:var(--muted);font-size:.92rem;opacity:0;animation:kbLadeEin .25s ease-out .3s forwards}
+.kb-lade.klein{min-height:0;padding:28px 0}
+.kb-lade svg{height:92px;width:auto;overflow:visible}
+.kb-lade .lb,.kb-lade .lc,.kb-lade .lw{transform-box:fill-box;transform-origin:50% 100%}
+.kb-lade .lw{animation:kbLadeWackeln 3.2s ease-in-out infinite}
+.kb-lade .lg{fill:var(--ink);opacity:.18}
+.kb-lade .ll{fill:var(--amber)}
+.kb-lade .lc{fill:var(--amber)}
+.kb-lade .lb{animation:kbLadeFlasche 3.2s cubic-bezier(.3,0,.2,1) infinite}
+.kb-lade .lc{animation:kbLadeKorken 3.2s cubic-bezier(.3,0,.2,1) infinite}
+.kb-lade .lr{animation:kbLadePegel 3.2s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes kbLadeEin{to{opacity:1}}
+/* Wackeln: Flasche und Korken gemeinsam (äußere Gruppe), Drehpunkt unten an der Flasche */
+@keyframes kbLadeWackeln{0%,2%,21%,100%{transform:rotate(0)} 5%{transform:rotate(-7deg)} 9%{transform:rotate(7deg)} 13%{transform:rotate(-6deg)} 17%{transform:rotate(5deg)} 20%{transform:rotate(-2deg)}}
+@keyframes kbLadeFlasche{
+  0%,2%{transform:rotate(0) scale(1,1) translateY(0)}
+  20%{transform:scale(1,1) translateY(0)}
+  23%{transform:scale(1.08,.84) translateY(2.5%)}
+  26%{transform:scale(1.14,.74) translateY(3.8%)}
+  28%{transform:scale(.84,1.32) translateY(-6%)}
+  31%{transform:scale(.93,1.14) translateY(-2%)}
+  34%{transform:scale(1.05,.95) translateY(.6%)}
+  37%,79%{transform:scale(1,1) translateY(0)}
+  82%{transform:scale(1.06,.9) translateY(1.6%)}
+  85%{transform:scale(.98,1.02) translateY(-.2%)}
+  88%,100%{transform:scale(1,1) translateY(0)}
+}
+@keyframes kbLadeKorken{
+  0%,2%{transform:translate(0,0) rotate(0) scale(1);opacity:1}
+  20%{transform:translate(0,0) rotate(0) scale(1);opacity:1}
+  23%{transform:translate(0,40px) rotate(-3deg) scale(1.03,.88);opacity:1}
+  26%{transform:translate(-1px,64px) rotate(-6deg) scale(1.05,.84);opacity:1}
+  28%{transform:translate(1px,-115px) rotate(90deg) scale(1.08);opacity:1}
+  31%{transform:translate(4px,-210px) rotate(360deg) scale(1);opacity:1}
+  35%{transform:translate(7px,-300px) rotate(620deg) scale(.8);opacity:0}
+  35.1%,73%{transform:translate(0,-160px) rotate(0) scale(.9);opacity:0}
+  76%{transform:translate(0,-60px) rotate(0) scale(1);opacity:1}
+  79%{transform:translate(0,-12px) rotate(0) scale(1.05,1.1);opacity:1}
+  82%{transform:translate(0,25px) scale(1.08,.82);opacity:1}
+  85%{transform:translate(0,-5px) scale(.97,1.04);opacity:1}
+  88%,100%{transform:translate(0,0) scale(1);opacity:1}
+}
+@keyframes kbLadePegel{
+  0%,36%{y:0px;height:252px}
+  48%{y:126px;height:126px}
+  57%,60%{y:252px;height:0px}
+  72%,100%{y:0px;height:252px}
+}
+@media (prefers-reduced-motion: reduce){ .kb-lade .lb,.kb-lade .lc,.kb-lade .lr,.kb-lade .lw{animation:none!important} }

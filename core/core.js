@@ -40,6 +40,12 @@ function notice(t){const n=$("#notice");if(!n)return;n.hidden=!t;n.textContent=t
 function lsGet(k){try{return localStorage.getItem(k);}catch(_){return null;}}
 function lsSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(_){}}
 
+
+/* --- Ladeanimation (CSS in base.css, „.kb-lade“): Flasche aus dem Logo. Jede Flasche braucht eine eigene clipPath-ID. --- */
+let ladeNr=0;
+function ladeFlasche(){const id="kbl"+(++ladeNr);return `<svg viewBox="-10 -6 105 262" aria-hidden="true" focusable="false"><defs><clipPath id="${id}"><rect class="lr" x="-2" y="0" width="89" height="252"/></clipPath></defs><g class="lw"><g class="lb"><path class="lg" d="M50.3366 26.9275C52.5932 26.9276 54.3464 26.8436 54.3464 33.7494V58.9476C54.3464 60.5303 54.6434 62.0321 55.0707 63.4076C72.0059 68.856 84.4354 84.906 84.4354 103.824V242.171C84.4354 245.46 81.8769 248.019 78.5866 248.019H66.8888C63.601 248.019 61.0423 245.46 61.0423 242.171V192.016H23.3954V242.171C23.3954 245.46 20.8344 248.019 17.5466 248.019H5.84884C2.92441 248.019 0 245.46 0 242.171V103.824C0 85.0963 12.1815 69.1792 29.043 63.5754C29.4825 62.1544 29.7919 60.5954 29.7919 58.9476V33.7494C29.7919 26.8436 31.798 26.9275 33.8016 26.9275H50.3366ZM42.4007 84.8159C31.8005 84.8164 23.3954 93.2244 23.3954 103.824V168.625H61.0423V103.824C61.0423 93.2241 52.6349 84.8159 42.4007 84.8159Z"/><path class="ll" clip-path="url(#${id})" d="M50.3366 26.9275C52.5932 26.9276 54.3464 26.8436 54.3464 33.7494V58.9476C54.3464 60.5303 54.6434 62.0321 55.0707 63.4076C72.0059 68.856 84.4354 84.906 84.4354 103.824V242.171C84.4354 245.46 81.8769 248.019 78.5866 248.019H66.8888C63.601 248.019 61.0423 245.46 61.0423 242.171V192.016H23.3954V242.171C23.3954 245.46 20.8344 248.019 17.5466 248.019H5.84884C2.92441 248.019 0 245.46 0 242.171V103.824C0 85.0963 12.1815 69.1792 29.043 63.5754C29.4825 62.1544 29.7919 60.5954 29.7919 58.9476V33.7494C29.7919 26.8436 31.798 26.9275 33.8016 26.9275H50.3366ZM42.4007 84.8159C31.8005 84.8164 23.3954 93.2244 23.3954 103.824V168.625H61.0423V103.824C61.0423 93.2241 52.6349 84.8159 42.4007 84.8159Z"/></g><g transform="translate(0 8)"><path class="lc" d="M29.713 2.83774C29.7992 1.24626 31.1148 0 32.7086 0H51.2914C52.8852 0 54.2008 1.24627 54.287 2.83774L55 16H29L29.713 2.83774Z"/></g></g></svg>`;}
+function ladeHtml(text="Wird geladen …",klein=false){return `<div class="kb-lade${klein?" klein":""}" role="status">${ladeFlasche()}<span>${esc(text)}</span></div>`;}
+function ladeFuellen(wurzel=document){wurzel.querySelectorAll(".kb-lade:not(:has(svg))").forEach(el=>el.insertAdjacentHTML("afterbegin",ladeFlasche()));}
 /* --- Seitenblatt (weiterhin genutzt von Rezepten, Verkostungen, Liga, Verwaltung, Neuer Sud) --- */
 let onClose=null;
 function openSheet(){$("#sheet").hidden=false;$("#scrim").hidden=false;document.body.style.overflow="hidden";}
@@ -363,6 +369,7 @@ async function refresh(){
 
 /* --- Start --- */
 async function boot(){
+  ladeFuellen();
   markMenu();
   wireMenu();
   wireAccountPanel();
@@ -405,6 +412,7 @@ async function boot(){
 const KB = window.KB = {
   CONFIG, ROLLEN, $, esc, state, isBM, isAdmin, siteUrl, sb: null, seite: null,
   fmtDate, fmtDateLong, fmtDateTime, fmtZahl, gradeCls, personName, todayIso, toast, notice, lsGet, lsSet,
+  ladeHtml, ladeFuellen,
   sheet, openSheet, closeSheet, bestaetigen, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
 };
 document.addEventListener("DOMContentLoaded", boot);
