@@ -6,7 +6,7 @@ const rolle = localStorage.getItem("test_rolle") || "anon";
 const uid = "u1";
 const log = window.__calls = [];
 const stile=[{id:1,name:"Pils",reihenfolge:10},{id:2,name:"Helles",reihenfolge:20},{id:15,name:"IPA",reihenfolge:150}];
-const biere=[{id:"b1",name:"Kolding Kölsch",brauerei:"Koldingbräu",eigen:true,alkohol:4.9,stil_id:1,sud_id:null,notiz:null,bild_kronkorken:"biere/b1/kronkorken-a.jpg",bild_flasche:null},{id:"b2",name:"Augustiner Hell",brauerei:"Augustiner",eigen:false,alkohol:5.2,stil_id:2,sud_id:null,notiz:null},{id:"b3",name:"Hazy Hops",brauerei:"Kehrwieder",eigen:false,alkohol:6.5,stil_id:15}];
+const biere=[{id:"b1",name:"Kolding Kölsch",brauerei:"Koldingbräu",eigen:true,alkohol:4.9,stil_id:1,sud_id:null,notiz:null,bild_kronkorken:"biere/b1/kronkorken-a.jpg",bild_flasche:null},{id:"b2",name:"Augustiner Hell",brauerei:"Augustiner",eigen:false,alkohol:5.2,stil_id:2,sud_id:null,notiz:null},{id:"b3",name:"Hazy Hops",brauerei:"Kehrwieder",eigen:false,alkohol:6.5,stil_id:15},{id:"b4",name:"Kolding Porter",brauerei:"Koldingbräu",eigen:true,alkohol:5.8,stil_id:2,sud_id:null,notiz:null},{id:"b5",name:"Tegernseer Hell",brauerei:"Tegernseer",eigen:false,alkohol:4.8,stil_id:2,sud_id:null,notiz:null}];
 const db={
  profile:[{id:uid,name:"Niels",email:"n@x.de",rolle:rolle==="admin"?"admin":"braumeister"}],
  sude:[{id:"s1",status:"dokumentiert",nr:1,datum:"2024-03-01",stil:"Kölsch",ausschlag:20,stammwuerze:11.5,malz:[{sorte:"Pils",gramm:4000}],hopfen:[],maischplan:[],oeffentlich:true,bewertung:8.6},{id:"s2",status:"dokumentiert",nr:2,datum:"2025-05-01",stil:"IPA",malz:[],hopfen:[],maischplan:[],oeffentlich:false,bewertung:9.4}],
@@ -32,7 +32,7 @@ const db={
 try{const g=JSON.parse(sessionStorage.getItem("fake_db")||"null");if(g)Object.keys(g).forEach(k=>db[k]=g[k]);}catch(_){}
 const merken=()=>{try{sessionStorage.setItem("fake_db",JSON.stringify(db));}catch(_){}};
 const embed=(t,r)=>{
- if(t==="proben"){const b=biere.find(x=>x.id===r.bier_id);return {...r,biere:{...b,bierstile:stile.find(s=>s.id===b.stil_id)}};}
+ if(t==="proben"){const b=biere.find(x=>x.id===r.bier_id);const v=db.verkostungen.find(x=>x.id===r.verkostung_id);return {...r,verkostungen:v?{datum:v.datum}:null,biere:{...b,bierstile:stile.find(s=>s.id===b.stil_id)}};}
  if(t==="biere")return {...r,bierstile:stile.find(s=>s.id===r.stil_id),proben:[{count:db.proben.filter(p=>p.bier_id===r.id).length}]};
  return r;
 };
