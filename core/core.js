@@ -114,6 +114,7 @@ function backToMain(){
 function renderChrome(){
   const inn=!!state.session, bm=isBM(), adm=isAdmin();
   $("#adminBtn").hidden=!adm;
+  document.querySelectorAll(".menu .nur-bm").forEach(a=>a.hidden=!bm); // z. B. Bierkeller
   const label=$("#accToggleLabel"),av=$("#accToggleAvatar"),toggle=$("#accountToggle");
   if(inn&&state.profile){
     const initials=accInitials(state.profile);

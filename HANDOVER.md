@@ -142,6 +142,7 @@ normalen Entwicklungsumgebung lief es bisher zuverlässiger.
   (`features/tastings/announce.js`, `schema/13_einladung.sql`).
 - **Bilder:** einheitlicher Zuschnitt überall, „Ausschnitt ändern“, Kronkorken und Flasche statt Etikett
   (`features/brews/schema/11_…`).
+- **Bierkeller:** eigene Seite für alle Biere mit Suche und Filtern (`features/cellar/`, `lib/bierform.js`).
 - **Galerien:** ein gemeinsames Galerie-Modul für Brautag und Verkostung, mit Mehrfach-Upload,
   Bildunterschrift, Datum und Zuschnitt (`features/tastings/schema/14_galerie_beschriftung.sql`).
 

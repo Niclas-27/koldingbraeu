@@ -489,3 +489,9 @@ details.mehr>summary::-webkit-details-marker{display:none}
 
 .g-edit-row .linkbtn{width:auto;height:auto;border-radius:0;color:var(--amber);background:none;font-size:.85rem;align-self:flex-start}
 
+
+/* Biere suchen/filtern (lib/bierform.js: BierForm.filter) – Bierkeller und „Bier hinzufügen“ */
+.bf-leiste{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.bf-leiste .search{flex:none;width:100%;box-sizing:border-box}
+.bf-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bf-chips select{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:5px 10px;font-size:.84rem;max-width:100%}

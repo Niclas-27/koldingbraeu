@@ -1,13 +1,14 @@
 # lib – gemeinsame Hilfsbausteine
 
 Eigene Bausteine ohne Bezug zu einem Bereich. Jede Datei ist ein einfaches Skript (kein Build-Schritt) und legt
-ein globales Objekt an. Die Bereiche binden sie per `<script>` ein. `lib/` greift nie auf einen Bereich zu.
+ein globales Objekt an. Die Bereiche binden sie per `<script>` ein. `lib/` greift nie auf einen Bereich zu (braucht aber `core/core.js`).
 
 | Datei | Global | Wozu |
 |---|---|---|
 | `brau.js` | `Brau` | Brau-Rechnungen: Stammwürze aus Schüttung/Ausbeute, IBU (Tinseth), Farbe, Alkohol (Balling, Refraktometer nach Terrill), Karbonisierung, MMuM-Import/-Export. Tests: `tests/brau_test.js` |
 | `bilder.js` | `Bilder` | Alles rund um Fotos (siehe unten). Tests: `tests/exif_test.js` und die Bildabläufe in `tests/run_tests.py` |
 | `qr.js` | `QR` | QR-Codes im Browser, ohne fremden Dienst |
+| `bierform.js` | `BierForm` | Biere laden (inkl. wie oft/wann zuletzt verkostet), Suche + Filter-Chips, Formular zum Anlegen/Bearbeiten. Genutzt vom Bierkeller und von „Bier hinzufügen“ in der Verkostung |
 
 ## bilder.js
 
