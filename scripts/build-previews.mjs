@@ -73,12 +73,25 @@ async function stub({ ordner, id, titel, beschreibung, bild, zielpfad, immer }) 
   return true;
 }
 
+// Sitemap für Suchmaschinen (seit 08.11.2026): feste Seiten + alles Öffentliche, mit der eigentlichen App-Adresse
+// (die Vorschauseiten selbst sind noindex und verweisen per canonical dorthin). robots.txt im Repo zeigt hierher.
+const sitemap = new Map([["/", null], ["/rezepte.html", null], ["/verkostung.html", null], ["/liga.html", null], ["/impressum.html", null], ["/datenschutz.html", null]]);
+const merke = (pfad, datum) => sitemap.set(pfad, datum ? String(datum).slice(0, 10) : null);
+async function sitemapSchreiben() {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+    + [...sitemap].map(([p, d]) => `  <url><loc>${esc(SITE_URL + p)}</loc>${d ? `<lastmod>${d}</lastmod>` : ""}</url>`).join("\n")
+    + `\n</urlset>\n`;
+  await writeFile(join(OUT, "sitemap.xml"), xml, "utf-8");
+  console.log(`Sitemap: ${sitemap.size} Adressen`);
+}
+
 async function main() {
   let erzeugt = 0;
 
   try {
-    const sude = await supa("sude?select=id,nr,stil,bild_kronkorken,bild_flasche,bild_etikett,bild_foto&oeffentlich=eq.true");
+    const sude = await supa("sude?select=id,nr,stil,datum,bild_kronkorken,bild_flasche,bild_etikett,bild_foto&oeffentlich=eq.true");
     for (const s of sude) {
+      merke(`/index.html?sud=${encodeURIComponent(s.id)}`, s.datum);
       const titel = s.stil || `Sud ${s.nr}`;
       const ok = await stub({
         ordner: "sud", id: s.id, titel,
@@ -93,6 +106,7 @@ async function main() {
   try {
     const rezepte = await supa("rezepte?select=id,name,bild_kronkorken,bild_flasche,bild_etikett,bild_foto&oeffentlich=eq.true");
     for (const r of rezepte) {
+      merke(`/rezepte.html?id=${encodeURIComponent(r.id)}`);
       const ok = await stub({
         ordner: "rezept", id: r.id, titel: r.name,
         beschreibung: `Rezept „${r.name}“ im Braubuch von Koldingbräu.`,
@@ -106,6 +120,7 @@ async function main() {
   try {
     const archiv = await supa("vk_archiv", { rpc: true });
     for (const v of archiv) {
+      merke(`/verkostung.html?e=${encodeURIComponent(v.id)}`, v.datum);
       const ok = await stub({
         ordner: "verkostung", id: v.id, titel: v.titel,
         beschreibung: `Ergebnis der Verkostung „${v.titel}“ bei Koldingbräu.`,
@@ -140,6 +155,7 @@ async function main() {
     const biere = new Map();
     for (const z of zeilen) if (!biere.has(z.bier_id)) biere.set(z.bier_id, z);
     for (const b of biere.values()) {
+      merke(`/liga.html?bier=${encodeURIComponent(b.bier_id)}`);
       const ok = await stub({
         ordner: "bier", id: b.bier_id, titel: b.name,
         beschreibung: `${[b.brauerei, b.stil].filter(Boolean).join(" · ") || "Bier"} in der Koldingbräu-Liga.`,
@@ -151,6 +167,7 @@ async function main() {
   } catch (e) { console.warn("Bier-Vorschauen übersprungen:", e.message); }
 
   console.log(`Vorschauseiten erzeugt: ${erzeugt}`);
+  try { await sitemapSchreiben(); } catch (e) { console.warn("Sitemap übersprungen:", e.message); }
 }
 
 main().catch(e => { console.warn("Vorschauseiten komplett übersprungen:", e.message); });

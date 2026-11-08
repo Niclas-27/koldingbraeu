@@ -41,7 +41,7 @@ jobs:
       - name: Seite zusammenstellen
         run: |
           mkdir -p _site
-          cp *.html .nojekyll _site/
+          cp *.html .nojekyll robots.txt _site/
           cp -r core features lib fonts vendor assets _site/
           # nur ausliefern, was der Browser braucht (keine Beschreibungen, keine SQL-Dateien)
           find _site/core _site/features -type f ! -name '*.js' ! -name '*.css' -delete
