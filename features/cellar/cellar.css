@@ -1,0 +1,10 @@
+/* Koldingbräu – Bierkeller (bierkeller.html) */
+.keller-liste{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.kz{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.kz .kz-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.kz .kz-t small{color:var(--muted);font-size:.8rem}
+.kz .kz-t a{color:inherit}
+.kz .kz-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.kz .bier-bild,.kz svg{flex:none}
+.keller-zahl{color:var(--muted);font-size:.85rem;margin:4px 0 8px}
+@media (max-width:520px){.kz{flex-wrap:wrap}.kz .kz-a{width:100%;justify-content:flex-start;padding-left:0}}

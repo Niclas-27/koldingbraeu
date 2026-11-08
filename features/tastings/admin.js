@@ -268,20 +268,21 @@ function adminBogen(probeId, teilnehmerId){
   $("#nt_wer").onchange = () => { $("#nt_nameWrap").hidden = $("#nt_wer").value !== "neu"; };
 }
 
-/* Bier zur Verkostung hinzufügen: aus der Bierliste wählen oder neu anlegen */
+/* Bier zur Verkostung hinzufügen: Suche + Filter (lib/bierform.js), sortiert nach „zuletzt verkostet“, oder neu anlegen */
 async function bierWaehlen(){
-  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,bild_kronkorken,bild_flasche,bierstile(name)").order("name");
-  if(error){ toast(fehlertext(error)); return; }
+  let biere;
+  try{ biere = await BierForm.laden(); }catch(e){ toast(fehlertext(e)); return; }
   const schon = new Set(D.proben.map(p=>p.bier_id));
-  const liste = (data||[]).filter(b=>!schon.has(b.id));
-  const zeile = b => `<button class="pick" data-b="${esc(b.id)}" data-s="${esc((b.name+" "+(b.brauerei||"")+" "+(b.bierstile?.name||"")).toLowerCase())}">${Bilder.bier({...b, stil:b.bierstile?.name})}<span><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))}</small></span></button>`;
-  sheet("Bier hinzufügen", `<button class="btn primary" id="neuesBier" style="align-self:flex-start">+ Neues Bier anlegen</button>
-    ${liste.length?`<input class="search" id="bSuche" type="search" autocomplete="off" placeholder="In der Bierliste suchen …" aria-label="Bierliste durchsuchen"><div class="picklist" id="pickList">${liste.map(zeile).join("")}</div>`:`<p class="hint">Die Bierliste ist noch leer – leg das erste Bier an.</p>`}`,
-    `<span class="spacer"></span><button class="btn" id="bwZu">Abbrechen</button>`);
+  const liste = biere.filter(b=>!schon.has(b.id));
+  const zeile = b => `<button class="pick" data-b="${esc(b.id)}">${Bilder.bier(b)}<span><b>${esc(b.name)}</b><small>${esc([BierForm.zeile(b), b.letzte ? "zuletzt "+fmtDateLong(b.letzte) : "noch nie verkostet"].filter(Boolean).join(" · "))}</small></span></button>`;
+  sheet("Bier hinzufügen", `${liste.length ? `<div id="bFilter" class="bf-leiste"></div><div class="picklist" id="pickList"></div>` : `<p class="hint">Die Bierliste ist leer – oder alle Biere sind schon dabei.</p>`}`,
+    `<button class="btn" id="neuesBier">+ Neues Bier</button><span class="spacer"></span><button class="btn" id="bwZu">Abbrechen</button>`);
   $("#bwZu").onclick = closeSheet;
   $("#neuesBier").onclick = () => bierForm(null, {});
-  const s = $("#bSuche"); if(s) s.oninput = () => { const q = s.value.trim().toLowerCase(); $("#pickList").querySelectorAll(".pick").forEach(p => p.hidden = q && !p.dataset.s.includes(q)); };
-  $("#sheetBody").querySelectorAll(".pick").forEach(p => p.onclick = async () => { p.disabled = true; await probeAnlegen(p.dataset.b); closeSheet(); detailLaden(); });
+  if(liste.length) BierForm.filter($("#bFilter"), liste, gef => {
+    $("#pickList").innerHTML = gef.length ? gef.map(zeile).join("") : `<p class="hint">Kein Bier passt. Mit „+ Neues Bier“ unten anlegen.</p>`;
+    $("#pickList").querySelectorAll(".pick").forEach(p => p.onclick = async () => { p.disabled = true; await probeAnlegen(p.dataset.b); closeSheet(); detailLaden(); });
+  }, {merken: "verkostung", fokus: true});
 }
 async function probeAnlegen(bierId){
   const nr = Math.max(0, ...D.proben.map(p=>p.nummer)) + 1;
@@ -289,108 +290,18 @@ async function probeAnlegen(bierId){
   if(error) toast(error.code==="23505" ? "Dieses Bier ist schon dabei." : fehlertext(error)); else toast("Bier hinzugefügt");
 }
 
-/* Bier anlegen oder bearbeiten. vorgabe: {name, brauerei, stilName, vorschlag} */
+/* Bier anlegen oder bearbeiten – Formular aus lib/bierform.js. vorgabe: {name, brauerei, stilName, vorschlag} */
 async function bierForm(bier, vorgabe, nachher){
-  await ladeStile();
-  const {data: sude} = await sb.from("sude").select("id,nr,stil,datum,bild_etikett,bild_kronkorken,bild_flasche").order("datum", {ascending:false});
-  const b = bier || {name: vorgabe.name||"", brauerei: vorgabe.brauerei||"", eigen: false, stil_id: (stile.find(s=>s.name.toLowerCase()===(vorgabe.stilName||"").toLowerCase())||{}).id ?? null, alkohol: null, sud_id: null, notiz: "", bild_kronkorken: null, bild_flasche: null};
-  const bildBasis = `biere/${bier?.id || "neu-" + crypto.randomUUID()}`;
-  const bierVorschau = {name: b.name, stil: (stile.find(s=>s.id===b.stil_id)||{}).name};
-  sheet(bier ? "Bier bearbeiten" : "Neues Bier", `<form id="bierForm" class="stack" novalidate>
-      <label class="f" for="bi_name">Name *<input id="bi_name" maxlength="80" value="${esc(b.name)}" required></label>
-      <label class="check"><input type="checkbox" id="bi_eigen"${b.eigen?" checked":""}><span><b>Selbst gebraut (Koldingbräu)</b></span></label>
-      <div class="grid2">
-        <label class="f" for="bi_br">Brauerei<input id="bi_br" maxlength="80" value="${esc(b.brauerei||"")}"></label>
-        <label class="f" for="bi_alk">Alkohol (% Vol.)<input id="bi_alk" type="number" step="0.1" min="0" max="30" inputmode="decimal" value="${esc(b.alkohol??"")}"></label>
-        <label class="f" for="bi_stil">Bierstil<select id="bi_stil"><option value="">– bitte wählen –</option>${stile.map(s=>`<option value="${s.id}"${s.id===b.stil_id?" selected":""}>${esc(s.name)}</option>`).join("")}${isAdmin()?`<option value="neu">+ Neuer Stil …</option>`:""}</select></label>
-        <label class="f" for="bi_sud" id="sudWrap"${b.eigen?"":" hidden"}>Zugehöriger Sud<select id="bi_sud"><option value="">–</option>${(sude||[]).map(s=>`<option value="${s.id}"${s.id===b.sud_id?" selected":""}>Nr. ${esc(s.nr)} · ${esc(s.stil||"")} · ${esc(fmtDateLong(s.datum))}</option>`).join("")}</select></label>
-      </div>
-      <label class="f" for="bi_neustil" id="neuStilWrap" hidden>Name des neuen Stils<input id="bi_neustil" maxlength="60"></label>
-      <div class="grid2 bildfelder">
-        ${Bilder.feldHtml("bi_kk", b.bild_kronkorken, {art:"rund", bier:bierVorschau, beschriftung:"Kronkorken"})}
-        ${Bilder.feldHtml("bi_fl", b.bild_flasche, {art:"hoch", bier:bierVorschau, beschriftung:"Flasche"})}
-      </div>
-      <p class="hint">Beide Bilder sind freiwillig. Gibt es nur eins, wird es überall gezeigt.</p>
-      <label class="f" for="bi_notiz">Notiz (intern)<textarea id="bi_notiz" maxlength="1000">${esc(b.notiz||"")}</textarea></label>
-      <span class="err" id="biErr"></span>
-    </form>`,
-    `<span class="spacer"></span><button class="btn" id="biAbbr">Abbrechen</button><button class="btn primary" id="biSave" form="bierForm" type="submit">${bier?"Speichern":D&&!nachher?"Anlegen und hinzufügen":"Anlegen"}</button>`);
-  const fKK = Bilder.feldVerdrahten("bi_kk", {art:"rund", basis:bildBasis+"/kronkorken", titel:"Kronkorken", bier:bierVorschau});
-  const fFL = Bilder.feldVerdrahten("bi_fl", {art:"hoch", basis:bildBasis+"/flasche", titel:"Flasche", bier:bierVorschau});
-  $("#biAbbr").onclick = closeSheet;
-  $("#bi_eigen").onchange = () => { $("#sudWrap").hidden = !$("#bi_eigen").checked; if($("#bi_eigen").checked && !$("#bi_br").value.trim()) $("#bi_br").value = "Koldingbräu"; };
-  $("#bi_stil").onchange = () => { $("#neuStilWrap").hidden = $("#bi_stil").value !== "neu"; };
-  // Sud ausgewählt: Sud und Bier teilen sich seit 07.11.2026 Kronkorken und Flasche (dieselbe Datei, keine Kopie –
-  // Bilder.loeschen löscht nur, was nirgends mehr verwendet wird). Übernommen wird, was beim Bier noch fehlt.
-  $("#bi_sud").onchange = () => {
-    const sud = (sude||[]).find(s => s.id === $("#bi_sud").value);
-    if(!sud) return;
-    if(sud.bild_kronkorken && !fKK.wert()) fKK.setzen(sud.bild_kronkorken);
-    const fl = sud.bild_flasche || sud.bild_etikett;
-    if(fl && !fFL.wert()) fFL.setzen(fl);
-  };
-  $("#bierForm").onsubmit = async e => { e.preventDefault();
-    const err = $("#biErr"), alk = $("#bi_alk").value;
-    const out = {name: $("#bi_name").value.trim(), brauerei: $("#bi_br").value.trim() || null, eigen: $("#bi_eigen").checked,
-      alkohol: alk === "" ? null : +alk, sud_id: $("#bi_eigen").checked ? ($("#bi_sud").value || null) : null, notiz: $("#bi_notiz").value.trim() || null,
-      bild_kronkorken: fKK.wert(), bild_flasche: fFL.wert()};
-    if(!out.name){ err.textContent = "Bitte einen Namen eingeben."; return; }
-    if(out.alkohol != null && (isNaN(out.alkohol) || out.alkohol < 0 || out.alkohol > 30)){ err.textContent = "Alkohol bitte zwischen 0 und 30 % angeben."; return; }
-    $("#biSave").disabled = true; err.textContent = "";
-    let stil = $("#bi_stil").value;
-    if(stil === "neu"){
-      const n = $("#bi_neustil").value.trim();
-      if(!n){ $("#biSave").disabled = false; err.textContent = "Bitte den Namen des neuen Stils eingeben."; return; }
-      const r = await sb.from("bierstile").insert({name: n}).select("id,name,reihenfolge").single();
-      if(r.error){ $("#biSave").disabled = false; err.textContent = fehlertext(r.error); return; }
-      stile.push(r.data); stil = r.data.id;
-    }
-    out.stil_id = stil ? +stil : null;
-    const q = bier ? sb.from("biere").update(out).eq("id", bier.id) : sb.from("biere").insert(out);
-    const {data, error} = await q.select("id").single();
-    if(error){ $("#biSave").disabled = false; err.textContent = fehlertext(error); return; }
-    // Verknüpfter Sud bekommt dieselben Bilder (gemeinsame Pflege), dann erst alte Dateien aufräumen.
-    if(out.sud_id && (out.bild_kronkorken || out.bild_flasche)){
-      const upd = {}; if(out.bild_kronkorken) upd.bild_kronkorken = out.bild_kronkorken; if(out.bild_flasche) upd.bild_flasche = out.bild_flasche;
-      await sb.from("sude").update(upd).eq("id", out.sud_id);
-    }
-    if(bier) for(const k of ["bild_kronkorken","bild_flasche"]) if(bier[k] && bier[k] !== out[k]) Bilder.loeschen(bier[k]);
-    if(!bier && D && !nachher){
-      await probeAnlegen(data.id);
-      if(vorgabe.vorschlag) await sb.from("vorschlaege").update({status: "uebernommen"}).eq("id", vorgabe.vorschlag);
-      closeSheet(); detailLaden(); return;
-    }
-    toast(bier ? "Gespeichert" : "Bier angelegt");
-    if(nachher) nachher(); else closeSheet();
-  };
-}
-
-/* Bierliste (alle Biere bearbeiten) */
-async function bierKatalog(){
-  const {data, error} = await sb.from("biere").select("id,name,brauerei,eigen,alkohol,stil_id,sud_id,notiz,bild_kronkorken,bild_flasche,bierstile(name)").order("name");
-  if(error){ toast(fehlertext(error)); return; }
-  // Verkostungen je Bier ohne PostgREST-Aggregatfunktion zählen (die ist standardmäßig gesperrt): Zeilen laden und zählen.
-  if(data.length){
-    const {data: pr} = await sb.from("proben").select("bier_id").in("bier_id", data.map(b=>b.id));
-    const anzahl = new Map();
-    (pr||[]).forEach(p => anzahl.set(p.bier_id, (anzahl.get(p.bier_id)||0)+1));
-    data.forEach(b => b.anzahlVerkostungen = anzahl.get(b.id)||0);
-  }
-  sheet("Biere", `<p class="hint">Jedes Bier gibt es nur einmal – so zählen seine Bewertungen aus allen Verkostungen zusammen in der Liga.</p>
-    ${data.length ? `<div class="picklist">${data.map(b=>`<div class="pick row">${Bilder.bier({...b, stil:b.bierstile?.name})}<span class="pt"><b>${esc(b.name)}</b><small>${esc(bierZeile({...b, stil:b.bierstile?.name}))} · ${b.anzahlVerkostungen} Verkostungen</small></span>
-      <span><button class="btn ghost" data-ed="${esc(b.id)}">Bearbeiten</button>${isAdmin()?`<button class="btn ghost danger" data-del="${esc(b.id)}">Löschen</button>`:""}</span></div>`).join("")}</div>` : `<p class="hint">Noch keine Biere. Biere legst du direkt in einer Verkostung an.</p>`}`,
-    `<span class="spacer"></span><button class="btn" id="kZu">Schließen</button>`);
-  $("#kZu").onclick = closeSheet;
-  $("#sheetBody").querySelectorAll("[data-ed]").forEach(btn => btn.onclick = () => bierForm(data.find(b=>b.id===btn.dataset.ed), {}, bierKatalog));
-  $("#sheetBody").querySelectorAll("[data-del]").forEach(btn => btn.onclick = () => {
-    const b = data.find(x=>x.id===btn.dataset.del);
-    if(b.anzahlVerkostungen){ toast("Das Bier ist in einer Verkostung – erst dort herausnehmen."); return; }
-    bestaetigen(`„${b.name}“ löschen?`, "Das Bier wird endgültig aus dem Katalog und der Liga entfernt.", "Endgültig löschen", async () => {
-      const r = await sb.from("biere").delete().eq("id", b.id).select("id");
-      if(r.error || !r.data?.length){ toast(r.error ? fehlertext(r.error) : "Löschen ist nur dem Admin erlaubt."); return; }
-      await Promise.all(["bild_kronkorken","bild_flasche"].map(k => b[k] && Bilder.loeschen(b[k])));
-      toast("Bier gelöscht"); bierKatalog();
-    }, true);
-  });
+  const hinzufuegen = !bier && D && !nachher;
+  await BierForm.oeffnen(bier, {vorgabe, stile: await ladeStile(), knopf: hinzufuegen ? "Anlegen und hinzufügen" : "Anlegen",
+    gespeichert: async (id, neu) => {
+      if(hinzufuegen){
+        await probeAnlegen(id);
+        if(vorgabe.vorschlag) await sb.from("vorschlaege").update({status: "uebernommen"}).eq("id", vorgabe.vorschlag);
+        closeSheet(); detailLaden(); return;
+      }
+      toast(neu ? "Bier angelegt" : "Gespeichert");
+      if(nachher) nachher(); else closeSheet();
+    }});
 }
 

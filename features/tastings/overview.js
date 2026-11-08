@@ -4,7 +4,7 @@ async function listeLaden(){
   stopTimer();
   const archiv = await sb.rpc("vk_archiv");
   let h = `<div class="vk-head"><div><h2>Verkostungen</h2><p class="hint">Biere nebeneinander probieren, bewerten und am Ende das Ranking aufdecken.</p></div>
-    ${isBM()?`<div class="top-actions"><button class="btn" id="bierBtn">Biere</button><button class="btn primary" id="neuBtn">+ Neue Verkostung</button></div>`:""}</div>
+    ${isBM()?`<div class="top-actions"><a class="btn" href="bierkeller.html">Bierkeller</a><button class="btn primary" id="neuBtn">+ Neue Verkostung</button></div>`:""}</div>
     <form id="codeForm" class="vk-card codebox" novalidate>
       <label class="f" for="c_code">Code von der Einladung<input id="c_code" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="z. B. herbstrunde-q7x2pmz4"></label>
       <button class="btn" type="submit">Mitmachen</button>
@@ -58,6 +58,6 @@ async function listeLaden(){
       }).join("")}</div>`);
   main().innerHTML = h;
   $("#codeForm").onsubmit = e => { e.preventDefault(); const c = $("#c_code").value.trim().toLowerCase().replace(/.*[?&]v=/, "").replace(/[^a-z0-9-]/g, ""); if(c) location.href = "verkostung.html?v="+encodeURIComponent(c); };
-  if(isBM()){ $("#neuBtn").onclick = () => vkForm(null); $("#bierBtn").onclick = bierKatalog; }
+  if(isBM()){ $("#neuBtn").onclick = () => vkForm(null); }
 }
 
