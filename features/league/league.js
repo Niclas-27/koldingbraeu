@@ -85,7 +85,7 @@ const profil = merkmale => MERKMALE.flatMap(([,l])=>l).filter(([k]) => merkmale[
   `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
 
 async function zeigeDetail(bierId){
-  $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Alle Biere</a></p><p class="empty">Wird geladen …</p>`;
+  $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Alle Biere</a></p>${KB.ladeHtml()}`;
   const {data, error} = await KB.sb.rpc("bier_detail", {p_id: bierId});
   if(error){ $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Alle Biere</a></p><p class="empty">${esc(fehlertext(error))}</p>`; return; }
   const b = data.bier;
