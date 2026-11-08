@@ -89,6 +89,18 @@ Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repo
 
 Vor dem Arbeiten den lokalen Stand holen: `git pull` auf `main`.
 
+## Suchmaschinen (seit 08.11.2026)
+
+- `robots.txt` (im Repo) erlaubt alles und verweist auf die Sitemap.
+- `sitemap.xml` entsteht beim Veröffentlichen in `scripts/build-previews.mjs`: feste Seiten plus alle öffentlichen
+  Sude, Rezepte, abgeschlossenen Verkostungen und Liga-Biere – jeweils mit der eigentlichen App-Adresse.
+- Titel und Beschreibungen der Hauptseiten sind auf Suchbegriffe zugeschnitten; `index.html` trägt strukturierte
+  Daten (schema.org `Brewery` + `WebSite`). Bewusst **kein** `canonical` auf den App-Seiten: dieselbe Datei zeigt
+  per `?sud=…` usw. verschiedene Inhalte, ein festes canonical würde sie für Google zur Kopie der Startseite machen.
+- Bierkeller und die Vorschauseiten unter `/sud/`, `/rezept/` … sind `noindex`.
+- Google Search Console richtet der Betreiber ein (Bestätigung per HTML-Tag in `index.html` oder DNS-Eintrag),
+  dort die Sitemap `https://kolding.de/sitemap.xml` einreichen.
+
 ## Vorschaubilder für geteilte Links
 
 WhatsApp & Co. lesen beim Teilen nur rohes HTML und führen kein JavaScript aus. Deshalb erzeugt

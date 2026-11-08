@@ -1,0 +1,5 @@
+# Koldingbräu – Hinweise für Suchmaschinen
+User-agent: *
+Allow: /
+
+Sitemap: https://kolding.de/sitemap.xml
