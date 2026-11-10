@@ -15,7 +15,7 @@ ein globales Objekt an. Die Bereiche binden sie per `<script>` ein. `lib/` greif
 ### Speicher
 - Bucket `bilder` (öffentlich lesbar): Sude, Rezepte, Biere, Titelbilder, „Fotos vom Brautag“.
 - Bucket `verkostung-galerie` (privat): Galerie der Verkostungen. Anzeige nur über kurzlebige signierte Links
-  (`galerieSignierteUrls`). Gäste laden über die Edge Function `galerie-hochladen` hoch.
+  (`galerieSignierteUrls`). Gäste laden über die Edge Function `galerie-hochladen` hoch und sehen die Galerie über `galerie-ansehen`.
 - Zu jedem Bild `name.jpg` gibt es `name_t.jpg` (Vorschau). Wurde ein Bild zugeschnitten, liegt das unbeschnittene
   Foto als `name_b.jpg` daneben (max. 1600 px), damit man den Ausschnitt später ändern kann.
 - Neue Datei = neuer Name (Zeitstempel im Pfad). So greift der lange Browser-Cache (`cacheControl` 1 Jahr) nie

@@ -161,7 +161,7 @@ function galerieZeigen(v){
   const box = $("#galerieBox"); if(!box) return;
   const name = id => (D.teilnehmer.find(t=>t.id===id)||{}).name;
   galerieM = Bilder.galerieModul({el: box, bucket: "verkostung-galerie", zeilen: D.galerie,
-    leer: "Noch keine Fotos. Teilnehmer können bis zu drei Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist.",
+    leer: "Noch keine Fotos. Teilnehmer können bis zu neun Fotos pro Person hochladen, solange die Verkostung nicht abgeschlossen ist, und sehen die Galerie in ihrer Gästeansicht.",
     info: z => z.teilnehmer_id ? `von ${name(z.teilnehmer_id) || "einem Gast"}` : "",
     basis: () => `verkostungen/${v.id}/galerie/${crypto.randomUUID()}`,
     einfuegen: async f => { const {data, error} = await sb.from("verkostung_bilder").insert({verkostung_id: v.id, ...f}).select("id,pfad,teilnehmer_id,bildunterschrift,aufgenommen,angelegt").single(); if(error) throw error; D.galerie.push(data); galerieZahl(); return data; },
@@ -198,13 +198,13 @@ function probeDetail(probeId){
   const a = auswertung(probeId);
   const body = `<p class="hint">${esc(bierZeile(p.bier))}</p>
     ${Bilder.bierFotos(p.bier)}
-    <div class="stats mini"><div class="stat"><b class="num ${gradeCls(a.schnitt)}">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div><div class="stat"><b class="num">${a.anzahl?Math.round(a.nochmal/a.anzahl*100):0} %</b><span>würden nochmal</span></div></div>
+    <div class="stats mini"><div class="stat"><b class="num ${gradeCls(a.schnitt)}">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div><div class="stat"><b class="num">${a.anzahl?Math.round(a.nochmal/a.anzahl*100):0} %</b><span>würden empfehlen</span></div></div>
     ${sec("Geschmacksprofil", profil)}
     ${sec("Geruch", zaehle("geruch"))}
     ${sec("Fehlaromen", zaehle("fehler"))}
     ${sec("Einzelne Bewertungen", alle.length ? `<div class="bw">${alle.map(b=>`<div class="bw-row${b.ausgeblendet?" aus":""}">
       <span class="grade ${gradeCls(b.note)}">${b.note}</span>
-      <span class="bw-t"><b>${esc(tn(b.teilnehmer_id))}</b>${b.nochmal===true?" · nochmal: ja":b.nochmal===false?" · nochmal: nein":""}${vermerk(b)}${b.kommentar?`<span class="note">${esc(b.kommentar)}</span>`:""}</span>
+      <span class="bw-t"><b>${esc(tn(b.teilnehmer_id))}</b>${b.nochmal===true?" · empfiehlt: ja":b.nochmal===false?" · empfiehlt: nein":""}${vermerk(b)}${b.kommentar?`<span class="note">${esc(b.kommentar)}</span>`:""}</span>
       <span class="bw-a">${isAdmin()?`<button class="btn ghost" data-ed="${esc(b.teilnehmer_id)}">Bearbeiten</button>`:""}<button class="btn ghost" data-aus="${esc(b.id)}">${b.ausgeblendet?"Einblenden":"Ausblenden"}</button></span></div>`).join("")}</div>
       <p class="hint">Ausgeblendete Bewertungen zählen nicht fürs Ranking und die Liga.</p>` : "")}
     ${isAdmin()?`<button type="button" class="add" id="nachtragen">+ Bewertung nachtragen</button>`:""}`;

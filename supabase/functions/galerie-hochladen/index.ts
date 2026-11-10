@@ -1,4 +1,4 @@
-// Gäste laden während einer Verkostung bis zu drei Fotos für die Galerie hoch.
+// Gäste laden während einer Verkostung bis zu neun Fotos (bis 10.11.2026: drei) für die Galerie hoch.
 // Bereitgestellt mit verify_jwt = false: Gäste haben kein Konto. Geprüft werden stattdessen der Code der Verkostung
 // und der persönliche Schlüssel (token) des Gastes – genau wie bei den vk_*-Datenbankfunktionen.
 // Erwartet multipart/form-data mit: code, token, gross (JPEG, max. 1,5 MB), klein (JPEG, max. 200 KB).
@@ -25,7 +25,7 @@ function geheimerSchluessel(): string {
   return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 }
 const BUCKET = "verkostung-galerie";
-const MAX_BILDER = 3;
+const MAX_BILDER = 9; // bis 10.11.2026: 3
 const istJpeg = (b: Uint8Array) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
 
 Deno.serve(async (req) => {

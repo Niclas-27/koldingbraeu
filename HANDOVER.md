@@ -146,6 +146,9 @@ normalen Entwicklungsumgebung lief es bisher zuverlässiger.
 - **Bierkeller:** eigene Seite für alle Biere mit Suche und Filtern (`features/cellar/`, `lib/bierform.js`).
 - **Galerien:** ein gemeinsames Galerie-Modul für Brautag und Verkostung, mit Mehrfach-Upload,
   Bildunterschrift, Datum und Zuschnitt (`features/tastings/schema/14_galerie_beschriftung.sql`).
+- **Feedback nach der Verkostung (10.11.2026):** Rangliste ohne Podest, Probennummer am Kronkorken (blind),
+  „Trübung“ und „weiterempfehlen“ im Bogen, Gäste-Zuschnitt in einem Schritt, Fotos vom Abend für Teilnehmer
+  (Edge Function `galerie-ansehen`, persönlicher Zugangslink), bis zu neun Gäste-Fotos.
 
 ### 2.9 Offene Punkte (Stand dieser Übergabe)
 

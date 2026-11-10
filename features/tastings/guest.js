@@ -3,6 +3,17 @@
 const gastKey = () => "kb_gast_"+code;
 function gast(){ try{ return JSON.parse(lsGet(gastKey())||"null"); }catch(_){ return null; } }
 let gData = null;
+const MAX_FOTOS = 9; // muss zu MAX_BILDER in supabase/functions/galerie-hochladen passen (bis 10.11.2026: 3)
+// Persönlicher Zugangslink (…?v=<code>&t=<schlüssel>, siehe zugangsLink in common.js): Schlüssel übernehmen und aus
+// der Adresszeile entfernen, damit er nicht in Lesezeichen/Verlauf landet.
+(function zugangUebernehmen(){
+  try{
+    const u = new URL(location.href), t = u.searchParams.get("t");
+    if(!t || !/^[0-9a-f-]{36}$/i.test(t) || !u.searchParams.get("v")) return;
+    lsSet("kb_gast_"+u.searchParams.get("v").trim().toLowerCase(), JSON.stringify({token: t}));
+    u.searchParams.delete("t"); history.replaceState(null, "", u.pathname + u.search + u.hash);
+  }catch(_){}
+})();
 
 async function gastLaden(still){
   const g = gast();
@@ -10,13 +21,15 @@ async function gastLaden(still){
   if(error){ stopTimer(); main().innerHTML = `<div class="vk-head"><h2>Verkostung</h2></div><p class="empty">${esc(fehlertext(error))}</p><p class="empty"><a href="verkostung.html">Zur Übersicht</a></p>`; return; }
   if(g && !data.ich){ lsSet(gastKey(), null); }   // Schlüssel passt nicht (mehr) – neu beitreten
   gData = data;
-  // Aufgedeckt: alle springen von selbst auf die volle Ergebnisseite (Podest, Bier antippen → Details). Die eigenen
+  // Aufgedeckt: alle springen von selbst auf die volle Ergebnisseite (Rangliste, Bier antippen → Details). Die eigenen
   // Noten nehmen wir je Bier mit, damit die Ergebnisseite „deine Note“ zeigen kann (schema/15 liefert dafür id + bier_id).
   if(data.verkostung.status === "abgeschlossen" && data.verkostung.id){
     stopTimer();
     const bierVon = new Map(data.proben.map(p => [p.id, p.bier_id]));
     const meine = {}; (data.ich?.bewertungen||[]).forEach(b => { const id = bierVon.get(b.probe_id); if(id) meine[id] = b.note; });
     if(Object.keys(meine).length) lsSet("kb_meine_"+data.verkostung.id, JSON.stringify(meine));
+    // Schlüssel für die Fotos vom Abend auf der Ergebnisseite (die kennt den Code nicht)
+    if(data.ich && g) lsSet("kb_gast_e_"+data.verkostung.id, g.token);
     location.replace("verkostung.html?e="+encodeURIComponent(data.verkostung.id));
     return;
   }
@@ -84,14 +97,17 @@ function gastZeigen(){
     h += sec("Ergebnis", rangTabelle(zeilen));
   }
   if(v.status === "abgeschlossen" && !ich) h += `<p class="hint">Diese Verkostung ist abgeschlossen.</p>`;
-  const darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < 3;
+  // Fotos vom Abend: hochladen (max. MAX_FOTOS) und – seit 10.11.2026 – alle Fotos sehen, nur für Teilnehmer.
+  const darf = ich && v.status !== "abgeschlossen" && (ich.bilder||0) < MAX_FOTOS;
   const kannLoeschen = ich && v.status !== "abgeschlossen" && (ich.bilder||0) > 0;
+  const ggAnfrage = ich ? {code, token: gast().token} : null;
   if(ich && v.status !== "abgeschlossen") h += sec("Fotos vom Abend", (darf
-      ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von 3)</button><span class="err" id="fotoErr"></span><p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sie sind nur für die Braumeister sichtbar – nach dem Neuladen siehst du sie hier nicht mehr.</p>`
-      : `<p class="hint">Du hast deine drei Fotos hochgeladen – danke! Sie sind nur für die Braumeister sichtbar.</p>`)
-      + (eigeneFotos.length && ich.bilder ? `<div class="g-eigene" aria-label="Von dir in dieser Sitzung hochgeladen">${eigeneFotos.slice(-ich.bilder).map(u => `<img src="${u}" alt="Hochgeladenes Foto">`).join("")}</div><p class="hint">Angekommen – nur für die Braumeister sichtbar.</p>` : "")
-      + (kannLoeschen ? `<button type="button" class="linkbtn" id="fotoLoeschBtn">Zuletzt hochgeladenes Foto entfernen</button><span class="err" id="fotoLoeschErr"></span>` : ""));
+      ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von ${MAX_FOTOS})</button><span class="err" id="fotoErr"></span><p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sehen können sie nur die Teilnehmer dieser Verkostung und die Braumeister.</p>`
+      : `<p class="hint">Du hast alle ${MAX_FOTOS} Fotos hochgeladen – danke!</p>`)
+      + (kannLoeschen ? `<button type="button" class="linkbtn" id="fotoLoeschBtn">Zuletzt hochgeladenes Foto entfernen</button><span class="err" id="fotoLoeschErr"></span>` : "")
+      + `<div id="gastGalerie">${(() => { const c = gastGalerieAusCache(ggAnfrage); return c ? gastGalerieHtml(c) : `<p class="hint">Fotos werden geladen …</p>`; })()}</div>`);
   main().innerHTML = h;
+  if(ggAnfrage && v.status !== "abgeschlossen") galerieAuffrischen(ggAnfrage, false);
 
   const jf = $("#joinForm");
   if(jf){
@@ -141,10 +157,18 @@ async function bmHinweis(){
   if(data){ const n = $("#notice"); n.hidden = false; n.innerHTML = `Du bist als Braumeister angemeldet. <a href="verkostung.html?id=${esc(data.id)}">Zur Verwaltung dieser Verkostung</a>`; }
 }
 
-/* Gast lädt ein Foto für die Galerie hoch – über die Edge Function „galerie-hochladen“ (prüft Code, Schlüssel, max. 3) */
-let eigeneFotos = []; // Vorschauen der in dieser Sitzung hochgeladenen Fotos (nur im Speicher; die Galerie selbst ist privat)
+/* Galerie in der Gästeansicht nachladen (höchstens einmal pro Minute, nach eigenem Hochladen/Löschen sofort) */
+async function galerieAuffrischen(anfrage, erzwingen){
+  const d = await gastGalerieLaden(anfrage, erzwingen), box = $("#gastGalerie");
+  if(!box) return;
+  if(!d){ box.innerHTML = `<p class="hint">Die Fotos konnten gerade nicht geladen werden.</p>`; return; }
+  box.innerHTML = gastGalerieHtml(d); gastGalerieVerdrahten(box, d);
+}
+
+/* Gast lädt ein Foto für die Galerie hoch – über die Edge Function „galerie-hochladen“ (prüft Code, Schlüssel, max. 9).
+   Seit 10.11.2026 ohne den zweiten Zuschnitt-Schritt (Vorschau-Quadrat wird mittig gesetzt). */
 async function gastFoto(){
-  const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend"});
+  const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend", ohneVorschau: true});
   if(!erg) return;
   const btn = $("#fotoBtn"), err = $("#fotoErr");
   btn.disabled = true; btn.textContent = "Wird hochgeladen …"; err.textContent = "";
@@ -160,8 +184,7 @@ async function gastFoto(){
     let msg = "Hochladen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}
     btn.disabled = false; btn.textContent = "+ Foto hinzufügen"; err.textContent = msg; return;
   }
-  eigeneFotos.push(URL.createObjectURL(erg.klein));
-  toast("Foto hochgeladen"); gastLaden();
+  toast("Foto hochgeladen"); await gastGalerieLaden({code, token: gast().token}, true); gastLaden();
 }
 
 /* Gast entfernt sein zuletzt hochgeladenes Foto wieder – über die Edge Function „galerie-loeschen“ */
@@ -173,6 +196,5 @@ async function gastFotoLoeschen(){
     let msg = "Löschen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}
     btn.disabled = false; err.textContent = msg; return;
   }
-  eigeneFotos.pop();
-  toast("Foto entfernt"); gastLaden();
+  toast("Foto entfernt"); await gastGalerieLaden({code, token: gast().token}, true); gastLaden();
 }

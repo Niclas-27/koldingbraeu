@@ -12,10 +12,9 @@ async function ergebnisLaden(){
   // Plätze vergeben (gleicher Schnitt und gleiche Nochmal-Zahl = gleicher Platz)
   let platz = 0, vorher = null;
   proben.forEach((p,i) => { const k = p.schnitt==null ? null : `${p.schnitt}|${p.nochmal}`; if(k!==vorher){ platz = i+1; vorher = k; } p.platz = p.schnitt==null ? null : platz; });
-  const podium = proben.filter(p => p.platz && p.platz <= 3).slice(0,3);
-  const stufe = p => `<button type="button" class="stufe s${p.platz}" data-pdet="${esc(p.bier_id)}"><span class="medaille" aria-hidden="true">${["🥇","🥈","🥉"][p.platz-1]}</span>${Bilder.bier(p,"gross")}
-      <b>${esc(p.name)}</b><small>${esc([p.brauerei, p.stil].filter(Boolean).join(" · "))}</small><span class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</span>${meinTxt(p)?`<small class="meine">${meinTxt(p)}</small>`:""}</button>`;
-  const ordnung = podium.length === 3 ? [podium[1], podium[0], podium[2]] : podium;
+  // Bei Blindverkostungen steht die ehemalige Probennummer als Kreis am Kronkorken – so finden die Gäste beim
+  // Aufdecken ihren Favoriten vom Abend wieder (seit 10.11.2026).
+  const bild = p => v.blind ? `<span class="bb-nr">${Bilder.bier(p)}<span class="probe-nr num" title="Probe ${p.nummer}" aria-label="Probe ${p.nummer}">${p.nummer}</span></span>` : Bilder.bier(p);
 
   const noten = p => `<div class="dots" aria-label="Einzelnoten: ${esc(p.noten.join(", "))}">${Array.from({length:11},(_,i)=>`<span class="tick${i%5===0?" lab":""}">${i%5===0?i:""}</span>`).join("")}
       ${(() => { const c = new Map(); return p.noten.map(n => { const k = c.get(n) || 0; c.set(n, k+1); return `<i style="left:${n*10}%;bottom:${10+k*12}px" title="Note ${n}"></i>`; }).join(""); })()}</div>`;
@@ -30,10 +29,7 @@ async function ergebnisLaden(){
         ${Object.keys(p.geruch).length?`<div><h4>Geruch</h4><p>${tags(p.geruch)}</p></div>`:""}
         ${Object.keys(p.fehler).length?`<div><h4>Fehlaromen</h4><p>${tags(p.fehler)}</p></div>`:""}
         <p><a href="liga.html?bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>`;
-  // Die ersten drei stehen schon auf dem Podest – die Rangliste darunter beginnt danach, statt sie zu
-  // wiederholen. Ihre Details öffnet ein Tipp auf die Podest-Karte.
-  const aufPodest = new Set(podium.map(p => p.bier_id));
-  const rest = proben.filter(p => !aufPodest.has(p.bier_id));
+  // Seit 10.11.2026 kein Podest mehr: alle Biere in einer einheitlichen Rangliste von Platz 1 bis zum letzten.
   let h = `<p><a class="back" href="verkostung.html">← Alle Verkostungen</a></p>
     <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
       <p class="hint">${esc([fmtDateLong(v.datum), v.ort, proben.length+" Biere", v.blind?"blind verkostet":""].filter(Boolean).join(" · "))}</p>
@@ -41,29 +37,49 @@ async function ergebnisLaden(){
       ${isBM()?`<a class="btn" href="verkostung.html?id=${esc(v.id)}">Verwalten</a>`:""}</div>
     ${v.bild_titel?`<img class="titelbild" id="titelbild" src="${esc(Bilder.url(v.bild_titel))}" alt="Titelbild der Verkostung">`:""}
     ${Object.keys(meine).length?`<p class="hint">Tippe auf ein Bier für Einzelnoten, Kommentare und Geschmacksprofil – deine eigene Note steht jeweils dabei.</p>`:""}
-    ${podium.length?`<div class="podium">${ordnung.map(stufe).join("")}</div>`:""}
-    ${rest.length?`<section class="sec"><h3>${podium.length?"Weitere Plätze":"Rangliste"}</h3><ol class="rank erg">${rest.map(p => {
+    ${proben.length?`<section class="sec"><h3>Rangliste</h3>${v.blind?`<p class="hint">Die Zahl am Kronkorken ist die Probennummer vom Abend.</p>`:""}<ol class="rank erg">${proben.map(p => {
       const offen = p.kommentare.length || Object.keys(p.merkmale).length || Object.keys(p.geruch).length || Object.keys(p.fehler).length || p.noten.length || p.bild_kronkorken || p.bild_flasche;
-      return `<li class="${p.platz&&p.platz<=3?"top p"+p.platz:""}">
+      return `<li>
       <details${offen?"":" class=\"leer\""}><summary>
         <span class="pl num">${p.platz?p.platz+".":"–"}</span>
-        <span class="nm mit-bild">${Bilder.bier(p)}<span><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span></span>
+        <span class="nm mit-bild">${bild(p)}<span><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span></span>
         <span class="sc"><b class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</b></span>
-        <small class="mt">${p.anzahl} Bew.${p.anzahl?` · ${Math.round(p.nochmal/p.anzahl*100)} % nochmal`:""}${meinTxt(p)?` · <b class="meine">${meinTxt(p)}</b>`:""}</small>
+        <small class="mt">${p.anzahl} Bew.${p.anzahl?` · ${Math.round(p.nochmal/p.anzahl*100)} % empfehlen`:""}${meinTxt(p)?` · <b class="meine">${meinTxt(p)}</b>`:""}</small>
         <span class="bar"><i class="${gradeCls(p.schnitt)}" style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
       </summary>
       <div class="erg-detail">
         ${detail(p)}
       </div></details></li>`;}).join("")}</ol>
       <p class="hint">Ein Bier auswählen zeigt Einzelnoten, Kommentare und Geschmacksprofil.</p></section>`:""}
-    ${podium.length?`<p class="hint">Eine Podest-Karte auswählen zeigt Einzelnoten, Kommentare und Geschmacksprofil.</p>`:""}`;
+    <div id="gastGalerie"></div>`;
   main().innerHTML = h;
   Bilder.bierFotosVerdrahten(main());
-  main().querySelectorAll("[data-pdet]").forEach(b => b.onclick = () => {
-    const p = proben.find(x => x.bier_id === b.dataset.pdet); if(!p) return;
-    sheet(`${p.platz}. ${p.name}`, `<div class="erg-detail">${detail(p)}</div>`, `<span class="spacer"></span><button class="btn" id="pdetZu">Schließen</button>`);
-    $("#pdetZu").onclick = closeSheet; Bilder.bierFotosVerdrahten($("#sheetBody"));
-  });
   const tb = $("#titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
+  ergebnisGalerie(v.id);
+}
+
+/* Fotos vom Abend – nur für Teilnehmer dieser Verkostung (seit 10.11.2026). Der Browser schickt alle bei sich
+   gespeicherten Gast-Schlüssel; „galerie-ansehen“ prüft, ob einer zu dieser Verkostung gehört. Ohne Treffer bleibt
+   der Abschnitt einfach weg – Besucher ohne Teilnahme sehen keinen Hinweis auf die Galerie. */
+function gastSchluessel(vid){
+  const t = new Set(); const e = lsGet("kb_gast_e_"+vid); if(e) t.add(e);
+  try{
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith("kb_gast_") || k.startsWith("kb_gast_e_")) continue;
+      try{ const g = JSON.parse(localStorage.getItem(k)); if(g && g.token) t.add(g.token); }catch(_){}
+    }
+  }catch(_){}
+  return [...t].slice(0, 20);
+}
+async function ergebnisGalerie(vid){
+  const tokens = gastSchluessel(vid);
+  if(!tokens.length) return;
+  const d = await gastGalerieLaden({verkostung_id: vid, tokens});
+  const box = $("#gastGalerie");
+  if(!d || !box || ergebnisId !== vid) return;
+  lsSet("kb_gast_e_"+vid, d.token);
+  box.innerHTML = `<section class="sec"><h3>Fotos vom Abend</h3><p class="hint">Nur für die Teilnehmer dieser Verkostung sichtbar.</p>${gastGalerieHtml(d)}</section>`;
+  gastGalerieVerdrahten(box, d);
 }
 
