@@ -115,17 +115,6 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .vk-tile .w{display:flex;align-items:baseline;gap:8px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line);font-weight:600;min-width:0}
 .vk-tile .w span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vk-tile .w b{font-size:1.15rem;font-weight:500;color:var(--hop)}
-.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
-.stufe{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius) var(--radius) 0 0;padding:14px 10px;min-width:0}
-.stufe.s1{padding-top:26px;padding-bottom:30px;border-color:var(--hop);background:var(--hop-soft)}
-.stufe.s2{padding-bottom:18px}
-.stufe .medaille{font-size:1.8rem;line-height:1}
-.stufe b{font-family:var(--font-display);font-size:1.1rem;overflow-wrap:anywhere}
-.stufe small{color:var(--muted);font-size:.78rem}
-.stufe .num{font-size:1.5rem;margin-top:4px}
-.stufe.s1 .num{font-size:2rem;color:var(--hop)}
-@media (max-width:560px){.podium{grid-template-columns:1fr;align-items:stretch}.podium .stufe{border-radius:var(--radius);flex-direction:row;gap:10px;padding:10px 14px;text-align:left}.podium .stufe small{display:none}.podium .stufe b{flex:1}.podium .stufe .num{margin:0;font-size:1.3rem}
-  .podium .s1{order:-1}}
 .dots{position:relative;height:46px;margin:0 8px;border-bottom:1px solid var(--line)}
 .dots .tick{position:absolute;bottom:-18px;font-size:.7rem;color:var(--muted);font-family:var(--font-data);transform:translateX(-50%)}
 .dots .tick:nth-child(1){left:0}
@@ -156,17 +145,11 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .vk-tile.mit-titel .vt-bild{display:block;width:100%;margin:0;aspect-ratio:16/9;object-fit:cover;background:var(--line)}
 .vk-tile.mit-titel .vt-body{display:flex;flex-direction:column;gap:4px;padding:12px 18px 16px}
 .vk-tile .w .bb{align-self:center;width:28px;height:28px}
-.stufe .bb{margin:6px 0}
-.stufe.s2 .bb-gross,.stufe.s3 .bb-gross{transform:scale(.8);margin:0}
-@media (max-width:560px){.podium .stufe .bb-kronkorken.bb-gross{width:48px;height:48px;transform:none}}
 .titelbild{display:block;width:100%;max-height:420px;object-fit:cover;border-radius:var(--radius);margin:4px 0 16px;cursor:zoom-in;background:var(--line)}
 .fotos-admin{max-width:420px}
 h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:16px 0 8px;font-family:var(--font-body)}
 .bildfelder .bildfeld{align-self:stretch}
 
-/* Podest-Karten öffnen die Details des Biers (Ergebnisseite) */
-button.stufe{font:inherit;color:inherit;cursor:pointer;width:100%}
-button.stufe:hover{border-color:var(--muted)}
 
 /* Einladung (Verwaltung) und Ankündigungsseite */
 .einladung-vorschau{white-space:pre-wrap;font-family:var(--font-body);font-size:.92rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
@@ -177,7 +160,16 @@ button.stufe:hover{border-color:var(--muted)}
 .g-eigene img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
 
 /* Ergebnis: eigene Note des Gastes */
-.stufe .meine,.erg .meine{color:var(--amber);font-weight:600}
-.stufe .meine{display:block;font-size:.75rem;margin-top:2px}
 .meine-detail{margin:0 0 6px;color:var(--muted)}
 .meine-detail b{color:var(--amber)}
+
+/* Ergebnis (blind): ehemalige Probennummer als Kreis am Kronkorken (seit 10.11.2026) */
+.bb-nr{position:relative;display:inline-flex;flex:none}
+.probe-nr{position:absolute;right:-6px;bottom:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--amber);color:var(--bg);font-size:.72rem;font-weight:700;line-height:20px;text-align:center;box-shadow:0 0 0 2px var(--surface)}
+
+/* Gäste-Galerie (Gästeansicht und Ergebnisseite, nur für eingecheckte Teilnehmer) */
+.gg-raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:10px 0}
+.gg-raster button{display:flex;flex-direction:column;gap:3px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:zoom-in;min-width:0}
+.gg-raster img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:var(--line)}
+.gg-raster small{color:var(--muted);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zugang-link{display:flex;gap:8px;flex-wrap:wrap;align-items:center}

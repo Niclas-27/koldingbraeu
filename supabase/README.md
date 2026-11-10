@@ -9,11 +9,12 @@ Hier liegt nur, was alle Bereiche gemeinsam nutzen. Die Tabellen und Funktionen 
 - `core.sql` – Profile, Rollen, Hilfsfunktionen `private.rolle()`, `private.ist_braumeister()`, `private.ist_admin()`,
   Trigger für neue Konten und Rollenschutz.
 - `functions/einladen/` – Edge Function, mit der der Admin Braumeister per E-Mail einlädt.
-- `functions/galerie-hochladen/` – Edge Function, über die Gäste einer laufenden Verkostung bis zu drei Fotos in die Galerie laden (prüft Code, Schlüssel und Limit, nimmt nur JPEG).
+- `functions/galerie-hochladen/` – Edge Function, über die Gäste einer laufenden Verkostung bis zu neun Fotos in die Galerie laden (prüft Code, Schlüssel und Limit, nimmt nur JPEG).
 - `functions/galerie-loeschen/` – Edge Function, über die ein Gast sein zuletzt hochgeladenes Galerie-Foto wieder entfernt (gleiche Prüfung von Code und Schlüssel, löscht immer genau das jüngste eigene Foto).
-- Beide Galerie-Functions laufen ohne Anmeldung (`verify_jwt = false`), weil Gäste kein Konto haben, und arbeiten mit dem geheimen Schlüssel am Speicher vorbei – die Prüfung steckt in der Function selbst.
+- `functions/galerie-ansehen/` – Edge Function (seit 10.11.2026), über die Teilnehmer einer Verkostung deren Galerie sehen – während und nach dem Abend. Prüft den persönlichen Schlüssel (mit Code oder Verkostungs-ID) und liefert signierte Links (1 Stunde) samt Name des Fotografen.
+- Alle drei Galerie-Functions laufen ohne Anmeldung (`verify_jwt = false`), weil Gäste kein Konto haben, und arbeiten mit dem geheimen Schlüssel am Speicher vorbei – die Prüfung steckt in der Function selbst.
 - Storage-Bucket `bilder` – öffentlich lesbar (Fotos, Kronkorken- und Flaschenbilder der Sude und Rezepte, Titelbilder, Bierbilder); hochladen, ersetzen und löschen dürfen nur Braumeister (Policies in `features/tastings/schema/04_images.sql`).
-- Storage-Bucket `verkostung-galerie` – **privat**, nur JPEG bis 1,5 MB. Hier liegen die Galerie-Fotos der Verkostungen; sehen, hochladen und löschen dürfen nur Braumeister (Anzeige über kurzlebige signierte Links). Gäste kommen nur über die beiden Edge Functions heran (`features/tastings/schema/09_galerie_privater_bucket.sql`).
+- Storage-Bucket `verkostung-galerie` – **privat**, nur JPEG bis 1,5 MB. Hier liegen die Galerie-Fotos der Verkostungen; sehen, hochladen und löschen dürfen direkt nur Braumeister (Anzeige über kurzlebige signierte Links). Gäste kommen nur über die drei Edge Functions heran (`features/tastings/schema/09_galerie_privater_bucket.sql`).
 
 Seit 07.11.2026 speichern beide Galerie-Functions auch den Zuschnitt (Tabelle `bild_ausschnitte`, siehe `lib/README.md` bzw. `features/brews/schema/11_kronkorken_flasche_ausschnitte.sql`).
 
