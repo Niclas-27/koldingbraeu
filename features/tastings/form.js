@@ -1,7 +1,8 @@
 /* Koldingbräu – Verkostungen: Bewertungsbogen (Gäste und Admin)
    Mobil optimiert: das Testing läuft hauptsächlich am Handy, darum nur ein Abschnitt pro
    Bildschirm, mit „Weiter“ (bzw. „Zurück“) durchgeklickt. Reihenfolge wie vorgegeben:
-   Aussehen, Geruch, Geschmack, Mundgefühl, Was fällt dir auf?, Nochmal trinken?,
+   Aussehen, Geruch, Geschmack, Mundgefühl, Was fällt dir auf?, Weiterempfehlen? (bis 10.11.2026 „Nochmal trinken?“,
+   gleiche Spalte bewertungen.nochmal),
    Benotung (einziges Pflichtfeld, deshalb zuletzt).
    Der frühere Fehlaromen-Schritt wurde entfernt (31.10.2026) – die Spalte bewertungen.fehler
    existiert in der DB weiter (historische Daten, Anzeige in Admin/Ergebnis/Bier-Detail bleibt),
@@ -10,7 +11,7 @@
 const BOGEN_SCHRITTE = [
   ...MERKMALE.map(([grp, liste]) => ({art:"merkmale", label:grp, felder:liste, chips: grp==="Geruch"?GERUCH:null, chipArt:"geruch"})),
   {art:"text", label:"Was fällt dir auf?"},
-  {art:"yn", label:"Würdest du es nochmal trinken?"},
+  {art:"yn", label:"Würdest du dieses Bier weiterempfehlen?"},
   {art:"note", label:"Benotung"},
 ];
 

@@ -8,7 +8,7 @@
 
 - Gewertet wird allein die Gesamtnote (0–10), Durchschnitt über alle Bewertungen.
 - Ein Bier zählt ab **3** Bewertungen (`MIN` in `league.js`); weniger lässt sich einblenden.
-- Gleichstand: mehr „würde nochmal trinken“ gewinnt.
+- Gleichstand: mehr „würde weiterempfehlen“ gewinnt (Spalte `nochmal`; bis 10.11.2026 lautete die Frage „nochmal trinken?“).
 - Filter: Bierstil, Koldingbräu/andere, Jahr. Jedes Bier verlinkt auf seine eigene Detailseite.
 
 ## Bier-Detailseite (`liga.html?bier=<uuid>`)

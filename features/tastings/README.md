@@ -10,7 +10,7 @@ am Ende das Ranking aufdecken. Die Ergebnisse fließen in die Liga.
 | `verkostung.html` | Übersicht: bisherige Verkostungen als Karten | alle; Braumeister sehen zusätzlich laufende/geplante |
 | `?v=<code>` | Mitmachen: Name eingeben, Bewertungsbogen, Live-Zwischenstand, Biere vorschlagen | Gäste (Link im QR-Code) |
 | `?id=<uuid>` | Verwalten: QR-Code, Biere, Status, Live-Auswertung, Ausblenden, Korrekturen | Braumeister / Admin |
-| `?e=<uuid>` | Ergebnisseite: Podest, Rangliste, Einzelnoten, Profil, Kommentare | alle (nur abgeschlossene) |
+| `?e=<uuid>` | Ergebnisseite: Rangliste (blind: mit Probennummer), Einzelnoten, Profil, Kommentare; für Teilnehmer die Fotos vom Abend | alle (nur abgeschlossene) |
 
 Ablauf: *In Vorbereitung* → *Läuft* → *Abgeschlossen*.
 
@@ -22,7 +22,7 @@ Ablauf: *In Vorbereitung* → *Läuft* → *Abgeschlossen*.
 | Braumeister | Verkostungen und Biere anlegen/bearbeiten, Status setzen, Vorschläge übernehmen, Bewertungen ausblenden; alle Namen und Kommentare sehen |
 | Admin | zusätzlich löschen (auch einzelne Teilnehmer samt ihrer Bewertungen), Bewertungen ändern und nachtragen (mit Vermerk und ursprünglicher Note), Bierstile ergänzen |
 
-Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **ohne** Zuordnung. Wer welche Note gab, sehen nur Braumeister. Die von Teilnehmern hochgeladenen Galerie-Fotos sind nicht öffentlich (siehe „Bilder“ unten).
+Öffentlich (Ergebnisseite): Teilnehmernamen, Noten, Kommentare **ohne** Zuordnung. Wer welche Note gab, sehen nur Braumeister. Die Galerie-Fotos sind nicht öffentlich – sehen dürfen sie nur Braumeister und die Teilnehmer dieser Verkostung (siehe „Bilder“ unten).
 
 ## Dateien
 
@@ -45,7 +45,8 @@ QR-Codes erzeugt `lib/qr.js` im Browser – ohne fremden Dienst.
 ## Bilder
 
 - **Titelbild** (optional) lädt ein Braumeister in der Verwaltung hoch (Abschnitt „Fotos“). Es erscheint auf der Karte in der Übersicht, beim Mitmachen und auf der Ergebnisseite. Öffentlich sichtbar.
-- **Galerie** (seit 27.10.2026 **nur für Braumeister/Admin sichtbar**): Teilnehmer laden während der Verkostung bis zu drei Fotos hoch (Knopf „+ Foto hinzufügen“), bekommen aber keine Fotos – weder eigene noch fremde – zurückgezeigt, nur die Anzahl ihrer bereits hochgeladenen Fotos. Das läuft über die Edge Function `galerie-hochladen`, die Code, persönlichen Schlüssel, Status und das Limit prüft – Teilnehmer haben keinen direkten Speicherzugriff. Die öffentliche Ergebnisseite zeigt die Galerie nicht mehr. Braumeister sehen die Galerie in der Verwaltung über kurzlebige Signed URLs (`Bilder.galerieSignierteUrls`) und können ebenfalls Fotos ergänzen/löschen. Seit 07.11.2026 nutzt die Verwaltung dasselbe Galerie-Modul wie „Fotos vom Brautag“ (`Bilder.galerieModul`): mehrere Fotos auf einmal (Auswahl oder Drag & Drop), je Foto Bildunterschrift und Zuschnitt vor dem Hochladen, nachträglich Bildunterschrift, Aufnahmedatum und „Ausschnitt ändern“ (auch für Gäste-Fotos; unter Gäste-Fotos steht „von <Name>“). Spalten `bildunterschrift`/`aufgenommen` und die Update-Policy: `schema/14_galerie_beschriftung.sql`. Während Ablage oder Bearbeiten offen sind, setzt das Live-Neuladen der Verwaltung aus. Gäste schneiden ihr Foto ebenfalls zu; `galerie-hochladen` nimmt dafür optional `ausschnitt` (JSON) und `basis` (unbeschnittenes Foto, nur wenn wirklich beschnitten) an und legt einen Eintrag in `bild_ausschnitte` an; `galerie-loeschen` räumt Basisbild und Eintrag mit weg.
+- **Fotos vom Abend für Teilnehmer** (seit 10.11.2026): Wer eingecheckt ist (Code + Name, persönlicher Schlüssel im Browser), sieht die ganze Galerie – während des Abends in der Gästeansicht, nach dem Abschluss unbegrenzt auf der Ergebnisseite; als Raster mit „von <Name>“ und Vollbild zum Durchwischen (`Bilder.zeigenRoh`). Neue Fotos sind sofort sichtbar; unpassende löscht ein Braumeister. Die Edge Function `galerie-ansehen` prüft den Schlüssel und liefert signierte Links (1 Stunde); Besucher ohne Teilnahme sehen auf der Ergebnisseite keinen Hinweis auf die Galerie. Die Ergebnisseite kennt den Code nicht: sie schickt alle im Browser gespeicherten Gast-Schlüssel (`kb_gast_<code>`, `kb_gast_e_<id>`, max. 20) mit der Verkostungs-ID. Für ein neues Gerät gibt es den persönlichen Link `?v=<code>&t=<schlüssel>` („Meinen Link teilen“); die Gästeseite übernimmt den Schlüssel und entfernt ihn aus der Adresszeile. Gemeinsamer Code: `gastGalerie*` in `common.js`. Kein Schutz gegen Screenshots oder Weitergabe des persönlichen Links.
+- **Galerie** (27.10.–10.11.2026 nur für Braumeister/Admin sichtbar): Teilnehmer laden während der Verkostung bis zu neun Fotos hoch (bis 10.11.2026: drei; Knopf „+ Foto hinzufügen“). Ihr Zuschnitt hat seit 10.11.2026 nur einen Schritt (`Bilder.waehlen({ohneVorschau: true})`, Vorschau-Quadrat mittig). Das läuft über die Edge Function `galerie-hochladen`, die Code, persönlichen Schlüssel, Status und das Limit prüft – Teilnehmer haben keinen direkten Speicherzugriff. Die öffentliche Ergebnisseite zeigt die Galerie nicht mehr. Braumeister sehen die Galerie in der Verwaltung über kurzlebige Signed URLs (`Bilder.galerieSignierteUrls`) und können ebenfalls Fotos ergänzen/löschen. Seit 07.11.2026 nutzt die Verwaltung dasselbe Galerie-Modul wie „Fotos vom Brautag“ (`Bilder.galerieModul`): mehrere Fotos auf einmal (Auswahl oder Drag & Drop), je Foto Bildunterschrift und Zuschnitt vor dem Hochladen, nachträglich Bildunterschrift, Aufnahmedatum und „Ausschnitt ändern“ (auch für Gäste-Fotos; unter Gäste-Fotos steht „von <Name>“). Spalten `bildunterschrift`/`aufgenommen` und die Update-Policy: `schema/14_galerie_beschriftung.sql`. Während Ablage oder Bearbeiten offen sind, setzt das Live-Neuladen der Verwaltung aus. Gäste schneiden ihr Foto ebenfalls zu; `galerie-hochladen` nimmt dafür optional `ausschnitt` (JSON) und `basis` (unbeschnittenes Foto, nur wenn wirklich beschnitten) an und legt einen Eintrag in `bild_ausschnitte` an; `galerie-loeschen` räumt Basisbild und Eintrag mit weg.
 - **Bierbilder**: je Bier optional *Kronkorken* (rund zugeschnitten) und *Flasche* (hochkant). Seit 07.11.2026 teilt ein eigenes Bier mit seinem verknüpften Sud dieselben Kronkorken-/Flaschen-Dateien (Auswahl des Suds übernimmt fehlende Bilder; Speichern zieht den Sud mit). In Listen, Liga und Podest wird nur die Kronkorken-Form gezeigt: ein vorhandenes Kronkorken-Bild, sonst ersatzweise das Flaschenbild, in Kronkorken-Form zugeschnitten (gezackter Kreis); gibt es keins, zeichnet `lib/bilder.js` einen Platzhalter-Kronkorken in der typischen Farbe des Bierstils. In den aufgeklappten Bierdetails (Ergebnisseite, Liga, Admin-Probendetail) zeigt `Bilder.bierFotos` zusätzlich beide hochgeladenen Fotos größer nebeneinander, wenn vorhanden. Öffentlich sichtbar.
 - **Löschen**: Braumeister können jedes Galerie-Foto löschen (✕ in der Galerie). Teilnehmer können, solange die Verkostung nicht abgeschlossen ist, ihr zuletzt hochgeladenes Foto selbst wieder entfernen (Link „Zuletzt hochgeladenes Foto entfernen“) – über die Edge Function `galerie-loeschen` (gleiche Code/Schlüssel-Prüfung wie beim Hochladen, kein Foto-Picker, immer nur das jüngste eigene Foto). Beim Löschen einer Verkostung gehen Titelbild und Galerie mit.
 - Speicher: Titelbild/Bierbilder im öffentlich lesbaren Bucket `bilder` (Pfade `verkostungen/<id>/titel-…jpg`, `biere/<id>/kronkorken-…jpg`); Teilnehmer-Galerie im **privaten** Bucket `verkostung-galerie` (Pfade `verkostungen/<id>/galerie/<uuid>-…jpg`), lesbar nur für Braumeister/Admin per RLS-Policy. Zu jedem Bild gibt es `…_t.jpg` als Vorschau. Schema: `schema/04_images.sql` (öffentlicher Bucket), `schema/09_galerie_privater_bucket.sql` (privater Bucket + `vk_laden`/`vk_ergebnis` ohne Galerie-Pfade).
@@ -91,8 +92,13 @@ erratbar zu werden. Ein späteres Umbenennen ändert den Code nicht mehr.
 - **Reihenfolge nur in der Vorbereitung änderbar:** die ↑↓-Knöpfe verschwinden, sobald die Verkostung läuft,
   damit sich die Nummern vor den Gästen nicht ändern. Im Zwischenstand steht die Probennummer als „Nr. 2 · …“
   in der Unterzeile statt vor dem Namen.
-- **Ergebnisseite ohne Dopplung:** Platz 1–3 stehen nur auf dem Podest; ein Tipp auf eine Podest-Karte öffnet
-  deren Details im Seitenblatt. Die Liste darunter heißt „Weitere Plätze“ und beginnt bei Platz 4.
+- **Ergebnisseite ohne Podest** (seit 10.11.2026, Wunsch der Tester): alle Biere in einer einheitlichen Rangliste
+  von Platz 1 bis zum letzten, ohne Medaillen oder Hervorhebung; Gleichstand (gleiche Note und gleiche
+  Empfehlungs-Zahl) teilt sich den Platz. Bei Blindverkostungen steht die ehemalige Probennummer als Kreis am
+  Kronkorken (`.probe-nr`), damit man beim Aufdecken seinen Favoriten wiedererkennt.
+- **Bogen-Texte** (seit 10.11.2026): „Klarheit“ heißt „Trübung“ (Schlüssel bleibt `klarheit`, Skala klar–trüb), die
+  Ja/Nein-Frage heißt „Würdest du dieses Bier weiterempfehlen?“ statt „nochmal trinken?“. Gespeichert wird weiter in
+  `bewertungen.nochmal`; alte Antworten zählen als Empfehlung, Anzeige überall „% empfehlen“.
 - Rückfragen vor dem Löschen laufen über das gemeinsame `bestaetigen()` aus `core/core.js`.
 
 ## Einladung (seit 07.11.2026)
@@ -120,7 +126,7 @@ erratbar zu werden. Ein späteres Umbenennen ändert den Code nicht mehr.
 
 ## Nach dem Aufdecken: automatisch aufs Ergebnis (seit 07.11.2026)
 Sobald eine Verkostung abgeschlossen ist, springt die Gästeseite (`?v=<code>`, fragt alle 15 s nach) von selbst auf die
-Ergebnisseite (`?e=<id>`) mit Podest und antippbaren Bieren. Vorher legt sie die eigenen Noten je Bier im Browser ab
+Ergebnisseite (`?e=<id>`) mit Rangliste und antippbaren Bieren. Dabei merkt sie sich den Gast-Schlüssel für diese Verkostung (`kb_gast_e_<id>`, für die Fotos vom Abend). Vorher legt sie die eigenen Noten je Bier im Browser ab
 (`localStorage` `kb_meine_<id>`); die Ergebnisseite zeigt sie als „deine Note“ – nur auf diesem Gerät. Braumeister
 landen nach „Abschließen“ ebenfalls direkt dort. Dafür liefert `vk_laden` nach dem Abschluss zusätzlich `id` und je
 Probe `bier_id` (`schema/15_ergebnis_wechsel.sql`, angewendet).

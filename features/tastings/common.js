@@ -8,7 +8,7 @@ const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v =
 
 const STATUS = {vorbereitung:"In Vorbereitung", laeuft:"Läuft", abgeschlossen:"Abgeschlossen"};
 const MERKMALE = [
-  ["Aussehen", [["farbe","Farbe","hell","dunkel"],["klarheit","Klarheit","klar","trüb"],["schaum","Schaum","wenig","viel"]]],
+  ["Aussehen", [["farbe","Farbe","hell","dunkel"],["klarheit","Trübung","klar","trüb"],["schaum","Schaum","wenig","viel"]]],
   ["Geruch", [["intensitaet","Intensität","schwach","kräftig"]]],
   ["Geschmack", [["bitter","Bittere","mild","bitter"],["suesse","Süße","trocken","süß"],["malzhopfen","Betonung","malzig","hopfig"]]],
   ["Mundgefühl", [["koerper","Körper","schlank","vollmundig"],["kohlensaeure","Kohlensäure","wenig","spritzig"],["abgang","Abgang","kurz","lang"]]],
@@ -42,11 +42,11 @@ function rangTabelle(zeilen, opts){
     const key = z.schnitt==null ? null : `${z.schnitt}|${z.nochmal||0}`;
     if(key!==vorher){platz=i+1;vorher=key;}
     const w = z.schnitt==null ? 0 : Math.round(z.schnitt/max*100);
-    return `<li class="${z.schnitt!=null&&platz<=3?"top p"+platz:""}"${opts&&opts.klick?` data-id="${esc(z.id)}" tabindex="0" role="button"`:""}>
+    return `<li${opts&&opts.klick?` data-id="${esc(z.id)}" tabindex="0" role="button"`:""}>
       <span class="pl num">${z.schnitt==null?"–":platz+"."}</span>
       <span class="nm${z.bild?" mit-bild":""}">${z.bild||""}<span><b>${esc(z.titel)}</b>${z.unter?`<small>${esc(z.unter)}</small>`:""}</span></span>
       <span class="sc"><b class="num ${gradeCls(z.schnitt)}">${note(z.schnitt)}</b></span>
-      <small class="mt">${z.anzahl||0} Bew.${z.anzahl?` · ${Math.round((z.nochmal||0)/z.anzahl*100)} % nochmal`:""}</small>
+      <small class="mt">${z.anzahl||0} Bew.${z.anzahl?` · ${Math.round((z.nochmal||0)/z.anzahl*100)} % empfehlen`:""}</small>
       <span class="bar"><i class="${gradeCls(z.schnitt)}" style="width:${w}%"></i></span>
     </li>`;}).join("")}</ol>`;
 }
@@ -88,4 +88,41 @@ async function einladungTeilen(v){
   }
   try{ await navigator.clipboard.writeText(text); toast("Einladung kopiert – jetzt im Messenger einfügen"); }
   catch(_){ toast("Kopieren ging nicht – bitte den Text markieren und kopieren"); }
+}
+
+/* ---------- Fotos vom Abend für Teilnehmer (seit 10.11.2026) ----------
+   Wer an einer Verkostung teilgenommen hat, sieht deren Galerie: während des Abends in der Gästeansicht, danach
+   unbegrenzt auf der Ergebnisseite. Die Fotos liegen im privaten Bucket; die Edge Function „galerie-ansehen“ prüft den
+   persönlichen Schlüssel und liefert signierte Links (1 Stunde). Öffentlich bleibt die Galerie unsichtbar.
+   anfrage: {code, token} (Gästeansicht) oder {verkostung_id, tokens} (Ergebnisseite). */
+const ggCache = {daten: null, zeit: 0, schluessel: ""};
+async function gastGalerieLaden(anfrage, erzwingen){
+  const k = JSON.stringify(anfrage);
+  if(!erzwingen && ggCache.daten && ggCache.schluessel === k && Date.now() - ggCache.zeit < 60000) return ggCache.daten;
+  const {data, error} = await sb.functions.invoke("galerie-ansehen", {body: anfrage});
+  if(error || !data || !data.fotos) return ggCache.schluessel === k ? ggCache.daten : null;
+  Object.assign(ggCache, {daten: data, zeit: Date.now(), schluessel: k});
+  return data;
+}
+const gastGalerieAusCache = anfrage => ggCache.schluessel === JSON.stringify(anfrage) ? ggCache.daten : null;
+// Persönlicher Zugangslink: öffnet die Gästeansicht mit dem Schlüssel und merkt ihn sich auf dem neuen Gerät.
+const zugangsLink = (c, token) => gastLink(c) + "&t=" + encodeURIComponent(token);
+function gastGalerieHtml(d){
+  const fotos = d.fotos || [];
+  return `${fotos.length
+      ? `<div class="gg-raster">${fotos.map((f,i) => `<button type="button" data-gg="${i}" aria-label="Foto ${i+1} groß zeigen"><img src="${esc(f.klein)}" alt="" loading="lazy">${f.von?`<small>von ${esc(f.mein?"dir":f.von)}</small>`:""}</button>`).join("")}</div>`
+      : `<p class="hint">Noch keine Fotos.</p>`}
+    <details class="zugang"><summary class="hint">Fotos auf einem anderen Gerät ansehen</summary>
+      <p class="hint">Mit deinem persönlichen Link siehst du die Fotos auch auf einem neuen Handy oder in einem anderen Browser – auch noch Wochen später. Bitte nicht weitergeben: Wer den Link hat, ist als du dabei.</p>
+      <div class="zugang-link"><button type="button" class="btn" data-zugang>Meinen Link teilen</button></div></details>`;
+}
+function gastGalerieVerdrahten(wurzel, d){
+  wurzel.querySelectorAll("[data-gg]").forEach(b => b.onclick = () =>
+    Bilder.zeigenRoh(d.fotos.map(f => ({src: f.gross, bildunterschrift: f.von ? "von "+(f.mein?"dir":f.von) : ""})), +b.dataset.gg));
+  const z = wurzel.querySelector("[data-zugang]");
+  if(z) z.onclick = async () => {
+    const url = zugangsLink(d.code, d.token);
+    if(navigator.share){ try{ await navigator.share({title: "Mein Zugang zur Verkostung", url}); return; }catch(e){ if(e && e.name === "AbortError") return; } }
+    try{ await navigator.clipboard.writeText(url); toast("Link kopiert"); }catch(_){ window.prompt("Dein persönlicher Link:", url); }
+  };
 }

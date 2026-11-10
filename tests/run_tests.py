@@ -98,10 +98,32 @@ async def main():
         t = await seite("anon", "verkostung.html", "vk_uebersicht"); pruefe("Übersicht zeigt Karten mit Teilnehmern", "Frühjahrsrunde" in t and "mit Niels" in t)
         t = await seite("bm", "verkostung.html", "vk_uebersicht_bm"); pruefe("Braumeister sieht laufende Verkostung", "Herbstrunde" in t)
         async def ergebnis(pg):
-            # Platz 1–3 stehen nur auf dem Podest; ihre Details öffnen sich per Tipp auf die Karte im Seitenblatt
-            pruefe("Rangliste wiederholt das Podest nicht", await pg.locator(".rank.erg li.top").count() == 0)
-            await pg.click(".podium .stufe.s1"); await pg.wait_for_timeout(300)
+            # Seit 10.11.2026 kein Podest: alle Biere in einer einheitlichen Rangliste, ohne Medaillen/Hervorhebung
+            pruefe("Kein Podest mehr", await pg.locator(".podium, .stufe, .medaille").count() == 0)
+            pruefe("Rangliste enthält alle sieben Biere ab Platz 1", await pg.locator(".rank.erg > li").count() == 7 and (await pg.inner_text(".rank.erg > li >> nth=0 >> .pl")).strip() == "1.")
+            pruefe("Kein Platz ist hervorgehoben", await pg.locator(".rank.erg li.top").count() == 0)
+            pruefe("Anteil heißt jetzt „empfehlen“", "% empfehlen" in await pg.inner_text(".rank.erg") and "% nochmal" not in await pg.inner_text(".rank.erg"))
+            pruefe("Offene Verkostung zeigt keine Probennummer", await pg.locator(".probe-nr").count() == 0)
+            pruefe("Ohne Teilnahme keine Fotos vom Abend", "Fotos vom Abend" not in await pg.inner_text("main"))
+            await pg.click(".rank.erg > li >> nth=0 >> summary"); await pg.wait_for_timeout(300)
         t = await seite("anon", "verkostung.html?e=v9", "vk_ergebnis", ergebnis); pruefe("Ergebnisseite mit Kommentar und Namen", "Geheimtipp" in t and "Mit Niels" in t)
+        async def ergebnis_blind(pg):
+            await pg.evaluate("localStorage.setItem('test_blind','1')"); await pg.reload(); await pg.wait_for_timeout(600)
+            pruefe("Blind: Probennummer als Kreis am Kronkorken", await pg.locator(".rank.erg .probe-nr").count() == 7)
+            pruefe("Blind: Platz 1 (Einbecker) war Probe 2", (await pg.inner_text(".rank.erg > li >> nth=0 >> .probe-nr")).strip() == "2")
+        await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_blind", ergebnis_blind, 390, 844)
+        async def ergebnis_galerie(pg):
+            # Teilnehmer (Schlüssel im Browser) sehen die Fotos vom Abend auch nach dem Abschluss
+            await pg.evaluate("localStorage.setItem('kb_gast_pils9code', JSON.stringify({token:'00000000-0000-4000-8000-000000000009'}))"); await pg.reload(); await pg.wait_for_timeout(700)
+            pruefe("Teilnehmer sieht die Fotos vom Abend auf der Ergebnisseite", await pg.locator("#gastGalerie .gg-raster button").count() == 2)
+            pruefe("Fotograf steht dabei („von Niels“, eigenes „von dir“)", "von Niels" in await pg.inner_text("#gastGalerie") and "von dir" in await pg.inner_text("#gastGalerie"))
+            pruefe("Schlüssel für diese Verkostung gemerkt", await pg.evaluate("localStorage.getItem('kb_gast_e_v9')") == "00000000-0000-4000-8000-000000000009")
+            await pg.click("#gastGalerie [data-gg='0']"); await pg.wait_for_timeout(200)
+            pruefe("Foto öffnet Vollbild mit Durchblättern", await pg.locator(".lightbox .lb-pfeil").count() == 2)
+            await wische(pg, ".lightbox", -120); await pg.wait_for_timeout(150)
+            pruefe("Wischen blättert zum nächsten Foto", "2 / 2" in await pg.inner_text(".lightbox .lb-zahl"))
+            await pg.keyboard.press("Escape")
+        await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_galerie", ergebnis_galerie, 390, 844)
         async def ergebnis_meine(pg):
             await pg.evaluate("localStorage.setItem('kb_meine_v9', JSON.stringify({b2: 7}))"); await pg.reload(); await pg.wait_for_timeout(600)
             pruefe("Ergebnis zeigt dem Gast seine eigene Note", "deine Note 7" in await pg.inner_text("main"))
@@ -112,8 +134,8 @@ async def main():
         await seite("bm", "verkostung.html?id=v1", "vk_abschliessen", abschliessen)
         async def ergebnis_bilder(pg):
             # Teilnehmer-Galerie ist seit 27.10.2026 nur für Braumeister/Admin sichtbar (privater Bucket)
-            pruefe("Ergebnis zeigt Titelbild, aber keine Galerie für Gäste", await pg.locator("#titelbild").count() == 1 and await pg.locator(".galerie").count() == 0)
-            pruefe("Platzhalter für Biere ohne Bild", await pg.locator(".podium .bb svg").count() >= 1)
+            pruefe("Ergebnis zeigt Titelbild, aber keine Galerie für Besucher", await pg.locator("#titelbild").count() == 1 and await pg.locator(".galerie, .gg-raster").count() == 0)
+            pruefe("Platzhalter für Biere ohne Bild", await pg.locator(".rank.erg .bb svg").count() >= 1)
             await pg.click("#titelbild"); await pg.wait_for_timeout(200)
             pruefe("Titelbild öffnet Großansicht", await pg.locator(".lightbox").count() == 1)
         await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_bilder", ergebnis_bilder)
@@ -122,16 +144,26 @@ async def main():
             await pg.fill("#j_name", "Clara"); await pg.click("#joinBtn"); await pg.wait_for_timeout(400)
             await pg.click(".probe >> nth=2")
             for _ in range(4): await pg.click("#bWeiter")  # Aussehen…Mundgefühl überspringen, bis „Was fällt dir auf?“
-            await pg.fill("#b_kom", "fruchtig"); await pg.click("#bWeiter")  # -> Nochmal trinken?
+            await pg.fill("#b_kom", "fruchtig"); await pg.click("#bWeiter")  # -> Weiterempfehlen?
+            pruefe("Frage heißt „Würdest du dieses Bier weiterempfehlen?“", "dieses Bier weiterempfehlen" in await pg.inner_text("body"))
             await pg.click("#bWeiter")  # überspringen -> Benotung
             await pg.click("#bWeiter")
             pruefe("Bogen verlangt Gesamtnote", "Gesamtnote" in await pg.inner_text("#bErr"))
             await pg.click(".scale button[data-n='7']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(400)
             pruefe("Bewertung gesendet", '"p_note":7' in await pg.evaluate("JSON.stringify(window.__letzte)"))
-            pruefe("Gast sieht Foto-Knopf (0 von 3), aber keine Galerie", await pg.locator(".galerie").count() == 0 and "0 von 3" in await pg.inner_text("#fotoBtn"))
-            await bild_waehlen(pg, "#fotoBtn"); await pg.wait_for_timeout(500)
-            pruefe("Gast-Foto geht an die Edge Function", await pg.evaluate("window.__invoke") == "galerie-hochladen")
-            pruefe("Zähler steht auf 1 von 3", "1 von 3" in await pg.inner_text("#fotoBtn"))
+            pruefe("Gast sieht Foto-Knopf (0 von 9)", "0 von 9" in await pg.inner_text("#fotoBtn"))
+            await pg.wait_for_timeout(300)
+            pruefe("Gast sieht die Fotos vom Abend (mit Fotograf)", await pg.locator("#gastGalerie .gg-raster button").count() == 1 and "von Anna" in await pg.inner_text("#gastGalerie"))
+            pruefe("Gast kann seinen persönlichen Zugangslink teilen", await pg.locator("#gastGalerie [data-zugang]").count() == 1)
+            await pg.click("#fotoBtn"); await pg.wait_for_selector(".bilddialog")
+            pruefe("Knopf heißt „Bild auswählen“", await pg.locator(".bilddialog label:has-text('Bild auswählen')").count() == 1)
+            await pg.set_input_files(".bilddialog input[type=file] >> nth=1", FOTO)
+            await pg.wait_for_selector(".bd-crop:not([hidden])")
+            pruefe("Gast-Zuschnitt hat nur einen Schritt („Übernehmen“ statt „Weiter“)", (await pg.inner_text(".bilddialog [data-a=ok]")).strip() == "Übernehmen" and (await pg.inner_text(".bd-schritt")).strip() == "")
+            await pg.click(".bilddialog [data-a=ok]"); await pg.wait_for_selector(".bilddialog", state="detached", timeout=5000); await pg.wait_for_timeout(600)
+            pruefe("Gast-Foto geht an die Edge Function", "galerie-hochladen" in await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='fn').map(c=>c[1]))"))
+            pruefe("Zähler steht auf 1 von 9", "1 von 9" in await pg.inner_text("#fotoBtn"))
+            pruefe("Neues Foto erscheint sofort in der Galerie", await pg.locator("#gastGalerie .gg-raster button").count() == 2 and "von dir" in await pg.inner_text("#gastGalerie"))
             pruefe("Kein Live-Zwischenstand für Gäste, solange die Verkostung läuft", await pg.locator(".rank").count() == 0)
         t = await seite("anon", "verkostung.html?v=abc234defg", "vk_gast", gast, 390, 844); pruefe("Gast ist beigetreten", "Clara" in t)
         t = await seite("anon", "verkostung.html?v=falsch", "vk_falscher_code"); pruefe("Falscher Code wird gemeldet", "gibt es nicht" in t)
