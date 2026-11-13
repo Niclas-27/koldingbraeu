@@ -166,7 +166,7 @@ Variante mit 17 festen Feldern wurde ausprobiert, die stufenlose gefiel besser. 
 **Geschmackskarte statt Kreis (seit 13.11.2026, PR „Geschmackskarte“):** Der Kreis saß nicht mittig (ungleich breite
 Beschriftung links/rechts), ließ die Ecken ungenutzt und kappte sie sogar – „sehr bitter und sehr süß“ war nicht
 wählbar. Jetzt ist es ein Quadrat über die volle Breite (`karteHtml` in `common.js`), Pole als Etiketten in der Karte
-(dadurch exakt mittig), dezenter Verlauf hopfengrün → würzig, in den Ecken Bierstil-Beispiele zur Orientierung
+(dadurch exakt mittig), flach in den Seitenfarben (Fläche `--surface`, Linie `--line`, Punkt in `--amber`), in den Ecken Bierstil-Beispiele zur Orientierung
 (`KARTE_ECKEN`: herb & trocken – Pils, IPA; bitter & süß – Imperial Stout; mild & trocken – Weizen, Kölsch; mild & süß –
 Bock, Märzen). Jede Achse wird einzeln auf -1…1 begrenzt, damit bilden die Werte 0–10 genau das Quadrat ab. Die Größe
 ist an die Bildschirmhöhe gekoppelt (mind. 220 px), damit die Seite auch auf einem iPhone SE ohne Scrollen passt. Die
@@ -174,9 +174,9 @@ Blase springt im oberen Bereich unter den Punkt. Im Code heißt es weiter „kre
 
 **Punktwolke auf der Ergebnisseite (seit 13.11.2026):** Im aufgeklappten Bier zeigt „Geschmacksbild · n Stimmen“ die
 Karte mit einem Punkt je Bewertung, einem Kreuz für den Schnitt und – nur auf dem Gerät des Gastes – seinem eigenen
-Punkt in Grün (`localStorage` `kb_meine_k_<id>`, `[suesse, bitter]` je Bier, legt `guest.js` beim Aufdecken mit ab).
+Punkt in Röstmalz-Dunkel (`--ink`; nicht Grün, das steht auf der Seite für gute Noten) (`localStorage` `kb_meine_k_<id>`, `[suesse, bitter]` je Bier, legt `guest.js` beim Aufdecken mit ab).
 Bittere/Süße erscheinen dann nicht noch einmal als Balken im Geschmacksprofil. Unter der Rangliste zeigt „Alle Biere
-auf einer Karte“ den Schnitt jedes Biers als Platzziffer (Platz 1 grün umrandet) mit Namensliste darunter. Dafür
+auf einer Karte“ den Schnitt jedes Biers als Platzziffer, eingefärbt in der Notenfarbe (`gradeCls`) mit Namensliste darunter. Dafür
 liefert `vk_ergebnis` je Probe zusätzlich `kreis` = Liste `[suesse, bitter]` der sichtbaren Bewertungen, ohne Namen,
 zufällig sortiert (`schema/16_ergebnis_geschmackskarte.sql`, additiv). Ohne dieses Feld (Datenbank noch nicht
 erweitert) zeigt die Seite nur den Schnitt aus `merkmale`.

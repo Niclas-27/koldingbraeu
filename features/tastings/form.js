@@ -146,7 +146,9 @@ function kreisVerdrahten(inhalt, f){
     // aus dem Bild ragt; im oberen Drittel unter den Punkt, sonst verdeckt sie „Bitter“ bzw. ragt aus der Karte.
     if(p){
       blase.textContent = kreisText(p);
-      blase.style.left = Math.min(70, Math.max(30, 50 + p.x*50)) + "%";
+      // nach ihrer echten Breite eingerückt, damit sie höchstens 8 px über die Karte hinausragt
+      const fw = feld.clientWidth, halb = blase.offsetWidth / 2, x = (50 + p.x*50) / 100 * fw;
+      blase.style.left = Math.min(fw + 8 - halb, Math.max(halb - 8, x)) + "px";
       blase.style.top = (50 - p.y*50) + "%";
       blase.classList.toggle("unten", p.y > 0.4);
     } else blase.classList.remove("an");

@@ -56,11 +56,11 @@ async function ergebnisLaden(){
     const mit = proben.map(p => ({p, ds: kSchnitt(p)})).filter(x => x.ds);
     if(mit.length < 2) return "";
     const nr = p => p.platz || "–";
-    return `<section class="sec"><h3>Alle Biere auf einer Karte</h3><p class="hint">So lagen die Biere im Schnitt – die Zahl ist der Platz.</p>
+    return `<section class="sec"><h3>Alle Biere auf einer Karte</h3><p class="hint">So lagen die Biere im Schnitt – die Zahl ist der Platz, die Farbe die Note.</p>
       ${karteHtml({klein: true, ecken: false, attr: ` role="img" aria-label="Alle Biere auf der Geschmackskarte, Namen in der Liste darunter"`,
-        innen: mit.map(({p, ds}) => `<span class="k-bier${p.platz===1?" g1":""}" style="${kartePos(ds[0],ds[1])}" title="${esc(p.name)}">${nr(p)}</span>`).join("")})
+        innen: mit.map(({p, ds}) => `<span class="k-bier ${gradeCls(p.schnitt)}" style="${kartePos(ds[0],ds[1])}" title="${esc(p.name)}">${nr(p)}</span>`).join("")})
         .replace('class="karte klein"', 'class="karte klein alle"')}
-      <dl class="alle-liste">${mit.map(({p, ds}) => `<dt class="num">${nr(p)}</dt><dd><b>${esc(p.name)}</b> · ${esc(kWorte(ds).toLowerCase())}</dd>`).join("")}</dl></section>`;
+      <dl class="alle-liste">${mit.map(({p, ds}) => `<dt class="num ${gradeCls(p.schnitt)}">${nr(p)}</dt><dd><b>${esc(p.name)}</b> · ${esc(kWorte(ds).toLowerCase())}</dd>`).join("")}</dl></section>`;
   };
   // Seit 10.11.2026 kein Podest mehr: alle Biere in einer einheitlichen Rangliste von Platz 1 bis zum letzten.
   let h = `<p><a class="back" href="verkostung.html">← Alle Verkostungen</a></p>
