@@ -43,14 +43,37 @@ const TAGS_GESCHMACK = [
    Sie bleiben hier nur, damit bereits gespeicherte Bewertungen weiter richtig angezeigt werden. */
 const TAGS_GESCHMACK_FRUEHER = [["herb","🍋"],["süß","🍯"]];
 /* Geschmackskreis (Seite „Geschmacksbild“): zwei Achsen, gespeichert als die früheren Regler in merkmale –
-   bitter: 0 = mild … 10 = bitter, suesse: 0 = trocken … 10 = süß. Begriffe fürs Glossar der Seite. */
+   bitter: 0 = mild … 10 = bitter, suesse: 0 = trocken … 10 = süß. Begriffe fürs Glossar der Seite.
+   (Heißt im Code weiter „Kreis“ – seit 13.11.2026 ist es eine quadratische Karte, siehe karteHtml.) */
 const KREIS_BEGRIFFE = [
   ["bitter","☕","Die Bittere vom Hopfen – zieht am Gaumen, wie Grapefruit, Chicorée oder dunkle Schokolade. Typisch für Pils und IPA."],
   ["mild","🥛","Kaum Bittere, weich und rund. Typisch für Helles oder Weizen."],
   ["süß","🍯","Schmeckt nach Malz-Süße, wie Honig, Karamell oder Malzbier. Typisch für Bock und Märzen."],
   ["trocken","🌵","Das Gegenteil von süß: kaum Restsüße, endet knackig und sauber – man will gleich den nächsten Schluck. Typisch für Pils und Kölsch."],
-  ["ausgewogen","⚖️","Die Mitte des Kreises: nichts sticht heraus."],
+  ["ausgewogen","⚖️","Die Mitte der Karte: nichts sticht heraus."],
 ];
+/* Geschmackskarte (seit 13.11.2026 statt des Kreises): Quadrat mit den vier Polen am Rand und Bierstil-Beispielen in
+   den Ecken. Gemeinsam für den Bogen (Eingabe) und die Ergebnisseite (Punktwolke). Lage als x/y von -1 bis 1:
+   x = Süße (links trocken, rechts süß), y = Bittere (unten mild, oben bitter) – 1:1 die Werte 0–10 in merkmale. */
+const KARTE_ECKEN = [["ol","herb & trocken","Pils, IPA"],["or","bitter & süß","Imperial Stout"],
+                     ["ul","mild & trocken","Weizen, Kölsch"],["ur","mild & süß","Bock, Märzen"]];
+function karteHtml({ecken = true, klein = false, attr = "", innen = ""} = {}){
+  return `<div class="karte${klein?" klein":""}"${attr}><i class="k-achse v" aria-hidden="true"></i><i class="k-achse h" aria-hidden="true"></i>
+    <span class="k-pol o" aria-hidden="true">${klein?"":"☕ "}Bitter</span><span class="k-pol u" aria-hidden="true">${klein?"":"🥛 "}Mild</span>
+    <span class="k-pol l" aria-hidden="true">${klein?"":"🌵 "}Trocken</span><span class="k-pol r" aria-hidden="true">Süß${klein?"":" 🍯"}</span>
+    ${ecken?KARTE_ECKEN.map(([k,t,b]) => `<span class="k-ecke ${k}" aria-hidden="true"><b>${esc(t)}</b>${esc(b)}</span>`).join(""):""}${innen}</div>`;
+}
+// Position in Prozent aus den gespeicherten Werten 0–10 (suesse, bitter)
+const kartePos = (suesse, bitter) => `left:${(suesse*10).toFixed(1)}%;top:${(100 - bitter*10).toFixed(1)}%`;
+// Wahl in Worten, z. B. „Leicht bitter und trocken“ (p = {x, y} von -1 bis 1)
+function kreisText(p){
+  if(!p) return "Noch nichts gewählt – tipp auf die Karte.";
+  const teil = (v, plus, minus) => { const a = Math.abs(v); if(a < 0.2) return null;
+    return {a, t: (a > 0.75 ? "sehr " : a < 0.45 ? "leicht " : "") + (v > 0 ? plus : minus)}; };
+  const t = [teil(p.y, "bitter", "mild"), teil(p.x, "süß", "trocken")].filter(Boolean).sort((a,b) => b.a - a.a).map(x => x.t);
+  if(!t.length) return "Ausgewogen";
+  const s = t.join(" und "); return s[0].toUpperCase() + s.slice(1);
+}
 const eindruck = t => { const e = [...TAGS_GERUCH, ...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].find(([x]) => x === t); return e ? e[1]+" "+t : t; };
 const istGeschmack = t => [...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].some(([x]) => x === t);
 const MIN_LIVE = 15000; // Abstand der Aktualisierung während einer laufenden Verkostung
