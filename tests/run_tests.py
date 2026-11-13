@@ -125,8 +125,12 @@ async def main():
             await pg.keyboard.press("Escape")
         await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_galerie", ergebnis_galerie, 390, 844)
         async def ergebnis_meine(pg):
-            await pg.evaluate("localStorage.setItem('kb_meine_v9', JSON.stringify({b2: 7}))"); await pg.reload(); await pg.wait_for_timeout(600)
+            await pg.evaluate("localStorage.setItem('kb_meine_v9', JSON.stringify({b2: 7})); localStorage.setItem('kb_meine_k_v9', JSON.stringify({b2: [3, 9]}))"); await pg.reload(); await pg.wait_for_timeout(600)
             pruefe("Ergebnis zeigt dem Gast seine eigene Note", "deine Note 7" in await pg.inner_text("main"))
+            pruefe("Punktwolke: je Gast ein Punkt, Schnitt und eigene Wahl", await pg.locator("details:has-text('Einbecker') .k-gast:not(.du)").count() == 3
+                   and await pg.locator("details:has-text('Einbecker') .k-gast.du").count() == 1 and await pg.locator("details:has-text('Einbecker') .k-schnitt").count() == 1)
+            pruefe("Alte Regler Bittere/Süße nicht doppelt im Profil", "Bittere" not in await pg.inner_text("details:has-text('Einbecker') .erg-detail"))
+            pruefe("Alle Biere auf einer Karte (nur Biere mit Werten)", await pg.locator(".karte.alle .k-bier").count() == 3 and "Einbecker" in await pg.inner_text(".alle-liste"))
         await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_meine", ergebnis_meine)
         async def abschliessen(pg):
             await pg.click("#stEnde"); await pg.click(".frage [data-f=ja]"); await pg.wait_for_timeout(800)
@@ -153,12 +157,16 @@ async def main():
             await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
             pruefe("Wischen blättert zur Seite „Schmecken“", "2 / 4" in await pg.inner_text(".fortschritt .zahl"))
             await pg.click(".bogen-seite[data-i='1'] .chip[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
-            # Geschmackskreis: Tippen oben rechts = bitter + süß; Wischen im Kreis blättert nicht
-            box = await pg.locator(".kreis-feld").bounding_box()
+            # Geschmackskarte: Tippen oben rechts = bitter + süß; Wischen auf der Karte blättert nicht; Karte mittig
+            box = await pg.locator("#karteFeld").bounding_box()
+            vb = await pg.evaluate("(() => { const r = document.querySelector(`.bogen-seite[data-i='2'] fieldset`).getBoundingClientRect(); return {x: r.x, width: r.width}; })()")
+            pruefe("Geschmackskarte steht waagerecht mittig", abs((box["x"] + box["width"]/2) - (vb["x"] + vb["width"]/2)) < 2)
             await pg.mouse.click(box["x"] + box["width"]*0.75, box["y"] + box["height"]*0.2)
             pruefe("Kreis beschreibt die Wahl in Worten", "bitter" in (await pg.inner_text("#kreisText")).lower())
-            await wische(pg, ".kreis-feld", -200); await pg.wait_for_timeout(350)
-            pruefe("Wischen im Kreis blättert nicht", "3 / 4" in await pg.inner_text(".fortschritt .zahl"))
+            await pg.mouse.click(box["x"] + box["width"]*0.98, box["y"] + box["height"]*0.02)
+            pruefe("Ecke der Karte erreichbar (sehr bitter und sehr süß)", "sehr bitter und sehr süß" in (await pg.inner_text("#kreisText")).lower())
+            await wische(pg, "#karteFeld", -200); await pg.wait_for_timeout(350)
+            pruefe("Wischen auf der Karte blättert nicht", "3 / 4" in await pg.inner_text(".fortschritt .zahl"))
             await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
             await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
             pruefe("Wischen auf der letzten Seite speichert nicht", "4 / 4" in await pg.inner_text(".fortschritt .zahl") and await pg.evaluate("!window.__letzte"))

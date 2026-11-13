@@ -137,7 +137,7 @@ Die Gäste sind keine Profis – der Bogen hat darum vier kurze Seiten statt 7 S
 Scrollen aufs Handy:
 1. **Riechen** – Tags `TAGS_GERUCH` (fruchtig, zitronig, blumig, kräuterig, brotig, karamellig, röstig, bananig),
 2. **Schmecken** – Tags `TAGS_GESCHMACK` (hopfig, malzig, spritzig, leicht, kräftig, süffig, ungewöhnlich, nicht meins),
-3. **Geschmacksbild** – der Geschmackskreis (siehe unten, optional),
+3. **Geschmacksbild** – die Geschmackskarte (früher Geschmackskreis, siehe unten, optional),
 4. **Dein Urteil** – Note 0–10 (einziges Pflichtfeld) und „Dein Satz zum Bier“ (optional, eine Zeile, max. 140 Zeichen;
    Spalte `kommentar`).
 
@@ -148,7 +148,7 @@ Bewertungen enthalten noch die früheren Geruchs-Tags (Zitrus, Banane …), die 
 gemeinsam als „Eindrücke“ (`liga.html` lädt `common.js` nicht).
 
 **Blättern:** „Weiter“/„Zurück“ und zusätzlich Wischen. Gewischt wird nur bei einer überwiegend waagerechten Geste über
-einem Viertel der Breite, nie im Textfeld und nie im Geschmackskreis, und Wischen speichert nie – gespeichert wird nur mit dem Knopf. Die Seiten
+einem Viertel der Breite, nie im Textfeld und nie auf der Geschmackskarte, und Wischen speichert nie – gespeichert wird nur mit dem Knopf. Die Seiten
 liegen nebeneinander auf einer Spur (`.bogen-spur`), damit alle Eingaben beim Hin- und Herblättern erhalten bleiben.
 
 **Glossar:** „Was heißt das?“ unter den Tags öffnet ein kleines Fenster mit den Erklärungen (dritter Eintrag der
@@ -162,6 +162,24 @@ früheren Reglern in `merkmale`: `bitter` (0 = mild … 10 = bitter) und `suesse
 passen neue und alte Bewertungen zusammen, und das Geschmacksprofil der Ergebnisseite zeigt sie ohne Änderung an. Eine
 Variante mit 17 festen Feldern wurde ausprobiert, die stufenlose gefiel besser. Seit dem Kreis sind die Tags „herb“ und
 „süß“ aus „Schmecken“ entfernt (`TAGS_GESCHMACK_FRUEHER` hält sie nur für schon gespeicherte Bewertungen).
+
+**Geschmackskarte statt Kreis (seit 13.11.2026, PR „Geschmackskarte“):** Der Kreis saß nicht mittig (ungleich breite
+Beschriftung links/rechts), ließ die Ecken ungenutzt und kappte sie sogar – „sehr bitter und sehr süß“ war nicht
+wählbar. Jetzt ist es ein Quadrat über die volle Breite (`karteHtml` in `common.js`), Pole als Etiketten in der Karte
+(dadurch exakt mittig), dezenter Verlauf hopfengrün → würzig, in den Ecken Bierstil-Beispiele zur Orientierung
+(`KARTE_ECKEN`: herb & trocken – Pils, IPA; bitter & süß – Imperial Stout; mild & trocken – Weizen, Kölsch; mild & süß –
+Bock, Märzen). Jede Achse wird einzeln auf -1…1 begrenzt, damit bilden die Werte 0–10 genau das Quadrat ab. Die Größe
+ist an die Bildschirmhöhe gekoppelt (mind. 220 px), damit die Seite auch auf einem iPhone SE ohne Scrollen passt. Die
+Blase springt im oberen Bereich unter den Punkt. Im Code heißt es weiter „kreis“ (`f.kreis`, `kreisText`, `#kreisText`).
+
+**Punktwolke auf der Ergebnisseite (seit 13.11.2026):** Im aufgeklappten Bier zeigt „Geschmacksbild · n Stimmen“ die
+Karte mit einem Punkt je Bewertung, einem Kreuz für den Schnitt und – nur auf dem Gerät des Gastes – seinem eigenen
+Punkt in Grün (`localStorage` `kb_meine_k_<id>`, `[suesse, bitter]` je Bier, legt `guest.js` beim Aufdecken mit ab).
+Bittere/Süße erscheinen dann nicht noch einmal als Balken im Geschmacksprofil. Unter der Rangliste zeigt „Alle Biere
+auf einer Karte“ den Schnitt jedes Biers als Platzziffer (Platz 1 grün umrandet) mit Namensliste darunter. Dafür
+liefert `vk_ergebnis` je Probe zusätzlich `kreis` = Liste `[suesse, bitter]` der sichtbaren Bewertungen, ohne Namen,
+zufällig sortiert (`schema/16_ergebnis_geschmackskarte.sql`, additiv). Ohne dieses Feld (Datenbank noch nicht
+erweitert) zeigt die Seite nur den Schnitt aus `merkmale`.
 
 Weggefallen sind die übrigen Regler (Aussehen, Geruch, Mundgefühl usw.) und die Frage „Würdest du dieses Bier
 weiterempfehlen?“. Die Spalten `merkmale`, `nochmal` und `fehler` bleiben für die historischen Daten; neue Bewertungen

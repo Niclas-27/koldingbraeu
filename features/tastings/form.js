@@ -12,7 +12,11 @@
      Die Spalten bleiben für die historischen Daten bestehen. Wird eine alte Bewertung neu gespeichert, gehen ihre
      alten Werte unverändert mit, damit nichts verloren geht.
    Geschmackskreis (seit 13.11.2026): Punkt stufenlos setzen und ziehen; eine Blase über dem Daumen beschreibt die
-   Wahl in Worten. Verglichen wurde auch eine Variante mit 17 festen Feldern – die stufenlose gefiel besser. */
+   Wahl in Worten. Verglichen wurde auch eine Variante mit 17 festen Feldern – die stufenlose gefiel besser.
+   Noch am selben Tag wurde aus dem Kreis eine quadratische „Geschmackskarte“ (karteHtml in common.js): Der Kreis saß
+   nicht mittig (ungleich breite Beschriftung links/rechts), ließ die Ecken leer und kappte sie sogar – „sehr bitter
+   und sehr süß“ war nicht erreichbar. Das Quadrat bildet die beiden Werte 0–10 genau ab; die Ecken nennen Bierstile
+   als Orientierung. Im Code heißt es weiter „kreis“ (f.kreis, kreisText …). */
 "use strict";
 const BOGEN_SEITEN = [
   {art:"tags", label:"Riechen", frage:"Woran erinnert dich der Geruch?", tags: () => TAGS_GERUCH},
@@ -21,30 +25,13 @@ const BOGEN_SEITEN = [
   {art:"urteil", label:"Dein Urteil"},
 ];
 
-/* ---- Geschmackskreis --------------------------------------------------------------------------------------
-   Lage im Kreis als x/y von -1 bis 1: x nach rechts = süß, links = trocken; y nach oben = bitter, unten = mild.
-   Mitte = ausgewogen, Rand = sehr ausgeprägt. */
-const KREIS_R = 100;
+/* ---- Geschmackskarte -------------------------------------------------------------------------------------
+   Lage als x/y von -1 bis 1: x nach rechts = süß, links = trocken; y nach oben = bitter, unten = mild.
+   Mitte = ausgewogen, Rand = sehr ausgeprägt. Jede Achse für sich begrenzt – auch die Ecken sind erreichbar. */
 const kreisAusMerkmalen = m => (m && typeof m.bitter === "number" && typeof m.suesse === "number")
   ? {x: (m.suesse - 5) / 5, y: (m.bitter - 5) / 5} : null;
 const kreisZuMerkmalen = p => ({bitter: Math.round(5 + 5*p.y), suesse: Math.round(5 + 5*p.x)});
-const kreisBegrenzen = p => { const r = Math.hypot(p.x, p.y); return r > 1 ? {x: p.x/r, y: p.y/r} : p; };
-function kreisText(p){
-  if(!p) return "Noch nichts gewählt – tipp in den Kreis.";
-  const teil = (v, plus, minus) => { const a = Math.abs(v); if(a < 0.2) return null;
-    return {a, t: (a > 0.75 ? "sehr " : a < 0.45 ? "leicht " : "") + (v > 0 ? plus : minus)}; };
-  const t = [teil(p.y, "bitter", "mild"), teil(p.x, "süß", "trocken")].filter(Boolean).sort((a,b) => b.a - a.a).map(x => x.t);
-  if(!t.length) return "Ausgewogen";
-  const s = t.join(" und "); return s[0].toUpperCase() + s.slice(1);
-}
-function kreisSvg(){
-  return `<svg class="kreis-svg" viewBox="-104 -104 208 208" aria-hidden="true">
-    <circle class="kreis-grund" r="${KREIS_R}"/><circle class="kreis-hilfe" r="${KREIS_R/2}"/>
-    <line class="kreis-achse" x1="0" y1="-${KREIS_R}" x2="0" y2="${KREIS_R}"/><line class="kreis-achse" x1="-${KREIS_R}" y1="0" x2="${KREIS_R}" y2="0"/>
-    <circle class="kreis-mitte" r="2.5"/>
-    <g class="kreis-punkt" hidden><circle class="kp-hof" r="20"/><circle class="kp-kern" r="9"/></g>
-  </svg>`;
-}
+const kreisBegrenzen = p => ({x: Math.max(-1, Math.min(1, p.x)), y: Math.max(-1, Math.min(1, p.y))});
 
 /* opts: {titel, hint, oben (zusätzliches HTML über dem Bogen), alt, speichern(werte) → Promise<{error}>, fertig(),
           naechste() → {label, oeffnen} | null  (optional: nach dem Speichern „Weiter zu Probe X“ anbieten)} */
@@ -62,12 +49,9 @@ function bogenZeigen(opts){
         <div class="tagpick">${s.tags().map(([t,e])=>`<button type="button" class="chip" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span aria-hidden="true">${e}</span> ${esc(t)}</button>`).join("")}</div>
         <button type="button" class="linkbtn glossar-auf" data-glossar="${i}">Was heißt das?</button>`;
     } else if(s.art === "kreis"){
-      h += `<p class="hint">Wo liegt das Bier? Mitte = ausgewogen, außen = sehr ausgeprägt.</p>
-        <div class="kreis">
-          <span class="kl kl-o">☕ Bitter</span><span class="kl kl-l">🌵<br>Trocken</span>
-          <div class="kreis-feld" tabindex="0" role="group" aria-label="Geschmackskreis: oben bitter, unten mild, links trocken, rechts süß. Mit den Pfeiltasten verschieben." aria-describedby="kreisText"></div>
-          <span class="kl kl-r">🍯<br>Süß</span><span class="kl kl-u">🥛 Mild</span>
-        </div>
+      h += `<p class="hint">Wo liegt das Bier? Tipp auf die Karte – Mitte = ausgewogen, Rand = sehr ausgeprägt.</p>
+        ${karteHtml({attr: ` id="karteFeld" tabindex="0" role="group" aria-label="Geschmackskarte: oben bitter, unten mild, links trocken, rechts süß. Mit den Pfeiltasten verschieben." aria-describedby="kreisText"`,
+          innen: `<span class="k-punkt" hidden></span><span class="kreis-blase" aria-hidden="true"></span>`})}
         <p class="kreis-text" id="kreisText" aria-live="polite"></p>
         <div class="kreis-links"><button type="button" class="linkbtn glossar-auf" data-glossar="${i}">Was heißt das?</button>
           <button type="button" class="linkbtn" id="kreisWeg">Zurücksetzen</button></div>`;
@@ -110,10 +94,10 @@ function bogenZeigen(opts){
 
   // Wischen: nur eine überwiegend waagerechte Geste über einer Mindestlänge zählt (wie in der Foto-Ansicht, lib/bilder.js),
   // damit ein leicht schräger Tap auf einen Tag nicht blättert. Im Textfeld nie (dort verschiebt man den Cursor) und
-  // im Geschmackskreis nie (dort zieht man den Punkt).
+  // auf der Geschmackskarte nie (dort zieht man den Punkt).
   let startX = null, startY = null;
   inhalt.addEventListener("touchstart", e => {
-    if(e.touches.length !== 1 || e.target.closest("input, textarea, .kreis-feld")){ startX = null; return; }
+    if(e.touches.length !== 1 || e.target.closest("input, textarea, .karte")){ startX = null; return; }
     startX = e.touches[0].clientX; startY = e.touches[0].clientY;
   }, {passive: true});
   inhalt.addEventListener("touchend", e => {
@@ -146,41 +130,36 @@ function bogenZeigen(opts){
   zeigen(0);
 }
 
-/* Geschmackskreis: Tippen setzt den Punkt, Ziehen verschiebt ihn.
+/* Geschmackskarte: Tippen setzt den Punkt, Ziehen verschiebt ihn.
    Pfeiltasten verschieben ihn in Schritten. Der Wert steht in f.kreis ({x, y} oder null). */
 function kreisVerdrahten(inhalt, f){
-  const feld = inhalt.querySelector(".kreis-feld");
+  const feld = inhalt.querySelector("#karteFeld");
   if(!feld) return;
-  let svg, punkt, blase, blaseWeg = null;
-  const zeichnen = () => {
-    feld.innerHTML = kreisSvg() + `<span class="kreis-blase" aria-hidden="true"></span>`;
-    svg = feld.querySelector("svg"); punkt = svg.querySelector(".kreis-punkt"); blase = feld.querySelector(".kreis-blase");
-    anzeigen();
-  };
+  const punkt = feld.querySelector(".k-punkt"), blase = feld.querySelector(".kreis-blase");
+  let blaseWeg = null;
   const anzeigen = () => {
     const p = f.kreis;
-    punkt.toggleAttribute("hidden", !p); // SVG-Elemente kennen .hidden nicht als Eigenschaft
-    if(p) punkt.setAttribute("transform", `translate(${(p.x*KREIS_R).toFixed(1)} ${(-p.y*KREIS_R).toFixed(1)})`);
+    punkt.hidden = !p;
+    if(p){ punkt.style.left = (50 + p.x*50) + "%"; punkt.style.top = (50 - p.y*50) + "%"; }
     inhalt.querySelector("#kreisText").textContent = kreisText(p);
-    // Blase über dem Daumen: der Finger verdeckt den Punkt, und der Text unter dem Kreis liegt auf kleinen Handys
-    // schon unter dem Weiter-Knopf. Waagerecht etwas eingerückt, damit sie am Rand nicht aus dem Bild ragt.
+    // Blase über dem Daumen: der Finger verdeckt den Punkt. Waagerecht etwas eingerückt, damit sie am Rand nicht
+    // aus dem Bild ragt; im oberen Drittel unter den Punkt, sonst verdeckt sie „Bitter“ bzw. ragt aus der Karte.
     if(p){
       blase.textContent = kreisText(p);
-      blase.style.left = Math.min(72, Math.max(28, 50 + p.x*KREIS_R/2.08)) + "%";
-      blase.style.top = (50 - p.y*KREIS_R/2.08) + "%";
+      blase.style.left = Math.min(70, Math.max(30, 50 + p.x*50)) + "%";
+      blase.style.top = (50 - p.y*50) + "%";
+      blase.classList.toggle("unten", p.y > 0.4);
     } else blase.classList.remove("an");
     inhalt.querySelector("#kreisWeg").hidden = !p;
   };
-  const setzen = p => { p = kreisBegrenzen(p); f.kreis = p; f.kreisGeloescht = false; anzeigen(); };
+  const setzen = p => { f.kreis = kreisBegrenzen(p); f.kreisGeloescht = false; anzeigen(); };
   const ausZeiger = e => {
-    const r = svg.getBoundingClientRect(), s = 208 / r.width; // viewBox ist 208 breit
-    return {x: ((e.clientX - r.left) * s - 104) / KREIS_R, y: -((e.clientY - r.top) * s - 104) / KREIS_R};
+    const r = feld.getBoundingClientRect();
+    return {x: ((e.clientX - r.left) / r.width) * 2 - 1, y: 1 - ((e.clientY - r.top) / r.height) * 2};
   };
   let zieht = false;
   feld.addEventListener("pointerdown", e => {
-    const p = ausZeiger(e);
-    if(Math.hypot(p.x, p.y) > 1.08) return; // knapp außerhalb zählt noch, weiter weg nicht
-    zieht = true; feld.setPointerCapture(e.pointerId); feld.classList.add("zieht"); setzen(p); e.preventDefault();
+    zieht = true; feld.setPointerCapture(e.pointerId); feld.classList.add("zieht"); setzen(ausZeiger(e)); e.preventDefault();
     clearTimeout(blaseWeg); blase.classList.add("an");
   });
   feld.addEventListener("pointermove", e => { if(zieht) setzen(ausZeiger(e)); });
@@ -196,7 +175,7 @@ function kreisVerdrahten(inhalt, f){
     setzen({x: p.x + d[0]*schritt, y: p.y + d[1]*schritt});
   });
   inhalt.querySelector("#kreisWeg").onclick = () => { f.kreis = null; f.kreisGeloescht = true; anzeigen(); feld.focus(); };
-  zeichnen();
+  anzeigen();
 }
 
 /* Kleines Glossar zu den Begriffen einer Seite – eigenes Fenster über dem Bogen (wie bestaetigen() in core.js),
