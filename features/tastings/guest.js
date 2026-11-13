@@ -28,6 +28,10 @@ async function gastLaden(still){
     const bierVon = new Map(data.proben.map(p => [p.id, p.bier_id]));
     const meine = {}; (data.ich?.bewertungen||[]).forEach(b => { const id = bierVon.get(b.probe_id); if(id) meine[id] = b.note; });
     if(Object.keys(meine).length) lsSet("kb_meine_"+data.verkostung.id, JSON.stringify(meine));
+    // … und die eigene Lage auf der Geschmackskarte ([suesse, bitter]) für den grünen Punkt in der Punktwolke
+    const meineK = {}; (data.ich?.bewertungen||[]).forEach(b => { const id = bierVon.get(b.probe_id), m = b.merkmale || {};
+      if(id && typeof m.suesse === "number" && typeof m.bitter === "number") meineK[id] = [m.suesse, m.bitter]; });
+    if(Object.keys(meineK).length) lsSet("kb_meine_k_"+data.verkostung.id, JSON.stringify(meineK));
     // Schlüssel für die Fotos vom Abend auf der Ergebnisseite (die kennt den Code nicht)
     if(data.ich && g) lsSet("kb_gast_e_"+data.verkostung.id, g.token);
     location.replace("verkostung.html?e="+encodeURIComponent(data.verkostung.id));

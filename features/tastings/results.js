@@ -8,6 +8,8 @@ async function ergebnisLaden(){
   // Eigene Noten (nur auf dem Gerät des Gastes, von der Gästeseite beim Aufdecken mitgegeben)
   let meine = {}; try{ meine = JSON.parse(lsGet("kb_meine_"+ergebnisId)||"{}") || {}; }catch(_){}
   const meinTxt = p => meine[p.bier_id] != null ? `deine Note ${meine[p.bier_id]}` : "";
+  // Eigene Lage auf der Geschmackskarte je Bier ([suesse, bitter]) – ebenfalls nur auf diesem Gerät (guest.js)
+  let meineK = {}; try{ meineK = JSON.parse(lsGet("kb_meine_k_"+ergebnisId)||"{}") || {}; }catch(_){}
   document.title = v.titel + " · Koldingbräu";
   // Plätze vergeben (gleicher Schnitt und gleiche Nochmal-Zahl = gleicher Platz)
   let platz = 0, vorher = null;
@@ -18,18 +20,48 @@ async function ergebnisLaden(){
 
   const noten = p => `<div class="dots" aria-label="Einzelnoten: ${esc(p.noten.join(", "))}">${Array.from({length:11},(_,i)=>`<span class="tick${i%5===0?" lab":""}">${i%5===0?i:""}</span>`).join("")}
       ${(() => { const c = new Map(); return p.noten.map(n => { const k = c.get(n) || 0; c.set(n, k+1); return `<i style="left:${n*10}%;bottom:${10+k*12}px" title="Note ${n}"></i>`; }).join(""); })()}</div>`;
-  const profil = p => MERKMALE.flatMap(([,l])=>l).filter(([k]) => p.merkmale[k]).map(([k,label,l,r]) =>
+  // Geschmackskarte (seit 13.11.2026): je Gast ein Punkt (p.kreis = [[suesse, bitter], …], schema/16), Kreuz = Schnitt.
+  // Ohne p.kreis (Datenbank noch nicht erweitert) bleibt nur der Schnitt aus merkmale.
+  const kSchnitt = p => {
+    if(p.kreis && p.kreis.length) return [p.kreis.reduce((a,k) => a + k[0], 0) / p.kreis.length, p.kreis.reduce((a,k) => a + k[1], 0) / p.kreis.length];
+    const m = p.merkmale || {}; return m.suesse && m.bitter ? [m.suesse.wert, m.bitter.wert] : null;
+  };
+  const kWorte = ([s,b]) => kreisText({x: (s-5)/5, y: (b-5)/5});
+  const karte = p => {
+    const ds = kSchnitt(p); if(!ds) return "";
+    const n = (p.kreis||[]).length, du = meineK[p.bier_id];
+    const punkte = (p.kreis||[]).map(([s,b]) => `<i class="k-gast" style="${kartePos(s,b)}"></i>`).join("")
+      + (du ? `<i class="k-gast du" style="${kartePos(du[0],du[1])}" title="deine Wahl"></i>` : "")
+      + `<i class="k-schnitt" style="${kartePos(ds[0],ds[1])}" title="Schnitt"></i>`;
+    return `<div><h4>Geschmacksbild${n?` · ${n} ${n===1?"Stimme":"Stimmen"}`:""}</h4>
+      ${karteHtml({klein: true, ecken: false, attr: ` role="img" aria-label="Geschmackskarte: im Schnitt ${esc(kWorte(ds).toLowerCase())}"`, innen: punkte})}
+      <p class="k-zus">Ø ${esc(kWorte(ds).toLowerCase())}${du?` · du: ${esc(kWorte(du).toLowerCase())}`:""}</p>
+      ${n?`<p class="k-legende"><span><i class="lg-g"></i>Gäste</span>${du?`<span><i class="lg-d"></i>deine Wahl</span>`:""}<span><i class="lg-s"></i>Schnitt</span></p>`:""}</div>`;
+  };
+  const profil = p => MERKMALE.flatMap(([,l])=>l).filter(([k]) => p.merkmale[k] && !(kSchnitt(p) && (k === "bitter" || k === "suesse"))).map(([k,label,l,r]) =>
       `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${p.merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
   const tags = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(eindruck(t))}${n>1?` ${n}×`:""}</span>`).join(" ");
 
   const detail = p => `${meinTxt(p)?`<p class="meine-detail">Ø ${note(p.schnitt)} · <b>${meinTxt(p)}</b></p>`:""}${Bilder.bierFotos(p)}
         ${p.noten.length?`<div><h4>Einzelnoten</h4>${noten(p)}</div>`:""}
         ${p.kommentare.length?`<div><h4>Gesagt wurde</h4><ul class="zitate">${p.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul></div>`:""}
+        ${karte(p)}
         ${profil(p)?`<div><h4>Geschmacksprofil</h4>${profil(p)}</div>`:""}
         ${(() => { const g = Object.fromEntries(Object.entries(p.geruch).filter(([t]) => !istGeschmack(t))), s = Object.fromEntries(Object.entries(p.geruch).filter(([t]) => istGeschmack(t)));
           return (Object.keys(g).length?`<div><h4>Geruch</h4><p>${tags(g)}</p></div>`:"") + (Object.keys(s).length?`<div><h4>Geschmack</h4><p>${tags(s)}</p></div>`:""); })()}
         ${Object.keys(p.fehler).length?`<div><h4>Fehlaromen</h4><p>${tags(p.fehler)}</p></div>`:""}
         <p><a href="liga.html?bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>`;
+  // Alle Biere auf einer Karte: je Bier sein Kronkorken mit der Probennummer vom Abend (wie in der Rangliste bei
+  // Blindverkostungen) am Schnittpunkt; bewusst ohne Notenfarbe – Grün sah nach Rangfolge aus. Liste nach Probennummer.
+  const alleKarte = () => {
+    const mit = proben.map(p => ({p, ds: kSchnitt(p)})).filter(x => x.ds).sort((a,b) => a.p.nummer - b.p.nummer);
+    if(mit.length < 2) return "";
+    return `<section class="sec"><h3>Alle Biere auf einer Karte</h3><p class="hint">So lagen die Biere im Schnitt – die Zahl am Kronkorken ist die Probennummer.</p>
+      ${karteHtml({klein: true, ecken: false, attr: ` role="img" aria-label="Alle Biere auf der Geschmackskarte, Namen in der Liste darunter"`,
+        innen: mit.map(({p, ds}) => `<span class="k-bier" style="${kartePos(ds[0],ds[1])}" title="Probe ${p.nummer}: ${esc(p.name)}">${Bilder.bier(p)}<span class="probe-nr num" aria-hidden="true">${p.nummer}</span></span>`).join("")})
+        .replace('class="karte klein"', 'class="karte klein alle"')}
+      <dl class="alle-liste">${mit.map(({p, ds}) => `<dt><span class="probe-nr num">${p.nummer}</span></dt><dd><b>${esc(p.name)}</b> · ${esc(kWorte(ds).toLowerCase())}${p.platz?` · Platz ${p.platz}`:""}</dd>`).join("")}</dl></section>`;
+  };
   // Seit 10.11.2026 kein Podest mehr: alle Biere in einer einheitlichen Rangliste von Platz 1 bis zum letzten.
   let h = `<p><a class="back" href="verkostung.html">← Alle Verkostungen</a></p>
     <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
@@ -52,6 +84,7 @@ async function ergebnisLaden(){
         ${detail(p)}
       </div></details></li>`;}).join("")}</ol>
       <p class="hint">Ein Bier auswählen zeigt Einzelnoten, Kommentare und Geschmacksprofil.</p></section>`:""}
+    ${alleKarte()}
     <div id="gastGalerie"></div>`;
   main().innerHTML = h;
   Bilder.bierFotosVerdrahten(main());

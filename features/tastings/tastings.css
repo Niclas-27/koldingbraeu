@@ -187,25 +187,60 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .gg-raster small{color:var(--muted);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zugang-link{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-/* Geschmackskreis (Seite „Geschmacksbild“, seit 13.11.2026): Kreis mit den vier Polen ringsum, Punkt stufenlos.
-   touch-action:none, damit Ziehen im Kreis weder scrollt noch blättert. */
-.kreis{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:". o ." "l k r" ". u .";align-items:center;justify-items:center;gap:4px 8px;margin:0 auto;width:100%;max-width:340px}
-.kl{font-size:.88rem;font-weight:700;color:var(--ink);text-align:center;line-height:1.25}
-.kl-o{grid-area:o}.kl-u{grid-area:u}.kl-l{grid-area:l}.kl-r{grid-area:r}
-.kreis-feld{grid-area:k;position:relative;width:100%;max-width:min(240px,30vh);aspect-ratio:1;touch-action:none;cursor:crosshair;border-radius:50%;-webkit-tap-highlight-color:transparent}
-.kreis-feld:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
-.kreis-svg{display:block;width:100%;height:100%;overflow:visible}
-.kreis-grund{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
-.kreis-hilfe{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
-.kreis-achse{stroke:var(--line);stroke-width:1}
-.kreis-mitte{fill:var(--muted)}
-.kp-kern{fill:var(--amber);stroke:var(--surface);stroke-width:3}
-.kp-hof{fill:var(--amber);opacity:0;transition:opacity .15s}
-.kreis-feld.zieht .kp-hof{opacity:.18}
+/* Geschmackskarte (Seite „Geschmacksbild“ und Ergebnisseite, seit 13.11.2026 statt des Kreises): Quadrat mit den
+   Polen am Rand und Bierstil-Beispielen in den Ecken. Die Beschriftung sitzt in der Karte, damit sie exakt mittig
+   steht. Höhe begrenzt, damit die Seite auch auf kleinen Handys ohne Scrollen passt. touch-action:none, damit Ziehen
+   weder scrollt noch blättert. */
+.karte{position:relative;width:100%;max-width:max(220px,min(100%,calc(100svh - 430px)));aspect-ratio:1;margin:0 auto;border-radius:var(--radius);overflow:hidden;
+  background:var(--surface);border:1px solid var(--line);box-sizing:border-box}
+#karteFeld{touch-action:none;cursor:crosshair;-webkit-tap-highlight-color:transparent;overflow:visible}
+#karteFeld{border-color:color-mix(in srgb,var(--ink) 35%,var(--line))}
+#karteFeld:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
+.k-achse{position:absolute;pointer-events:none}
+.k-achse.v{left:50%;top:0;bottom:0;border-left:1px dashed var(--line)}.k-achse.h{top:50%;left:0;right:0;border-top:1px dashed var(--line)}
+/* Pole im Stil der Tags/Chips der Seite */
+.k-pol{position:absolute;z-index:1;font-weight:600;font-size:.84rem;line-height:1.2;color:var(--ink);background:var(--surface);padding:3px 10px;border:1px solid var(--line);border-radius:999px;white-space:nowrap;pointer-events:none}
+.k-pol.o{top:8px;left:50%;transform:translateX(-50%)}.k-pol.u{bottom:8px;left:50%;transform:translateX(-50%)}
+.k-pol.l{left:8px;top:50%;transform:translateY(-50%)}.k-pol.r{right:8px;top:50%;transform:translateY(-50%)}
+.k-ecke{position:absolute;font-size:.7rem;line-height:1.25;color:var(--muted);pointer-events:none}
+.k-ecke b{display:block;color:var(--ink);font-size:.74rem}
+.k-ecke.ol{top:42px;left:10px}.k-ecke.or{top:42px;right:10px;text-align:right}
+.k-ecke.ul{bottom:42px;left:10px}.k-ecke.ur{bottom:42px;right:10px;text-align:right}
+.k-punkt{position:absolute;z-index:2;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--amber);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--amber),0 2px 6px rgba(0,0,0,.18);pointer-events:none}
+.k-punkt[hidden]{display:none}
+#karteFeld.zieht .k-punkt{box-shadow:0 0 0 1px var(--amber),0 0 0 12px var(--amber-soft)}
 .kreis-text{margin:0;text-align:center;font-weight:700;font-size:1.05rem;min-height:1.4em}
 .kreis-links{display:flex;justify-content:space-between;gap:12px;font-size:.92rem}
-/* Blase über dem Daumen: sitzt gut 40px über dem Punkt, solange man tippt/zieht, und noch kurz danach */
-.kreis-blase{position:absolute;z-index:2;transform:translate(-50%,calc(-100% - 40px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+/* Blase über dem Daumen (im oberen Bereich darunter), solange man tippt/zieht, und noch kurz danach */
+.kreis-blase{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 30px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.kreis-blase.unten{transform:translate(-50%,30px)}
 .kreis-blase.an{opacity:1}
 @media (prefers-reduced-motion:reduce){.kreis-blase{transition:none}}
-.bogen-seite fieldset:has(.kreis){gap:12px}
+.bogen-seite fieldset:has(.karte){gap:12px}
+
+/* Ergebnisseite: Punktwolke je Bier und alle Biere auf einer Karte (seit 13.11.2026) */
+.karte.klein{max-width:340px;margin:0}
+.karte.klein .k-pol{font-size:.72rem;font-weight:500;color:var(--muted);padding:1px 8px}
+.karte.klein .k-ecke{display:none}
+.k-gast{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:color-mix(in srgb,var(--amber) 55%,transparent);border:2px solid var(--surface)}
+/* eigene Wahl: Röstmalz statt Grün – Grün heißt auf der Seite „gute Note“ */
+.k-gast.du{z-index:2;width:18px;height:18px;margin:-9px 0 0 -9px;background:var(--ink)}
+.k-schnitt{position:absolute;z-index:3;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:2.5px solid var(--amber);background:color-mix(in srgb,var(--surface) 60%,transparent);box-sizing:border-box}
+.k-schnitt::before,.k-schnitt::after{content:"";position:absolute;left:50%;top:50%;background:var(--amber)}
+.k-schnitt::before{width:10px;height:2px;margin:-1px 0 0 -5px}.k-schnitt::after{width:2px;height:10px;margin:-5px 0 0 -1px}
+.k-legende{display:flex;flex-wrap:wrap;gap:4px 14px;margin:8px 0 0;font-size:.78rem;color:var(--muted)}
+.k-legende i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.k-legende .lg-g{background:color-mix(in srgb,var(--amber) 55%,transparent)}.k-legende .lg-d{background:var(--ink)}
+.k-legende .lg-s{border:2px solid var(--amber);width:6px;height:6px}
+.k-zus{margin:8px 0 0;font-weight:700}
+.karte.alle{max-width:420px;aspect-ratio:1}
+/* Bier auf der Gesamtkarte: Kronkorken (32 px) mit Probennummer wie in der Rangliste (.probe-nr), Mitte = Schnitt.
+   Antippen/Hover holt ein verdecktes Bier nach vorn. */
+.k-bier{position:absolute;z-index:2;width:32px;height:32px;margin:-16px 0 0 -16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+.k-bier:hover,.k-bier:focus-within{z-index:4}
+.k-bier .bb{width:32px;height:32px}
+.k-bier .probe-nr{right:-8px;bottom:-6px}
+.alle-liste{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:10px 0 0;font-size:.88rem}
+.alle-liste dt{display:flex;justify-content:flex-end;align-items:center}
+.alle-liste .probe-nr{position:static;box-shadow:none}.alle-liste dd{margin:0;color:var(--muted)}
+.alle-liste dd b{color:var(--ink);font-weight:600}
