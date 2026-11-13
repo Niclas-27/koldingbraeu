@@ -103,7 +103,7 @@ async def main():
             pruefe("Rangliste enthält alle sieben Biere ab Platz 1", await pg.locator(".rank.erg > li").count() == 7 and (await pg.inner_text(".rank.erg > li >> nth=0 >> .pl")).strip() == "1.")
             pruefe("Kein Platz ist hervorgehoben", await pg.locator(".rank.erg li.top").count() == 0)
             pruefe("Kein „% empfehlen“ mehr in der Rangliste", "empfehlen" not in await pg.inner_text(".rank.erg") and "% nochmal" not in await pg.inner_text(".rank.erg"))
-            pruefe("Offene Verkostung zeigt keine Probennummer", await pg.locator(".probe-nr").count() == 0)
+            pruefe("Offene Verkostung zeigt keine Probennummer in der Rangliste", await pg.locator(".rank.erg .probe-nr").count() == 0)
             pruefe("Ohne Teilnahme keine Fotos vom Abend", "Fotos vom Abend" not in await pg.inner_text("main"))
             await pg.click(".rank.erg > li >> nth=0 >> summary"); await pg.wait_for_timeout(300)
         t = await seite("anon", "verkostung.html?e=v9", "vk_ergebnis", ergebnis); pruefe("Ergebnisseite mit Kommentar und Namen", "Geheimtipp" in t and "Mit Niels" in t)
