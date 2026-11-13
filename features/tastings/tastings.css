@@ -35,9 +35,9 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .probe .pg{font-size:.85rem;color:var(--amber);font-weight:600}
 .probe.done{border-color:var(--hop);background:var(--hop-soft)}
 .probe.done .pg b{display:inline-block;min-width:36px;text-align:center;font-size:1.2rem;color:var(--hop)}
-/* Bewertungsbogen: seit 13.11.2026 drei Seiten (Riechen, Schmecken, Urteil) nebeneinander auf einer Spur, die per
+/* Bewertungsbogen: seit 13.11.2026 vier Seiten (Riechen, Schmecken, Geschmacksbild, Urteil) nebeneinander auf einer Spur, die per
    „Weiter“/Wischen verschoben wird; Bedienelemente fürs Handy vergrößert */
-#bogenInhalt{overflow:hidden;margin:0 -20px}
+#bogenInhalt{overflow:hidden;margin:0 -20px;flex:none} /* flex:none: sonst schrumpft der Bogen auf kleinen Handys und schneidet unten ab, statt zu scrollen */
 .bogen-spur{display:flex;align-items:flex-start;transition:transform .28s ease}
 @media (prefers-reduced-motion:reduce){.bogen-spur{transition:none}}
 .bogen-seite{flex:0 0 100%;min-width:0;padding:0 20px;box-sizing:border-box}
@@ -186,3 +186,26 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .gg-raster img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:var(--line)}
 .gg-raster small{color:var(--muted);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zugang-link{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Geschmackskreis (Seite „Geschmacksbild“, seit 13.11.2026): Kreis mit den vier Polen ringsum, Punkt stufenlos.
+   touch-action:none, damit Ziehen im Kreis weder scrollt noch blättert. */
+.kreis{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:". o ." "l k r" ". u .";align-items:center;justify-items:center;gap:4px 8px;margin:0 auto;width:100%;max-width:340px}
+.kl{font-size:.88rem;font-weight:700;color:var(--ink);text-align:center;line-height:1.25}
+.kl-o{grid-area:o}.kl-u{grid-area:u}.kl-l{grid-area:l}.kl-r{grid-area:r}
+.kreis-feld{grid-area:k;position:relative;width:100%;max-width:min(240px,30vh);aspect-ratio:1;touch-action:none;cursor:crosshair;border-radius:50%;-webkit-tap-highlight-color:transparent}
+.kreis-feld:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
+.kreis-svg{display:block;width:100%;height:100%;overflow:visible}
+.kreis-grund{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.kreis-hilfe{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.kreis-achse{stroke:var(--line);stroke-width:1}
+.kreis-mitte{fill:var(--muted)}
+.kp-kern{fill:var(--amber);stroke:var(--surface);stroke-width:3}
+.kp-hof{fill:var(--amber);opacity:0;transition:opacity .15s}
+.kreis-feld.zieht .kp-hof{opacity:.18}
+.kreis-text{margin:0;text-align:center;font-weight:700;font-size:1.05rem;min-height:1.4em}
+.kreis-links{display:flex;justify-content:space-between;gap:12px;font-size:.92rem}
+/* Blase über dem Daumen: sitzt gut 40px über dem Punkt, solange man tippt/zieht, und noch kurz danach */
+.kreis-blase{position:absolute;z-index:2;transform:translate(-50%,calc(-100% - 40px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.kreis-blase.an{opacity:1}
+@media (prefers-reduced-motion:reduce){.kreis-blase{transition:none}}
+.bogen-seite fieldset:has(.kreis){gap:12px}
