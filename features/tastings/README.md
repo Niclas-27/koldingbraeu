@@ -176,7 +176,7 @@ Blase springt im oberen Bereich unter den Punkt. Im Code heißt es weiter „kre
 Karte mit einem Punkt je Bewertung, einem Kreuz für den Schnitt und – nur auf dem Gerät des Gastes – seinem eigenen
 Punkt in Röstmalz-Dunkel (`--ink`; nicht Grün, das steht auf der Seite für gute Noten) (`localStorage` `kb_meine_k_<id>`, `[suesse, bitter]` je Bier, legt `guest.js` beim Aufdecken mit ab).
 Bittere/Süße erscheinen dann nicht noch einmal als Balken im Geschmacksprofil. Unter der Rangliste zeigt „Alle Biere
-auf einer Karte“ den Schnitt jedes Biers mit seiner Probennummer vom Abend (wie am Kronkorken), eingefärbt in der Notenfarbe (`gradeCls`); die Liste darunter ist nach Probennummer sortiert und nennt den Platz mit Namensliste darunter. Dafür
+auf einer Karte“ jedes Bier als Kronkorken mit Probennummer (wie in der Rangliste) an seinem Schnittpunkt – bewusst ohne Notenfarbe, Grün sah nach Rangfolge aus; die Liste darunter ist nach Probennummer sortiert und nennt den Platz mit Namensliste darunter. Dafür
 liefert `vk_ergebnis` je Probe zusätzlich `kreis` = Liste `[suesse, bitter]` der sichtbaren Bewertungen, ohne Namen,
 zufällig sortiert (`schema/16_ergebnis_geschmackskarte.sql`, additiv). Ohne dieses Feld (Datenbank noch nicht
 erweitert) zeigt die Seite nur den Schnitt aus `merkmale`.

@@ -51,16 +51,16 @@ async function ergebnisLaden(){
           return (Object.keys(g).length?`<div><h4>Geruch</h4><p>${tags(g)}</p></div>`:"") + (Object.keys(s).length?`<div><h4>Geschmack</h4><p>${tags(s)}</p></div>`:""); })()}
         ${Object.keys(p.fehler).length?`<div><h4>Fehlaromen</h4><p>${tags(p.fehler)}</p></div>`:""}
         <p><a href="liga.html?bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>`;
-  // Alle Biere auf einer Karte: je Bier sein Schnitt, beschriftet mit der Probennummer vom Abend (wie am Kronkorken),
-  // Rand in der Notenfarbe; Liste darunter nach Probennummer
+  // Alle Biere auf einer Karte: je Bier sein Kronkorken mit der Probennummer vom Abend (wie in der Rangliste bei
+  // Blindverkostungen) am Schnittpunkt; bewusst ohne Notenfarbe – Grün sah nach Rangfolge aus. Liste nach Probennummer.
   const alleKarte = () => {
     const mit = proben.map(p => ({p, ds: kSchnitt(p)})).filter(x => x.ds).sort((a,b) => a.p.nummer - b.p.nummer);
     if(mit.length < 2) return "";
-    return `<section class="sec"><h3>Alle Biere auf einer Karte</h3><p class="hint">So lagen die Biere im Schnitt – die Zahl ist die Probennummer, die Farbe die Note.</p>
+    return `<section class="sec"><h3>Alle Biere auf einer Karte</h3><p class="hint">So lagen die Biere im Schnitt – die Zahl am Kronkorken ist die Probennummer.</p>
       ${karteHtml({klein: true, ecken: false, attr: ` role="img" aria-label="Alle Biere auf der Geschmackskarte, Namen in der Liste darunter"`,
-        innen: mit.map(({p, ds}) => `<span class="k-bier ${gradeCls(p.schnitt)}" style="${kartePos(ds[0],ds[1])}" title="Probe ${p.nummer}: ${esc(p.name)}">${p.nummer}</span>`).join("")})
+        innen: mit.map(({p, ds}) => `<span class="k-bier" style="${kartePos(ds[0],ds[1])}" title="Probe ${p.nummer}: ${esc(p.name)}">${Bilder.bier(p)}<span class="probe-nr num" aria-hidden="true">${p.nummer}</span></span>`).join("")})
         .replace('class="karte klein"', 'class="karte klein alle"')}
-      <dl class="alle-liste">${mit.map(({p, ds}) => `<dt class="num ${gradeCls(p.schnitt)}">${p.nummer}</dt><dd><b>${esc(p.name)}</b> · ${esc(kWorte(ds).toLowerCase())}${p.platz?` · Platz ${p.platz}`:""}</dd>`).join("")}</dl></section>`;
+      <dl class="alle-liste">${mit.map(({p, ds}) => `<dt><span class="probe-nr num">${p.nummer}</span></dt><dd><b>${esc(p.name)}</b> · ${esc(kWorte(ds).toLowerCase())}${p.platz?` · Platz ${p.platz}`:""}</dd>`).join("")}</dl></section>`;
   };
   // Seit 10.11.2026 kein Podest mehr: alle Biere in einer einheitlichen Rangliste von Platz 1 bis zum letzten.
   let h = `<p><a class="back" href="verkostung.html">← Alle Verkostungen</a></p>
