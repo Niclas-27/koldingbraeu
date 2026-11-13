@@ -130,3 +130,35 @@ Ergebnisseite (`?e=<id>`) mit Rangliste und antippbaren Bieren. Dabei merkt sie 
 (`localStorage` `kb_meine_<id>`); die Ergebnisseite zeigt sie als „deine Note“ – nur auf diesem Gerät. Braumeister
 landen nach „Abschließen“ ebenfalls direkt dort. Dafür liefert `vk_laden` nach dem Abschluss zusätzlich `id` und je
 Probe `bier_id` (`schema/15_ergebnis_wechsel.sql`, angewendet).
+
+## Einfacher Bewertungsbogen (seit 13.11.2026)
+
+Die Gäste sind keine Profis – der Bogen hat darum drei kurze Seiten statt 7 Schritte (`form.js`), jede passt ohne
+Scrollen aufs Handy:
+1. **Riechen** – Tags `TAGS_GERUCH` (fruchtig, zitronig, blumig, kräuterig, brotig, karamellig, röstig, bananig),
+2. **Schmecken** – Tags `TAGS_GESCHMACK` (hopfig, malzig, herb, süß, spritzig, leicht, kräftig, süffig, ungewöhnlich,
+   nicht meins),
+3. **Dein Urteil** – Note 0–10 (einziges Pflichtfeld) und „Dein Satz zum Bier“ (optional, eine Zeile, max. 140 Zeichen;
+   Spalte `kommentar`).
+
+Beide Tag-Listen stehen in `common.js` als `[wort, emoji, erklärung]`. Gespeichert werden alle Tags zusammen in
+`bewertungen.geruch` (nur das Wort, das Emoji kommt beim Anzeigen dazu, `eindruck()`) – deshalb darf kein Wort in beiden
+Listen vorkommen. Ergebnisseite und Verwaltung trennen per `istGeschmack()` wieder in „Geruch“ und „Geschmack“; ältere
+Bewertungen enthalten noch die früheren Geruchs-Tags (Zitrus, Banane …), die beim Geruch landen. Die Liga zeigt alles
+gemeinsam als „Eindrücke“ (`liga.html` lädt `common.js` nicht).
+
+**Blättern:** „Weiter“/„Zurück“ und zusätzlich Wischen. Gewischt wird nur bei einer überwiegend waagerechten Geste über
+einem Viertel der Breite, nie im Textfeld, und Wischen speichert nie – gespeichert wird nur mit dem Knopf. Die Seiten
+liegen nebeneinander auf einer Spur (`.bogen-spur`), damit alle Eingaben beim Hin- und Herblättern erhalten bleiben.
+
+**Glossar:** „Was heißt das?“ unter den Tags öffnet ein kleines Fenster mit den Erklärungen (dritter Eintrag der
+Tag-Listen; Tags ohne Erklärung erscheinen dort nicht). Escape schließt nur das Glossar, nicht den Bogen.
+
+Weggefallen sind die Regler (Aussehen, Geruch, Geschmack, Mundgefühl) und die Frage „Würdest du dieses Bier
+weiterempfehlen?“. Die Spalten `merkmale`, `nochmal` und `fehler` bleiben für die historischen Daten; neue Bewertungen
+senden `{}` / `null` / `[]`, beim erneuten Speichern einer alten Bewertung gehen deren Werte unverändert mit. Das
+Geschmacksprofil wird weiter gezeigt, wo alte Werte vorliegen; „% empfehlen“ wird nicht mehr angezeigt (bleibt nur als
+stiller Gleichstand-Brecher in der Sortierung). Keine Datenbank-Änderung nötig.
+
+Nach dem Speichern bietet der Bogen „Weiter zu Probe X“ an (nächstes noch nicht bewertetes Bier). Wischen zwischen den
+Bieren gibt es bewusst nicht: versehentliches Wischen beim Antippen der Tags, die Biere kommen ohnehin nacheinander.

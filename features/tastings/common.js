@@ -13,7 +13,36 @@ const MERKMALE = [
   ["Geschmack", [["bitter","Bittere","mild","bitter"],["suesse","Süße","trocken","süß"],["malzhopfen","Betonung","malzig","hopfig"]]],
   ["Mundgefühl", [["koerper","Körper","schlank","vollmundig"],["kohlensaeure","Kohlensäure","wenig","spritzig"],["abgang","Abgang","kurz","lang"]]],
 ];
-const GERUCH = ["malzig","brotig","Karamell","röstig","blumig","Zitrus","tropisch","harzig/kräuterig","Banane","Nelke","fruchtig","säuerlich"];
+/* MERKMALE: die früheren Regler – der Bogen fragt sie seit 13.11.2026 nicht mehr ab, sie bleiben nur für die Anzeige
+   historischer Bewertungen (Geschmacksprofil).
+   Tags für den Bogen (Seite „Riechen“ und „Schmecken“): [wort, emoji, kurze Erklärung fürs Glossar oder ""].
+   Gespeichert werden beide Seiten zusammen in bewertungen.geruch (nur das Wort, ohne Emoji) – darum darf kein Wort in
+   beiden Listen vorkommen. Ältere Bewertungen enthalten dort noch die früheren Geruchs-Tags (Zitrus, Banane …), die
+   zählen bei der Anzeige zum Geruch. */
+const TAGS_GERUCH = [
+  ["fruchtig","🍊","Nach Obst – Apfel, Beeren, Pfirsich oder Tropenfrüchte."],
+  ["zitronig","🍋","Frisch-sauer wie Zitrone, Limette oder Grapefruit."],
+  ["blumig","🌸","Nach Blüten oder Parfüm, leicht süßlich."],
+  ["kräuterig","🌿","Nach frischen Kräutern, Gras, Heu oder Tee."],
+  ["brotig","🍞","Nach frischem Brot, Brotteig oder Getreide."],
+  ["karamellig","🍯","Wie Karamellbonbon oder Toffee – süßlich-warm."],
+  ["röstig","🔥","Wie Kaffee, dunkle Schokolade oder dunkler Toast. Typisch für Stout, Porter, Schwarzbier."],
+  ["bananig","🍌","Nach reifer Banane, manchmal mit Nelke – typisch für Weizenbier."],
+];
+const TAGS_GESCHMACK = [
+  ["hopfig","🌿","Frisch, grün und würzig – oft nach Zitrus, Kiefer oder Gras, meist mit etwas Bittere. Typisch für IPA und Pils."],
+  ["malzig","🍺","Nach Getreide – wie Brotkruste, Müsli oder Malzbier, eher rund und leicht süßlich. Typisch für Helles, Märzen, Bock."],
+  ["herb","🍋","Angenehm bitter, wie Grapefruit oder Chicorée – zieht etwas im Mund."],
+  ["süß","🍯","Schmeckt süßlich, wie Honig oder Malzbier."],
+  ["spritzig","🫧","Viel Kohlensäure, prickelt auf der Zunge."],
+  ["leicht","🪶","Schlank und frisch im Mund, fast wie Wasser."],
+  ["kräftig","💪","Voll und rund im Mund, fast cremig."],
+  ["süffig","🍻","Trinkt sich leicht – man will gleich den nächsten Schluck."],
+  ["ungewöhnlich","🤔",""],
+  ["nicht meins","😬",""],
+];
+const eindruck = t => { const e = [...TAGS_GERUCH, ...TAGS_GESCHMACK].find(([x]) => x === t); return e ? e[1]+" "+t : t; };
+const istGeschmack = t => TAGS_GESCHMACK.some(([x]) => x === t);
 const MIN_LIVE = 15000; // Abstand der Aktualisierung während einer laufenden Verkostung
 
 const params = new URLSearchParams(location.search);
@@ -46,7 +75,7 @@ function rangTabelle(zeilen, opts){
       <span class="pl num">${z.schnitt==null?"–":platz+"."}</span>
       <span class="nm${z.bild?" mit-bild":""}">${z.bild||""}<span><b>${esc(z.titel)}</b>${z.unter?`<small>${esc(z.unter)}</small>`:""}</span></span>
       <span class="sc"><b class="num ${gradeCls(z.schnitt)}">${note(z.schnitt)}</b></span>
-      <small class="mt">${z.anzahl||0} Bew.${z.anzahl?` · ${Math.round((z.nochmal||0)/z.anzahl*100)} % empfehlen`:""}</small>
+      <small class="mt">${z.anzahl||0} Bew.</small>
       <span class="bar"><i class="${gradeCls(z.schnitt)}" style="width:${w}%"></i></span>
     </li>`;}).join("")}</ol>`;
 }

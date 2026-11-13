@@ -51,7 +51,7 @@ function zeigen(){
       <span class="pl num">${platz ? platz+"." : "–"}</span>
       <span class="nm mit-bild">${Bilder.bier(b)}<span><b>${esc(b.name)}</b><small>${esc([b.brauerei, b.stil].filter(Boolean).join(" · "))}</small></span></span>
       <span class="sc"><b class="num ${gradeCls(b.schnitt)}">${fmtZahl(b.schnitt, 1)}</b></span>
-      <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"} · ${Math.round(b.nochmal / b.anzahl * 100)} % empfehlen</small>
+      <small class="mt">${b.anzahl} Bewertungen · ${b.verkostungen} ${b.verkostungen===1?"Verkostung":"Verkostungen"}</small>
       <span class="bar"><i class="${gradeCls(b.schnitt)}" style="width:${Math.round(b.schnitt * 10)}%"></i></span>
       </a>
     </li>`;
@@ -90,10 +90,9 @@ async function zeigeDetail(bierId){
   if(error){ $("#liga").innerHTML = `<p><a class="back" href="liga.html">← Alle Biere</a></p><p class="empty">${esc(fehlertext(error))}</p>`; return; }
   const b = data.bier;
   document.title = b.name + " · Koldingbräu";
-  const kennzahlen = `<div class="kws">
+  const kennzahlen = `<div class="kws k3">
       <div class="kw"><span>Schnitt</span><b class="num ${gradeCls(data.schnitt)}">${data.schnitt!=null?fmtZahl(data.schnitt,1):"–"}</b></div>
       <div class="kw"><span>Bewertungen</span><b class="num">${data.anzahl||0}</b></div>
-      <div class="kw"><span>Empfehlen</span><b class="num">${data.anzahl?Math.round(data.nochmal/data.anzahl*100):"–"}</b><small>${data.anzahl?"%":""}</small></div>
       <div class="kw"><span>Alkohol</span><b class="num">${b.alkohol!=null?fmtZahl(b.alkohol,1):"–"}</b><small>${b.alkohol!=null?"% Vol.":""}</small></div>
     </div>`;
   const header = `<header class="bier-kopf">
@@ -111,7 +110,7 @@ async function zeigeDetail(bierId){
       ${bilder?sec("Bilder", bilder):""}
       ${hatWerte ? `
         ${profil(data.merkmale)?sec("Geschmacksprofil", profil(data.merkmale)):""}
-        ${Object.keys(data.geruch).length?sec("Geruch", `<p>${tags(data.geruch)}</p>`):""}
+        ${Object.keys(data.geruch).length?sec("Eindrücke", `<p>${tags(data.geruch)}</p>`):""}
         ${Object.keys(data.fehler).length?sec("Fehlaromen", `<p>${tags(data.fehler)}</p>`):""}
         ${data.kommentare.length?sec("Was gesagt wurde", `<ul class="zitate">${data.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul>`):""}
       ` : `<p class="empty">Für dieses Bier gibt es noch keine Bewertungen aus abgeschlossenen Verkostungen.</p>`}
