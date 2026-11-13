@@ -102,7 +102,7 @@ async def main():
             pruefe("Kein Podest mehr", await pg.locator(".podium, .stufe, .medaille").count() == 0)
             pruefe("Rangliste enthält alle sieben Biere ab Platz 1", await pg.locator(".rank.erg > li").count() == 7 and (await pg.inner_text(".rank.erg > li >> nth=0 >> .pl")).strip() == "1.")
             pruefe("Kein Platz ist hervorgehoben", await pg.locator(".rank.erg li.top").count() == 0)
-            pruefe("Anteil heißt jetzt „empfehlen“", "% empfehlen" in await pg.inner_text(".rank.erg") and "% nochmal" not in await pg.inner_text(".rank.erg"))
+            pruefe("Kein „% empfehlen“ mehr in der Rangliste", "empfehlen" not in await pg.inner_text(".rank.erg") and "% nochmal" not in await pg.inner_text(".rank.erg"))
             pruefe("Offene Verkostung zeigt keine Probennummer", await pg.locator(".probe-nr").count() == 0)
             pruefe("Ohne Teilnahme keine Fotos vom Abend", "Fotos vom Abend" not in await pg.inner_text("main"))
             await pg.click(".rank.erg > li >> nth=0 >> summary"); await pg.wait_for_timeout(300)
@@ -143,14 +143,26 @@ async def main():
         async def gast(pg):
             await pg.fill("#j_name", "Clara"); await pg.click("#joinBtn"); await pg.wait_for_timeout(400)
             await pg.click(".probe >> nth=2")
-            for _ in range(4): await pg.click("#bWeiter")  # Aussehen…Mundgefühl überspringen, bis „Was fällt dir auf?“
-            await pg.fill("#b_kom", "fruchtig"); await pg.click("#bWeiter")  # -> Weiterempfehlen?
-            pruefe("Frage heißt „Würdest du dieses Bier weiterempfehlen?“", "dieses Bier weiterempfehlen" in await pg.inner_text("body"))
-            await pg.click("#bWeiter")  # überspringen -> Benotung
+            # Seit 13.11.2026 drei Seiten: Riechen, Schmecken (Tags), Urteil (Note + Satz) – keine Regler, keine Ja/Nein-Frage
+            pruefe("Bogen hat drei Seiten ohne Regler", await pg.locator(".bogen-seite").count() == 3 and await pg.locator("#bogenInhalt input[type=range]").count() == 0)
+            await pg.click(".bogen-seite[data-i='0'] .chip[data-t='fruchtig']")
+            await pg.click(".bogen-seite[data-i='0'] [data-glossar]"); await pg.wait_for_selector(".glossar")
+            pruefe("Glossar erklärt die Begriffe", "Kaffee" in await pg.inner_text(".glossar"))
+            await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
+            pruefe("Escape schließt nur das Glossar, nicht den Bogen", await pg.locator(".glossar").count() == 0 and await pg.locator("#bogenInhalt").count() == 1)
+            await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
+            pruefe("Wischen blättert zur Seite „Schmecken“", "2 / 3" in await pg.inner_text(".fortschritt .zahl"))
+            await pg.click(".bogen-seite[data-i='1'] .chip[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
+            await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
+            pruefe("Wischen auf der letzten Seite speichert nicht", "3 / 3" in await pg.inner_text(".fortschritt .zahl") and await pg.evaluate("!window.__letzte"))
             await pg.click("#bWeiter")
-            pruefe("Bogen verlangt Gesamtnote", "Gesamtnote" in await pg.inner_text("#bErr"))
-            await pg.click(".scale button[data-n='7']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(400)
-            pruefe("Bewertung gesendet", '"p_note":7' in await pg.evaluate("JSON.stringify(window.__letzte)"))
+            pruefe("Bogen verlangt eine Note", "Note" in await pg.inner_text("#bErr"))
+            await pg.click(".scale button[data-n='7']")
+            await pg.fill("#b_kom", "Schmeckt nach Sommer"); await pg.click("#bWeiter"); await pg.wait_for_timeout(400)
+            letzte = await pg.evaluate("JSON.stringify(window.__letzte)")
+            pruefe("Bewertung gesendet (Note, Tags, Satz)", '"p_note":7' in letzte and '"p_geruch":["fruchtig","hopfig"]' in letzte and "Sommer" in letzte)
+            pruefe("Nach dem Speichern: Weiter zum nächsten offenen Bier", "Weiter zu" in await pg.inner_text("#bNaechste"))
+            await pg.click("#bFertig"); await pg.wait_for_timeout(400)
             pruefe("Gast sieht Foto-Knopf (0 von 9)", "0 von 9" in await pg.inner_text("#fotoBtn"))
             await pg.wait_for_timeout(300)
             pruefe("Gast sieht die Fotos vom Abend (mit Fotograf)", await pg.locator("#gastGalerie .gg-raster button").count() == 1 and "von Anna" in await pg.inner_text("#gastGalerie"))
@@ -174,11 +186,11 @@ async def main():
             pruefe("Hinweis-Meldung ist eine Leiste, keine Pille", await pg.evaluate("parseFloat(getComputedStyle(document.querySelector('.toast')).borderTopLeftRadius) < 20"))
             await pg.click(".rank li[data-id] >> nth=1"); await pg.wait_for_timeout(300)
             await pg.click("[data-ed] >> nth=0")
-            for _ in range(6): await pg.click("#bWeiter")  # alle Schritte bis Benotung überspringen
+            await pg.click("#bWeiter"); await pg.click("#bWeiter")  # Riechen, Schmecken überspringen
             await pg.click(".scale button[data-n='4']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(500)
             pruefe("Admin ändert Bewertung", '"p_note":4' in await pg.evaluate("JSON.stringify(window.__admin)"))
             await pg.click("#nachtragen"); await pg.select_option("#nt_wer", "neu"); await pg.fill("#nt_name", "Manu")
-            for _ in range(6): await pg.click("#bWeiter")
+            await pg.click("#bWeiter"); await pg.click("#bWeiter")
             await pg.click(".scale button[data-n='6']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(500)
             pruefe("Admin trägt Bewertung nach", "vom Admin nachgetragen" in await pg.inner_text("#sheetBody"))
             await pg.click("#bAbbr") if await pg.locator("#bAbbr").count() else None

@@ -10,7 +10,7 @@ const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachgus
 const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_kronkorken","bild_flasche","wasserhaerte","milchsaeure_hauptguss","milchsaeure_nachguss","ph_vorher","ph_nachher","refraktometer_anstellen","refraktometer_restextrakt","karbonisierung","wizard_notizen"];
 const CAPS = {rot:"#c23b2b",blau:"#2f5fa8",orange:"#e5862b",silber:"#b9bec4",gruen:"#3f8a3a",gold:"#c9a227",schwarz:"#1c1c1c",weiss:"#f4f4f0",gelb:"#e8c82e"};
 const CAP_LABEL = {rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"Grün",gold:"Gold",schwarz:"Schwarz",weiss:"Weiß",gelb:"Gelb"};
-Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
+Object.assign(state, { brews: [], q: "", style: "", sort: "neu", ansicht: "liste" });
 
 /* --- Helfer --- */
 /* Bewertung: Note von 0–10 (10 = beste Note), wie bei den Verkostungs-Gesamtnoten – bis 25.10.2026 noch
@@ -118,7 +118,8 @@ function renderList(){
   if(!b.length){$("#list").innerHTML=`<p class="empty">Kein Sud passt zu dieser Suche.</p>`;return;}
   const groups=[];if(state.sort==="note"){groups.push({k:"Nach Note",items:b});}
   else b.forEach(x=>{const k=x.datum?x.datum.slice(0,4):"Ohne Datum";let g=groups[groups.length-1];if(!g||g.k!==k){g={k,items:[]};groups.push(g);}g.items.push(x);});
-  $("#list").innerHTML=groups.map(g=>`<section class="year"><div class="year-head"><h2>${esc(g.k)}</h2><span>${g.items.length} Sud${g.items.length===1?"":"e"}</span></div>${g.items.map(rowHTML).join("")}</section>`).join("");
+  const grid=state.ansicht==="grid",itemFn=grid?cardHTML:rowHTML;
+  $("#list").innerHTML=groups.map(g=>`<section class="year"><div class="year-head"><h2>${esc(g.k)}</h2><span>${g.items.length} Sud${g.items.length===1?"":"e"}</span></div>${grid?`<div class="sud-grid">${g.items.map(itemFn).join("")}</div>`:g.items.map(itemFn).join("")}</section>`).join("");
 }
 function rowHTML(b){
   const bm=isBM();const malz=(b.malz||[]).map(m=>m.sorte).filter(Boolean).join(", ");
@@ -130,6 +131,24 @@ function rowHTML(b){
     ${sudBild(b)}<div class="date"><b>${esc(fmtDate(b.datum))}</b>${esc(b.datum?b.datum.slice(0,4):"")}</div>
     <div class="main"><div class="title"><h3>${esc(title(b))}</h3>${cap}<span class="nr">Nr. ${esc(b.nr)}</span>${lock}${statusBadge}</div><div class="meta">${esc(sub||"Keine Angaben")}</div></div>
     <div class="facts"><div class="num">${b.stammwuerze!=null?esc(fmtNum(b.stammwuerze,"°P"))+"<br>":""}${b.flaschen?esc(b.flaschen)+" Fl.":esc(ageText(b.datum))}</div>${bm?`<span class="grade ${gradeCls(b.bewertung)}" title="Bewertung">${esc(Bz.fmtZahl(b.bewertung,1))}</span>`:""}</div>
+  </a>`;
+}
+/* Kachelansicht derselben Daten wie rowHTML – zusätzlich zur Liste, umschaltbar (Wunsch des Nutzers:
+   Bierstil/Kategorie steht schon im Titel, dazu Stammwürze/Alkohol als technische Werte + Status). */
+function cardHTML(b){
+  const bm=isBM();
+  const cap=b.etikett?`<i class="cap" style="background:${CAPS[b.etikett]||"var(--line)"}" title="Kronkorken ${esc(CAP_LABEL[b.etikett]||b.etikett)}"></i>`:"";
+  const lock=bm&&!b.oeffentlich?`<span class="lock" title="Nur für angemeldete Braumeister sichtbar">intern</span>`:"";
+  const statusBadge=bm&&b.status!=="dokumentiert"?`<span class="tag ${b.status}">${b.status==="entwurf"?"Entwurf":"Gärung läuft"}</span>`:"";
+  const grade=bm?`<span class="grade ${gradeCls(b.bewertung)}" style="margin-left:auto" title="Bewertung">${esc(Bz.fmtZahl(b.bewertung,1))}</span>`:"";
+  const facts=[b.stammwuerze!=null?esc(fmtNum(b.stammwuerze,"°P")):null,b.alkohol!=null?esc(fmtNum(b.alkohol,"% Vol.")):null,b.flaschen?esc(b.flaschen)+" Fl.":null].filter(Boolean);
+  return `<a class="sud-karte" href="index.html?sud=${esc(b.id)}">
+    <div class="kk-flaeche">${sudBild(b)}${(statusBadge||lock)?`<div class="badges">${statusBadge}${lock}</div>`:""}</div>
+    <div class="kk-body">
+      <div class="kk-title"><h3>${esc(title(b))}</h3>${cap}${grade}</div>
+      <span class="kk-nr">Nr. ${esc(b.nr)} · ${esc(fmtDate(b.datum))}${esc(b.datum?b.datum.slice(0,4):"")}</span>
+      <div class="kk-facts">${facts.length?facts.join(" · "):esc(ageText(b.datum))}</div>
+    </div>
   </a>`;
 }
 /* Kopfzeile (Logo/Menü/Konto) nur im Braugang-Assistenten ausblenden, um auf dem Handy Höhe zu gewinnen –
@@ -911,10 +930,22 @@ async function loadBrews(){
   state.brews=data||[];return true;
 }
 
+/* Liste/Kacheln merken wie die Sortierung (kb_sort) – gleiches Muster, eigener Key. */
+function ansichtSetzen(a){
+  state.ansicht=a;KB.lsSet("kb_sude_ansicht",a);
+  $("#ansichtListe").setAttribute("aria-pressed",String(a==="liste"));
+  $("#ansichtGrid").setAttribute("aria-pressed",String(a==="grid"));
+  renderList();
+}
 KB.seite = {
   chrome,
   start(){
     const s=KB.lsGet("kb_sort");if(s){state.sort=s;$("#sort").value=s;}
+    const a=KB.lsGet("kb_sude_ansicht");if(a==="grid"||a==="liste")state.ansicht=a;
+    $("#ansichtListe").setAttribute("aria-pressed",String(state.ansicht==="liste"));
+    $("#ansichtGrid").setAttribute("aria-pressed",String(state.ansicht==="grid"));
+    $("#ansichtListe").onclick=()=>ansichtSetzen("liste");
+    $("#ansichtGrid").onclick=()=>ansichtSetzen("grid");
     $("#newBtn").onclick=neuerSud;
     $("#exportBtn").onclick=downloadCSV;
     $("#q").addEventListener("input",e=>{state.q=e.target.value;renderList();});

@@ -194,13 +194,14 @@ function probeDetail(probeId){
     const m = w.reduce((a,x)=>a+x,0)/w.length;
     return `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${m*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)} · ${w.length}×</small></div>`;
   }).join("");
-  const zaehle = feld => { const c = new Map(); sichtbar.forEach(b=>(b[feld]||[]).forEach(t=>c.set(t,(c.get(t)||0)+1))); return [...c].sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(t)} ${n}×</span>`).join(" "); };
+  const zaehle = (feld, nur = () => true) => { const c = new Map(); sichtbar.forEach(b=>(b[feld]||[]).filter(nur).forEach(t=>c.set(t,(c.get(t)||0)+1))); return [...c].sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(eindruck(t))} ${n}×</span>`).join(" "); };
   const a = auswertung(probeId);
   const body = `<p class="hint">${esc(bierZeile(p.bier))}</p>
     ${Bilder.bierFotos(p.bier)}
-    <div class="stats mini"><div class="stat"><b class="num ${gradeCls(a.schnitt)}">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div><div class="stat"><b class="num">${a.anzahl?Math.round(a.nochmal/a.anzahl*100):0} %</b><span>würden empfehlen</span></div></div>
+    <div class="stats mini"><div class="stat"><b class="num ${gradeCls(a.schnitt)}">${note(a.schnitt)}</b><span>Ø Gesamtnote</span></div><div class="stat"><b class="num">${a.anzahl}</b><span>Bewertungen</span></div></div>
     ${sec("Geschmacksprofil", profil)}
-    ${sec("Geruch", zaehle("geruch"))}
+    ${sec("Geruch", zaehle("geruch", t => !istGeschmack(t)))}
+    ${sec("Geschmack", zaehle("geruch", istGeschmack))}
     ${sec("Fehlaromen", zaehle("fehler"))}
     ${sec("Einzelne Bewertungen", alle.length ? `<div class="bw">${alle.map(b=>`<div class="bw-row${b.ausgeblendet?" aus":""}">
       <span class="grade ${gradeCls(b.note)}">${b.note}</span>
