@@ -32,8 +32,6 @@ const TAGS_GERUCH = [
 const TAGS_GESCHMACK = [
   ["hopfig","🌿","Frisch, grün und würzig – oft nach Zitrus, Kiefer oder Gras, meist mit etwas Bittere. Typisch für IPA und Pils."],
   ["malzig","🍺","Nach Getreide – wie Brotkruste, Müsli oder Malzbier, eher rund und leicht süßlich. Typisch für Helles, Märzen, Bock."],
-  ["herb","🍋","Angenehm bitter, wie Grapefruit oder Chicorée – zieht etwas im Mund."],
-  ["süß","🍯","Schmeckt süßlich, wie Honig oder Malzbier."],
   ["spritzig","🫧","Viel Kohlensäure, prickelt auf der Zunge."],
   ["leicht","🪶","Schlank und frisch im Mund, fast wie Wasser."],
   ["kräftig","💪","Voll und rund im Mund, fast cremig."],
@@ -41,8 +39,20 @@ const TAGS_GESCHMACK = [
   ["ungewöhnlich","🤔",""],
   ["nicht meins","😬",""],
 ];
-const eindruck = t => { const e = [...TAGS_GERUCH, ...TAGS_GESCHMACK].find(([x]) => x === t); return e ? e[1]+" "+t : t; };
-const istGeschmack = t => TAGS_GESCHMACK.some(([x]) => x === t);
+/* „herb“ und „süß“ waren am 13.11.2026 kurz Geschmacks-Tags – seit dem Geschmackskreis fragt der Kreis das ab.
+   Sie bleiben hier nur, damit bereits gespeicherte Bewertungen weiter richtig angezeigt werden. */
+const TAGS_GESCHMACK_FRUEHER = [["herb","🍋"],["süß","🍯"]];
+/* Geschmackskreis (Seite „Geschmacksbild“): zwei Achsen, gespeichert als die früheren Regler in merkmale –
+   bitter: 0 = mild … 10 = bitter, suesse: 0 = trocken … 10 = süß. Begriffe fürs Glossar der Seite. */
+const KREIS_BEGRIFFE = [
+  ["bitter","☕","Die Bittere vom Hopfen – zieht am Gaumen, wie Grapefruit, Chicorée oder dunkle Schokolade. Typisch für Pils und IPA."],
+  ["mild","🥛","Kaum Bittere, weich und rund. Typisch für Helles oder Weizen."],
+  ["süß","🍯","Schmeckt nach Malz-Süße, wie Honig, Karamell oder Malzbier. Typisch für Bock und Märzen."],
+  ["trocken","🌵","Das Gegenteil von süß: kaum Restsüße, endet knackig und sauber – man will gleich den nächsten Schluck. Typisch für Pils und Kölsch."],
+  ["ausgewogen","⚖️","Die Mitte des Kreises: nichts sticht heraus."],
+];
+const eindruck = t => { const e = [...TAGS_GERUCH, ...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].find(([x]) => x === t); return e ? e[1]+" "+t : t; };
+const istGeschmack = t => [...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].some(([x]) => x === t);
 const MIN_LIVE = 15000; // Abstand der Aktualisierung während einer laufenden Verkostung
 
 const params = new URLSearchParams(location.search);

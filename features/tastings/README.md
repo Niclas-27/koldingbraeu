@@ -133,12 +133,12 @@ Probe `bier_id` (`schema/15_ergebnis_wechsel.sql`, angewendet).
 
 ## Einfacher Bewertungsbogen (seit 13.11.2026)
 
-Die Gäste sind keine Profis – der Bogen hat darum drei kurze Seiten statt 7 Schritte (`form.js`), jede passt ohne
+Die Gäste sind keine Profis – der Bogen hat darum vier kurze Seiten statt 7 Schritte (`form.js`), jede passt ohne
 Scrollen aufs Handy:
 1. **Riechen** – Tags `TAGS_GERUCH` (fruchtig, zitronig, blumig, kräuterig, brotig, karamellig, röstig, bananig),
-2. **Schmecken** – Tags `TAGS_GESCHMACK` (hopfig, malzig, herb, süß, spritzig, leicht, kräftig, süffig, ungewöhnlich,
-   nicht meins),
-3. **Dein Urteil** – Note 0–10 (einziges Pflichtfeld) und „Dein Satz zum Bier“ (optional, eine Zeile, max. 140 Zeichen;
+2. **Schmecken** – Tags `TAGS_GESCHMACK` (hopfig, malzig, spritzig, leicht, kräftig, süffig, ungewöhnlich, nicht meins),
+3. **Geschmacksbild** – der Geschmackskreis (siehe unten, optional),
+4. **Dein Urteil** – Note 0–10 (einziges Pflichtfeld) und „Dein Satz zum Bier“ (optional, eine Zeile, max. 140 Zeichen;
    Spalte `kommentar`).
 
 Beide Tag-Listen stehen in `common.js` als `[wort, emoji, erklärung]`. Gespeichert werden alle Tags zusammen in
@@ -148,15 +148,24 @@ Bewertungen enthalten noch die früheren Geruchs-Tags (Zitrus, Banane …), die 
 gemeinsam als „Eindrücke“ (`liga.html` lädt `common.js` nicht).
 
 **Blättern:** „Weiter“/„Zurück“ und zusätzlich Wischen. Gewischt wird nur bei einer überwiegend waagerechten Geste über
-einem Viertel der Breite, nie im Textfeld, und Wischen speichert nie – gespeichert wird nur mit dem Knopf. Die Seiten
+einem Viertel der Breite, nie im Textfeld und nie im Geschmackskreis, und Wischen speichert nie – gespeichert wird nur mit dem Knopf. Die Seiten
 liegen nebeneinander auf einer Spur (`.bogen-spur`), damit alle Eingaben beim Hin- und Herblättern erhalten bleiben.
 
 **Glossar:** „Was heißt das?“ unter den Tags öffnet ein kleines Fenster mit den Erklärungen (dritter Eintrag der
 Tag-Listen; Tags ohne Erklärung erscheinen dort nicht). Escape schließt nur das Glossar, nicht den Bogen.
 
-Weggefallen sind die Regler (Aussehen, Geruch, Geschmack, Mundgefühl) und die Frage „Würdest du dieses Bier
+**Geschmackskreis:** ein Kreis mit vier Polen – 12 Uhr Bitter, 3 Uhr Süß, 6 Uhr Mild, 9 Uhr Trocken. Der Gast tippt
+einen Punkt in den Kreis und kann ihn ziehen; Mitte = ausgewogen, Rand = sehr ausgeprägt. Während des Tippens steht
+die Wahl in Worten in einer Blase über dem Daumen („Bitter und leicht süß“), zusätzlich als Text unter dem Kreis.
+Pfeiltasten verschieben den Punkt, „Zurücksetzen“ nimmt ihn wieder weg. Gespeichert wird der Punkt in den beiden
+früheren Reglern in `merkmale`: `bitter` (0 = mild … 10 = bitter) und `suesse` (0 = trocken … 10 = süß) – dadurch
+passen neue und alte Bewertungen zusammen, und das Geschmacksprofil der Ergebnisseite zeigt sie ohne Änderung an. Eine
+Variante mit 17 festen Feldern wurde ausprobiert, die stufenlose gefiel besser. Seit dem Kreis sind die Tags „herb“ und
+„süß“ aus „Schmecken“ entfernt (`TAGS_GESCHMACK_FRUEHER` hält sie nur für schon gespeicherte Bewertungen).
+
+Weggefallen sind die übrigen Regler (Aussehen, Geruch, Mundgefühl usw.) und die Frage „Würdest du dieses Bier
 weiterempfehlen?“. Die Spalten `merkmale`, `nochmal` und `fehler` bleiben für die historischen Daten; neue Bewertungen
-senden `{}` / `null` / `[]`, beim erneuten Speichern einer alten Bewertung gehen deren Werte unverändert mit. Das
+senden in `merkmale` nur noch den Kreis, sonst `null` / `[]`, beim erneuten Speichern einer alten Bewertung gehen deren Werte unverändert mit. Das
 Geschmacksprofil wird weiter gezeigt, wo alte Werte vorliegen; „% empfehlen“ wird nicht mehr angezeigt (bleibt nur als
 stiller Gleichstand-Brecher in der Sortierung). Keine Datenbank-Änderung nötig.
 
