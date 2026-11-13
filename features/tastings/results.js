@@ -20,13 +20,14 @@ async function ergebnisLaden(){
       ${(() => { const c = new Map(); return p.noten.map(n => { const k = c.get(n) || 0; c.set(n, k+1); return `<i style="left:${n*10}%;bottom:${10+k*12}px" title="Note ${n}"></i>`; }).join(""); })()}</div>`;
   const profil = p => MERKMALE.flatMap(([,l])=>l).filter(([k]) => p.merkmale[k]).map(([k,label,l,r]) =>
       `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${p.merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
-  const tags = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(t)}${n>1?` ${n}×`:""}</span>`).join(" ");
+  const tags = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(eindruck(t))}${n>1?` ${n}×`:""}</span>`).join(" ");
 
   const detail = p => `${meinTxt(p)?`<p class="meine-detail">Ø ${note(p.schnitt)} · <b>${meinTxt(p)}</b></p>`:""}${Bilder.bierFotos(p)}
         ${p.noten.length?`<div><h4>Einzelnoten</h4>${noten(p)}</div>`:""}
         ${p.kommentare.length?`<div><h4>Gesagt wurde</h4><ul class="zitate">${p.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul></div>`:""}
         ${profil(p)?`<div><h4>Geschmacksprofil</h4>${profil(p)}</div>`:""}
-        ${Object.keys(p.geruch).length?`<div><h4>Geruch</h4><p>${tags(p.geruch)}</p></div>`:""}
+        ${(() => { const g = Object.fromEntries(Object.entries(p.geruch).filter(([t]) => !istGeschmack(t))), s = Object.fromEntries(Object.entries(p.geruch).filter(([t]) => istGeschmack(t)));
+          return (Object.keys(g).length?`<div><h4>Geruch</h4><p>${tags(g)}</p></div>`:"") + (Object.keys(s).length?`<div><h4>Geschmack</h4><p>${tags(s)}</p></div>`:""); })()}
         ${Object.keys(p.fehler).length?`<div><h4>Fehlaromen</h4><p>${tags(p.fehler)}</p></div>`:""}
         <p><a href="liga.html?bier=${esc(p.bier_id)}">In der Liga ansehen →</a></p>`;
   // Seit 10.11.2026 kein Podest mehr: alle Biere in einer einheitlichen Rangliste von Platz 1 bis zum letzten.
@@ -44,7 +45,7 @@ async function ergebnisLaden(){
         <span class="pl num">${p.platz?p.platz+".":"–"}</span>
         <span class="nm mit-bild">${bild(p)}<span><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span></span>
         <span class="sc"><b class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</b></span>
-        <small class="mt">${p.anzahl} Bew.${p.anzahl?` · ${Math.round(p.nochmal/p.anzahl*100)} % empfehlen`:""}${meinTxt(p)?` · <b class="meine">${meinTxt(p)}</b>`:""}</small>
+        <small class="mt">${p.anzahl} Bew.${meinTxt(p)?` · <b class="meine">${meinTxt(p)}</b>`:""}</small>
         <span class="bar"><i class="${gradeCls(p.schnitt)}" style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
       </summary>
       <div class="erg-detail">
