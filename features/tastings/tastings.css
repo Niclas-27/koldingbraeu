@@ -35,25 +35,38 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .probe .pg{font-size:.85rem;color:var(--amber);font-weight:600}
 .probe.done{border-color:var(--hop);background:var(--hop-soft)}
 .probe.done .pg b{display:inline-block;min-width:36px;text-align:center;font-size:1.2rem;color:var(--hop)}
-/* Bewertungsbogen: ein Abschnitt pro Bildschirm, Bedienelemente für's Handy vergrößert */
-#b_kom{min-height:160px;font-size:1.1rem;padding:12px 14px}
-@media (max-width:560px){#b_kom{min-height:220px}}
+/* Bewertungsbogen: seit 13.11.2026 drei Seiten (Riechen, Schmecken, Urteil) nebeneinander auf einer Spur, die per
+   „Weiter“/Wischen verschoben wird; Bedienelemente fürs Handy vergrößert */
+#bogenInhalt{overflow:hidden;margin:0 -20px}
+.bogen-spur{display:flex;align-items:flex-start;transition:transform .28s ease}
+@media (prefers-reduced-motion:reduce){.bogen-spur{transition:none}}
+.bogen-seite{flex:0 0 100%;min-width:0;padding:0 20px;box-sizing:border-box}
+.bogen-seite fieldset{display:flex;flex-direction:column;gap:16px}
+.bogen-seite .hint{margin:0}
+.glossar-auf{align-self:flex-start;font-size:.92rem}
+#b_kom{font-size:1.05rem;padding:12px 14px;margin-top:4px}
 .bogen-fuss{display:flex;flex-direction:column;gap:10px;flex:1}
-.bogen-knoepfe{display:flex;gap:10px}
 .fortschritt{display:flex;align-items:center;gap:10px}
 .fortschritt .punkte{display:flex;gap:5px;flex:1}
-.fortschritt .punkte i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.fortschritt .punkte i{flex:1;height:5px;border-radius:3px;background:var(--line);transition:background .2s}
 .fortschritt .punkte i.ab{background:var(--amber)}
 .fortschritt .zahl{font-size:.78rem;color:var(--muted);flex:none;font-family:var(--font-data)}
+.bogen-knoepfe{display:flex;gap:10px;flex:1}
+.bogen-knoepfe .btn{flex:1;min-height:48px}
+.bogen-knoepfe #bZurueck{flex:0 0 64px}
+/* Glossar zu den Tags (Fenster über dem Bogen, Grundgerüst .frage aus base.css) */
+.glossar .frage-k{max-height:min(80vh,640px);overflow-y:auto}
+.glossar dl{margin:0;display:flex;flex-direction:column;gap:12px}
+.glossar dt{font-weight:700}
+.glossar dd{margin:2px 0 0;color:var(--muted);font-size:.92rem;line-height:1.4}
+.bogen-fertig{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:32px 0 12px}
+.bogen-fertig .haken{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--hop-soft);color:var(--hop);font-size:2rem;font-weight:700}
+.bogen-fertig h3{margin:8px 0 0}
 #bogenInhalt fieldset{gap:20px}
-#bogenInhalt legend{font-family:var(--font-display);font-size:1.7rem;font-weight:800;font-stretch:82%;color:var(--ink);text-transform:none;letter-spacing:0;margin-bottom:2px}
+#bogenInhalt legend{font-family:var(--font-display);font-size:1.4rem;font-weight:800;font-stretch:82%;color:var(--ink);text-transform:none;letter-spacing:0;margin-bottom:2px}
 .scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 0;font-family:var(--font-data);font-size:1.15rem;font-weight:600;cursor:pointer;min-height:52px}
 .scale button[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.yn{display:flex;gap:10px}
-.yn button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:15px 0;font-weight:700;font-size:1.02rem;cursor:pointer;min-height:52px}
-.yn button[aria-pressed="true"]{background:var(--hop-soft);border-color:var(--hop);color:var(--hop)}
-.yn button[data-yn="false"][aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
 .sl-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.95rem;font-weight:600}
 .sl-top output{color:var(--amber);font-weight:700;font-size:1.25rem;font-family:var(--font-data)}
 .sl.unset .sl-top output{color:var(--muted)}

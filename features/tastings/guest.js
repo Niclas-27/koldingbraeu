@@ -149,6 +149,13 @@ function bogen(probeId){
     alt: (d.ich.bewertungen||[]).find(b=>b.probe_id===probeId) || {},
     speichern: f => sb.rpc("vk_bewerten", {p_code: code, p_token: gast().token, p_probe: probeId, ...f}),
     fertig: () => gastLaden(),
+    // Nach dem Speichern „Weiter zu Probe X“: das nächste noch nicht bewertete Bier (in Reihenfolge, danach von vorn)
+    naechste: () => {
+      const bewertet = new Set((d.ich.bewertungen||[]).map(b=>b.probe_id)); bewertet.add(probeId);
+      const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer), i = sortiert.findIndex(x=>x.id===probeId);
+      const n = [...sortiert.slice(i+1), ...sortiert.slice(0,i)].find(x=>!bewertet.has(x.id));
+      return n ? {label: offen ? `Weiter zu ${n.nummer}. ${n.bier.name}` : `Weiter zu Probe ${n.nummer}`, oeffnen: () => bogen(n.id)} : null;
+    },
   });
 }
 
