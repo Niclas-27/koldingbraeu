@@ -34,7 +34,7 @@ async function ergebnisLaden(){
       + (du ? `<i class="k-gast du" style="${kartePos(du[0],du[1])}" title="deine Wahl"></i>` : "")
       + `<i class="k-schnitt" style="${kartePos(ds[0],ds[1])}" title="Schnitt"></i>`;
     return `<div><h4>Geschmacksbild${n?` · ${n} ${n===1?"Stimme":"Stimmen"}`:""}</h4>
-      ${karteHtml({klein: true, ecken: false, attr: ` role="img" aria-label="Geschmackskarte: im Schnitt ${esc(kWorte(ds).toLowerCase())}"`, innen: punkte})}
+      ${karteHtml({klein: true, attr: ` role="img" aria-label="Geschmackskarte: im Schnitt ${esc(kWorte(ds).toLowerCase())}"`, innen: punkte})}
       <p class="k-zus">Ø ${esc(kWorte(ds).toLowerCase())}${du?` · du: ${esc(kWorte(du).toLowerCase())}`:""}</p>
       ${n?`<p class="k-legende"><span><i class="lg-g"></i>Gäste</span>${du?`<span><i class="lg-d"></i>deine Wahl</span>`:""}<span><i class="lg-s"></i>Schnitt</span></p>`:""}</div>`;
   };
@@ -57,7 +57,7 @@ async function ergebnisLaden(){
     const mit = proben.map(p => ({p, ds: kSchnitt(p)})).filter(x => x.ds).sort((a,b) => a.p.nummer - b.p.nummer);
     if(mit.length < 2) return "";
     return `<section class="sec"><h3>Alle Biere auf einer Karte</h3><p class="hint">So lagen die Biere im Schnitt – die Zahl am Kronkorken ist die Probennummer.</p>
-      ${karteHtml({klein: true, ecken: false, attr: ` role="img" aria-label="Alle Biere auf der Geschmackskarte, Namen in der Liste darunter"`,
+      ${karteHtml({klein: true, attr: ` role="img" aria-label="Alle Biere auf der Geschmackskarte, Namen in der Liste darunter"`,
         innen: mit.map(({p, ds}) => `<span class="k-bier" style="${kartePos(ds[0],ds[1])}" title="Probe ${p.nummer}: ${esc(p.name)}">${Bilder.bier(p)}<span class="probe-nr num" aria-hidden="true">${p.nummer}</span></span>`).join("")})
         .replace('class="karte klein"', 'class="karte klein alle"')}
       <dl class="alle-liste">${mit.map(({p, ds}) => `<dt><span class="probe-nr num">${p.nummer}</span></dt><dd><b>${esc(p.name)}</b> · ${esc(kWorte(ds).toLowerCase())}${p.platz?` · Platz ${p.platz}`:""}</dd>`).join("")}</dl></section>`;

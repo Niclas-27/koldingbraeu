@@ -3,8 +3,9 @@
    aufs Handy:  1. Riechen (Tags)  2. Schmecken (Tags)  3. Geschmacksbild (Kreis)  4. Urteil: Note 0–10 (einziges
    Pflichtfeld) + „Dein Satz zum Bier“.
    Blättern mit „Weiter“/„Zurück“ oder zusätzlich per Wischen (nur waagerecht, ab einer deutlichen Bewegung, nicht im
-   Textfeld und nicht im Kreis; Wischen speichert nie – gespeichert wird nur mit dem Knopf). „Was heißt das?“ öffnet
-   ein kleines Glossar zu den Begriffen der aktuellen Seite (TAGS_GERUCH / TAGS_GESCHMACK / KREIS_BEGRIFFE, common.js).
+   Textfeld und nicht im Kreis; Wischen speichert nie – gespeichert wird nur mit dem Knopf). Riechen/Schmecken sind
+   seit 14.11.2026 Kacheln mit Beispielen (TAGS_GERUCH / TAGS_GESCHMACK, common.js); ein Glossar („?“) gibt es nur noch
+   beim Geschmacksbild (KREIS_BEGRIFFE).
    Gespeichert wird wie bisher über vk_bewerten / vk_admin_bewerten, ohne Änderung an der Datenbank:
    - Die Tags beider Seiten landen zusammen in bewertungen.geruch (nur das Wort, ohne Emoji).
    - Der Geschmackskreis landet als die früheren Regler „bitter“ und „suesse“ (0–10) in merkmale.
@@ -43,18 +44,20 @@ function bogenZeigen(opts){
   const letzte = BOGEN_SEITEN.length - 1;
 
   const seiteHtml = (s, i) => {
-    let h = `<section class="bogen-seite" data-i="${i}"${i?` aria-hidden="true"`:""}><fieldset><legend>${esc(s.label)}</legend>`;
+    // Geschmacksbild: Glossar und Zurücksetzen als kleine Symbol-Knöpfe in der Überschrift, damit die Karte Platz hat
+    const kopfKnoepfe = s.art === "kreis" ? `<span class="kopf-knoepfe">
+        <button type="button" class="ikon-knopf" id="kreisWeg" aria-label="Auswahl zurücksetzen" title="Zurücksetzen">↺</button>
+        <button type="button" class="ikon-knopf glossar-auf" data-glossar="${i}" aria-label="Was heißt das?" title="Was heißt das?">?</button></span>` : "";
+    const kopfRechts = kopfKnoepfe || (s.art === "tags" ? `<small class="kopf-hinweis">mehrere möglich</small>` : "");
+    let h = `<section class="bogen-seite" data-i="${i}"${i?` aria-hidden="true"`:""}><fieldset><legend${kopfRechts?` class="mit-knoepfen"`:""}><span>${esc(s.label)}</span>${kopfRechts}</legend>`;
     if(s.art === "tags"){
-      h += `<p class="hint">${esc(s.frage)} Tipp an, was passt – gern mehrere, gern keins.</p>
-        <div class="tagpick">${s.tags().map(([t,e])=>`<button type="button" class="chip" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span aria-hidden="true">${e}</span> ${esc(t)}</button>`).join("")}</div>
-        <button type="button" class="linkbtn glossar-auf" data-glossar="${i}">Was heißt das?</button>`;
+      // Kacheln in zwei Spalten (seit 14.11.2026 statt Chips): Emoji, Wort, Beispiele; Haken oben rechts zeigt die Auswahl
+      h += `<div class="tagpick" role="group" aria-label="${esc(s.frage)} Mehrere möglich.">${s.tags().map(([t,e,bsp])=>`<button type="button" class="kachel" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span class="k-emoji" aria-hidden="true">${e}</span><b>${esc(t)}</b><small>${esc(bsp)}</small></button>`).join("")}</div>`;
     } else if(s.art === "kreis"){
-      h += `<p class="hint">Wo liegt das Bier? Tipp auf die Karte – Mitte = ausgewogen, Rand = sehr ausgeprägt.</p>
-        ${karteHtml({attr: ` id="karteFeld" tabindex="0" role="group" aria-label="Geschmackskarte: oben bitter, unten mild, links trocken, rechts süß. Mit den Pfeiltasten verschieben." aria-describedby="kreisText"`,
+      // Ohne Hinweistext und Ecken-Beschriftung (14.11.2026): die Zeile unter der Karte erklärt, was zu tun ist
+      h += `${karteHtml({attr: ` id="karteFeld" tabindex="0" role="group" aria-label="Geschmackskarte: oben bitter, unten mild, links trocken, rechts süß. Mitte = ausgewogen, Rand = sehr ausgeprägt. Mit den Pfeiltasten verschieben." aria-describedby="kreisText"`,
           innen: `<span class="k-punkt" hidden></span><span class="kreis-blase" aria-hidden="true"></span>`})}
-        <p class="kreis-text" id="kreisText" aria-live="polite"></p>
-        <div class="kreis-links"><button type="button" class="linkbtn glossar-auf" data-glossar="${i}">Was heißt das?</button>
-          <button type="button" class="linkbtn" id="kreisWeg">Zurücksetzen</button></div>`;
+        <p class="kreis-text" id="kreisText" aria-live="polite"></p>`;
     } else {
       h += `<div class="scale" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${Array.from({length:11},(_,n)=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}">${n}</button>`).join("")}</div>
         <div class="sl-ends"><span>0 = gar nicht</span><span>10 = großartig</span></div>
@@ -66,8 +69,9 @@ function bogenZeigen(opts){
   const body = `${opts.hint?`<p class="hint">${esc(opts.hint)}</p>`:""}${opts.oben||""}
     <div id="bogenInhalt"><div class="bogen-spur">${BOGEN_SEITEN.map(seiteHtml).join("")}</div></div>
     <span class="err" id="bErr" role="alert"></span>`;
+  // Fortschritt seit 14.11.2026 als dünne Linie an der Oberkante der Fußleiste; „3 / 4“ nur noch für Screenreader
   const foot = `<div class="bogen-fuss">
-      <div class="fortschritt"><span class="punkte">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span><span class="zahl num"></span></div>
+      <div class="fortschritt"><span class="punkte" aria-hidden="true">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span><span class="zahl vh"></span></div>
       <div class="bogen-knoepfe"><button class="btn" id="bZurueck" aria-label="Zurück">←</button><button class="btn primary" id="bWeiter"></button></div>
     </div>`;
   sheet(opts.titel, body, foot);
@@ -85,7 +89,7 @@ function bogenZeigen(opts){
   }
 
   inhalt.querySelectorAll(".scale button").forEach(b => b.onclick = () => { f.note = +b.dataset.n; $("#bErr").textContent = ""; inhalt.querySelectorAll(".scale button").forEach(x=>x.setAttribute("aria-checked", String(x===b))); });
-  inhalt.querySelectorAll(".tagpick .chip").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); });
+  inhalt.querySelectorAll(".tagpick .kachel").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); });
   inhalt.querySelectorAll("[data-glossar]").forEach(b => b.onclick = () => glossarZeigen(BOGEN_SEITEN[+b.dataset.glossar]));
   const kom = $("#b_kom");
   kom.addEventListener("input", () => { f.kommentar = kom.value; });
@@ -142,15 +146,14 @@ function kreisVerdrahten(inhalt, f){
     punkt.hidden = !p;
     if(p){ punkt.style.left = (50 + p.x*50) + "%"; punkt.style.top = (50 - p.y*50) + "%"; }
     inhalt.querySelector("#kreisText").textContent = kreisText(p);
-    // Blase über dem Daumen: der Finger verdeckt den Punkt. Waagerecht etwas eingerückt, damit sie am Rand nicht
-    // aus dem Bild ragt; im oberen Drittel unter den Punkt, sonst verdeckt sie „Bitter“ bzw. ragt aus der Karte.
+    // Blase über dem Daumen: der Finger verdeckt den Punkt.
     if(p){
       blase.textContent = kreisText(p);
       // nach ihrer echten Breite eingerückt, damit sie höchstens 8 px über die Karte hinausragt
       const fw = feld.clientWidth, halb = blase.offsetWidth / 2, x = (50 + p.x*50) / 100 * fw;
       blase.style.left = Math.min(fw + 8 - halb, Math.max(halb - 8, x)) + "px";
+      // immer über dem Finger – ganz oben ragt sie über die Überschrift (darunter verdeckt sie der Daumen)
       blase.style.top = (50 - p.y*50) + "%";
-      blase.classList.toggle("unten", p.y > 0.4);
     } else blase.classList.remove("an");
     inhalt.querySelector("#kreisWeg").hidden = !p;
   };

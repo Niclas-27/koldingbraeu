@@ -151,8 +151,8 @@ gemeinsam als „Eindrücke“ (`liga.html` lädt `common.js` nicht).
 einem Viertel der Breite, nie im Textfeld und nie auf der Geschmackskarte, und Wischen speichert nie – gespeichert wird nur mit dem Knopf. Die Seiten
 liegen nebeneinander auf einer Spur (`.bogen-spur`), damit alle Eingaben beim Hin- und Herblättern erhalten bleiben.
 
-**Glossar:** „Was heißt das?“ unter den Tags öffnet ein kleines Fenster mit den Erklärungen (dritter Eintrag der
-Tag-Listen; Tags ohne Erklärung erscheinen dort nicht). Escape schließt nur das Glossar, nicht den Bogen.
+**Glossar:** Seit 14.11.2026 nur noch beim Geschmacksbild („?“ in der Überschrift, Begriffe aus `KREIS_BEGRIFFE`);
+bei Riechen/Schmecken stehen die Beispiele auf den Kacheln. Escape schließt nur das Glossar, nicht den Bogen.
 
 **Geschmackskreis:** ein Kreis mit vier Polen – 12 Uhr Bitter, 3 Uhr Süß, 6 Uhr Mild, 9 Uhr Trocken. Der Gast tippt
 einen Punkt in den Kreis und kann ihn ziehen; Mitte = ausgewogen, Rand = sehr ausgeprägt. Während des Tippens steht
@@ -171,6 +171,17 @@ wählbar. Jetzt ist es ein Quadrat über die volle Breite (`karteHtml` in `commo
 Bock, Märzen). Jede Achse wird einzeln auf -1…1 begrenzt, damit bilden die Werte 0–10 genau das Quadrat ab. Die Größe
 ist an die Bildschirmhöhe gekoppelt (mind. 220 px), damit die Seite auch auf einem iPhone SE ohne Scrollen passt. Die
 Blase springt im oberen Bereich unter den Punkt. Im Code heißt es weiter „kreis“ (`f.kreis`, `kreisText`, `#kreisText`).
+
+**Kompakter (14.11.2026):** Ohne Bierstil-Ecken und ohne Hinweistext; „Was heißt das?“ und „Zurücksetzen“ sind kleine
+Symbol-Knöpfe (? und ↺) rechts in der Überschrift. Die Blase steht immer über dem Finger und ragt ganz oben über die
+Überschrift (`#bogenInhalt` hat dafür oben 20 px Innenabstand bei −20 px Außenabstand). Der Fortschritt ist eine
+3-px-Linie an der Oberkante der Fußleiste, „3 / 4“ nur noch für Screenreader. Karte bis `100svh − 305px` (iPhone volle
+Breite, iPhone SE ~250 px), auf niedrigen Bildschirmen ist der Kopf des Bogens flacher.
+
+**Riechen/Schmecken als Kacheln (14.11.2026):** Statt der Chips zwei Spalten mit je vier Kacheln (`.kachel`): Emoji,
+Wort, darunter kurze Beispiele („Apfel, Beeren, Pfirsich“), Haken oben rechts zeigt die Auswahl. Die Beispiele sind das
+dritte Feld in `TAGS_GERUCH`/`TAGS_GESCHMACK` und ersetzen auf diesen Seiten Hinweistext und Glossar; rechts in der
+Überschrift steht klein „mehrere möglich“. Das Glossar („?“) gibt es nur noch beim Geschmacksbild.
 
 **Punktwolke auf der Ergebnisseite (seit 13.11.2026):** Im aufgeklappten Bier zeigt „Geschmacksbild · n Stimmen“ die
 Karte mit einem Punkt je Bewertung, einem Kreuz für den Schnitt und – nur auf dem Gerät des Gastes – seinem eigenen
