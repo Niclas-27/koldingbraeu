@@ -274,3 +274,49 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .alle-liste dt{display:flex;justify-content:flex-end;align-items:center}
 .alle-liste .probe-nr{position:static;box-shadow:none}.alle-liste dd{margin:0;color:var(--muted)}
 .alle-liste dd b{color:var(--ink);font-weight:600}
+
+/* ---------- Titel pro Bier, Zusammenfassung, Siegerehrung (seit 14.11.2026) ----------
+   Farbwelt der Seite: flache Flächen, Akzent --amber; Grün/Gelb/Rot nur an der Note (gradeCls). */
+.vk-titel{display:inline-block;font-size:.78rem;font-weight:600;color:var(--amber);border:1px solid var(--amber);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.vk-titel-zeile{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.kurz{display:flex;flex-direction:column;gap:8px}
+.kurz-text{font-size:1.02rem;line-height:1.45}
+.vk-head .top-actions{margin-top:0}
+
+.ehrung{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;gap:12px;overflow-y:auto;
+  padding:max(14px,env(safe-area-inset-top)) 18px max(16px,env(safe-area-inset-bottom))}
+.eh-kopf{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.eh-kopf .kicker{margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eh-karte{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%;max-width:520px;margin:0 auto;padding:10px 0;text-align:center}
+.eh-karte p{margin:0}
+.eh-platz{display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--font-display);font-size:clamp(2.6rem,13vw,4.4rem);font-weight:800;font-stretch:80%;line-height:1}
+.eh-platz small{font-family:var(--font-body);font-size:.85rem;font-weight:400;font-stretch:100%;color:var(--muted)}
+.eh-bild{margin:8px 0 2px}
+.eh-bild .probe-nr{right:-2px;bottom:2px;min-width:30px;height:30px;border-radius:15px;font-size:1rem;line-height:30px}
+.eh-karte h3{font-size:clamp(1.5rem,6vw,2rem);font-weight:800;font-stretch:82%;line-height:1.1;overflow-wrap:anywhere}
+.eh-note{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px}
+.eh-note b{font-size:2.2rem;font-weight:500;line-height:1.1}
+.eh-karte .vk-titel-zeile{justify-content:center;margin-top:4px}
+.eh-karte .vk-titel{font-size:.9rem;padding:4px 12px}
+.eh-text{font-size:1.12rem;line-height:1.45;max-width:34em;margin-top:6px;text-wrap:pretty}
+.eh-fuss{display:flex;align-items:center;gap:8px;width:100%;max-width:520px;margin:0 auto}
+.eh-fuss .spacer{flex:1}
+.eh-fuss .btn{min-height:44px}
+.eh-fuss .btn.primary{min-width:8.5em;justify-content:center;text-align:center}
+.eh-stand{color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:no-preference){
+  .eh-karte > *{animation:eh-auf .45s ease-out both}
+  .eh-karte > :nth-child(2){animation-delay:.06s}.eh-karte > :nth-child(3){animation-delay:.14s}.eh-karte > :nth-child(4){animation-delay:.22s}
+  .eh-karte > :nth-child(n+5){animation-delay:.3s}
+  @keyframes eh-auf{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+}
+
+/* Verwaltung: „Abschluss vorbereiten“ / „Zusammenfassungen“ */
+.zf-hinweis{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.zf-hinweis p{margin:0}
+.zf-bitte{font-family:var(--font-data);font-size:.85rem;user-select:all;overflow-wrap:anywhere}
+.zf-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px}
+.zf-liste li{display:flex;flex-direction:column;gap:8px}
+.zf-kopf{display:flex;align-items:center;gap:10px;min-width:0}
+.zf-kopf .pl{min-width:26px;color:var(--muted)}
+.zf-name{min-width:0}.zf-name b{display:block;overflow-wrap:anywhere}.zf-name small{color:var(--muted);font-size:.8rem}

@@ -12,7 +12,8 @@ am Ende das Ranking aufdecken. Die Ergebnisse fließen in die Liga.
 | `?id=<uuid>` | Verwalten: QR-Code, Biere, Status, Live-Auswertung, Ausblenden, Korrekturen | Braumeister / Admin |
 | `?e=<uuid>` | Ergebnisseite: Rangliste (blind: mit Probennummer), Einzelnoten, Profil, Kommentare; für Teilnehmer die Fotos vom Abend | alle (nur abgeschlossene) |
 
-Ablauf: *In Vorbereitung* → *Läuft* → *Abgeschlossen*.
+Ablauf: *In Vorbereitung* → *Läuft* → *Abgeschlossen*. Beim Abschließen prüft der Braumeister erst Texte und Titel („Abschluss vorbereiten“), danach sehen
+alle die Siegerehrung und dann die Rangliste (siehe „Abschluss“ unten).
 
 ## Wer darf was
 
@@ -205,3 +206,42 @@ stiller Gleichstand-Brecher in der Sortierung). Keine Datenbank-Änderung nötig
 
 Nach dem Speichern bietet der Bogen „Weiter zu Probe X“ an (nächstes noch nicht bewertetes Bier). Wischen zwischen den
 Bieren gibt es bewusst nicht: versehentliches Wischen beim Antippen der Tags, die Biere kommen ohnehin nacheinander.
+
+## Abschluss: Zusammenfassung, Titel, Siegerehrung (seit 14.11.2026)
+
+Ziel: ein lustigerer Abschluss. Drei Bausteine, bewusst klein gehalten – der Nutzer will das später ausbauen
+(Titel pro Gast, wählbarer Tonfall, Tippspiel, Urkunde zum Teilen).
+
+- **Zusammenfassung je Bier** – ein, zwei Sätze aus Noten und Kommentaren, in `proben.zusammenfassung`
+  (max. 400 Zeichen im Formular). Öffentlich erst nach dem Aufdecken über `vk_ergebnis`
+  (`schema/17_zusammenfassung.sql`, additiv); schreiben dürfen nur Braumeister (Policy „Braumeister ändern Proben“).
+  Angezeigt in der Siegerehrung und oben in den aufgeklappten Bierdetails der Ergebnisseite (`.kurz`).
+- **Titel pro Bier** – rein aus den Noten berechnet, nichts gespeichert (`VK_TITEL`, `vkTitel()` in `common.js`):
+  „Streitfall des Abends“ (größte Spanne zwischen bester und schlechtester Note, mindestens 3 Punkte),
+  „Konsensbier“ (kleinste Spanne, höchstens 1 Punkt), „Einstimmig empfohlen“ (alle empfehlen es). Jeder Titel
+  höchstens einmal pro Verkostung, nur bei eindeutigem Ergebnis (Gleichstand der Spanne entscheidet die Streuung,
+  sonst kein Titel) und nur für Biere ab drei Bewertungen. Bei zwei, drei Gästen gibt es deshalb oft keinen Titel.
+- **Siegerehrung** (`siegerehrung()` in `results.js`) – bildschirmfüllend über der Ergebnisseite, eine Karte pro
+  Bier vom letzten Platz bis zum Sieger: Platz, Kronkorken (blind: mit Probennummer), Note, Empfehlungen, „deine
+  Note“, Titel, Zusammenfassung. „Weiter“/„Zurück“, Wischen, Pfeiltasten; „Überspringen“ bzw. Escape geht immer.
+  Jeder blättert am eigenen Gerät (keine Synchronisierung). Startet von selbst nur direkt nach dem Aufdecken –
+  Gästeseite und Verwaltung hängen dafür `&ehrung=1` an die Ergebnis-Adresse, der Zusatz wird sofort wieder entfernt –
+  sonst über den Knopf „Siegerehrung ansehen“. Die Rangliste bleibt ohne Podest.
+
+**Verwaltung:** „Abschließen und aufdecken“ öffnet den Zwischenschritt „Abschluss vorbereiten“ (`zusammenfassungen()`
+in `admin.js`): Rangfolge mit Titeln und einem Textfeld je Bier, Hinweis auf fehlende Texte, „Texte neu laden“ (holt
+neue Texte aus der Datenbank, ohne selbst Geändertes zu überschreiben), „Jetzt aufdecken“ (speichert und schließt
+ab). Aufdecken geht auch ohne Texte. Bei abgeschlossenen Verkostungen öffnet „Zusammenfassungen“ dasselbe Blatt zum
+nachträglichen Ändern.
+
+**Woher die Texte kommen:** bewusst ohne API-Schlüssel – Claude schreibt sie im Chat (Projekt „Koldingbraeu“,
+Supabase-Verbindung) direkt in `proben.zusammenfassung`. Der Braumeister schickt die im Blatt angezeigte Nachricht
+(„Schreib die Zusammenfassungen für die Verkostung ‚…‘“), wartet kurz und tippt „Texte neu laden“. Eine
+automatische Erzeugung per Edge Function kann später als zusätzlicher Knopf dazukommen (Stub
+`verkostung-zusammenfassen` existiert in Supabase, wird nicht benutzt).
+
+Regeln für die Texte: ein bis zwei Sätze, höchstens etwa 200 Zeichen; Noten, Empfehlungen und Kommentare mischen;
+trocken-humorvoll, nicht verletzend; **keine Namen und keine Zuordnung, wer was gesagt hat** (wie auf der
+Ergebnisseite); Zitate nur wörtlich aus den Kommentaren; ausgeblendete Bewertungen nicht verwenden; nichts
+erfinden. Die Spalte `proben.zusammenfassung_test` enthält nur noch sechs alte Testtexte (mit Namen, veraltete
+Noten) als Sicherung und wird nirgends angezeigt.

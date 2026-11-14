@@ -12,8 +12,12 @@ async function ergebnisLaden(){
   let meineK = {}; try{ meineK = JSON.parse(lsGet("kb_meine_k_"+ergebnisId)||"{}") || {}; }catch(_){}
   document.title = v.titel + " · Koldingbräu";
   // Plätze vergeben (gleicher Schnitt und gleiche Nochmal-Zahl = gleicher Platz)
-  let platz = 0, vorher = null;
-  proben.forEach((p,i) => { const k = p.schnitt==null ? null : `${p.schnitt}|${p.nochmal}`; if(k!==vorher){ platz = i+1; vorher = k; } p.platz = p.schnitt==null ? null : platz; });
+  plaetzeVergeben(proben);
+  // Titel pro Bier (seit 14.11.2026, common.js) und die Zusammenfassung in ein, zwei Sätzen (proben.zusammenfassung,
+  // schema/17) – beides steht in der Siegerehrung und oben in den aufgeklappten Bierdetails.
+  const titel = vkTitel(proben), titelVon = p => titel.get(p) || [];
+  const kurz = p => { const t = vkTitelHtml(titelVon(p)), z = (p.zusammenfassung||"").trim();
+    return t || z ? `<div class="kurz">${t?`<p class="vk-titel-zeile">${t}</p>`:""}${z?`<p class="kurz-text">${esc(z)}</p>`:""}</div>` : ""; };
   // Bei Blindverkostungen steht die ehemalige Probennummer als Kreis am Kronkorken – so finden die Gäste beim
   // Aufdecken ihren Favoriten vom Abend wieder (seit 10.11.2026).
   const bild = p => v.blind ? `<span class="bb-nr">${Bilder.bier(p)}<span class="probe-nr num" title="Probe ${p.nummer}" aria-label="Probe ${p.nummer}">${p.nummer}</span></span>` : Bilder.bier(p);
@@ -42,7 +46,7 @@ async function ergebnisLaden(){
       `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${p.merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
   const tags = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(eindruck(t))}${n>1?` ${n}×`:""}</span>`).join(" ");
 
-  const detail = p => `${meinTxt(p)?`<p class="meine-detail">Ø ${note(p.schnitt)} · <b>${meinTxt(p)}</b></p>`:""}${Bilder.bierFotos(p)}
+  const detail = p => `${kurz(p)}${meinTxt(p)?`<p class="meine-detail">Ø ${note(p.schnitt)} · <b>${meinTxt(p)}</b></p>`:""}${Bilder.bierFotos(p)}
         ${p.noten.length?`<div><h4>Einzelnoten</h4>${noten(p)}</div>`:""}
         ${p.kommentare.length?`<div><h4>Gesagt wurde</h4><ul class="zitate">${p.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul></div>`:""}
         ${karte(p)}
@@ -67,17 +71,17 @@ async function ergebnisLaden(){
     <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
       <p class="hint">${esc([fmtDateLong(v.datum), v.ort, proben.length+" Biere", v.blind?"blind verkostet":""].filter(Boolean).join(" · "))}</p>
       ${data.teilnehmer.length?`<p class="hint">Mit ${esc(data.teilnehmer.join(", "))}</p>`:""}</div>
-      ${isBM()?`<a class="btn" href="verkostung.html?id=${esc(v.id)}">Verwalten</a>`:""}</div>
+      <div class="top-actions">${proben.filter(p => p.platz).length > 1?`<button type="button" class="btn" id="ehrungStart">Siegerehrung ansehen</button>`:""}${isBM()?`<a class="btn" href="verkostung.html?id=${esc(v.id)}">Verwalten</a>`:""}</div></div>
     ${v.bild_titel?`<img class="titelbild" id="titelbild" src="${esc(Bilder.url(v.bild_titel))}" alt="Titelbild der Verkostung">`:""}
     ${Object.keys(meine).length?`<p class="hint">Tippe auf ein Bier für Einzelnoten, Kommentare und Geschmacksprofil – deine eigene Note steht jeweils dabei.</p>`:""}
     ${proben.length?`<section class="sec"><h3>Rangliste</h3>${v.blind?`<p class="hint">Die Zahl am Kronkorken ist die Probennummer vom Abend.</p>`:""}<ol class="rank erg">${proben.map(p => {
-      const offen = p.kommentare.length || Object.keys(p.merkmale).length || Object.keys(p.geruch).length || Object.keys(p.fehler).length || p.noten.length || p.bild_kronkorken || p.bild_flasche;
+      const offen = kurz(p) || p.kommentare.length || Object.keys(p.merkmale).length || Object.keys(p.geruch).length || Object.keys(p.fehler).length || p.noten.length || p.bild_kronkorken || p.bild_flasche;
       return `<li>
       <details${offen?"":" class=\"leer\""}><summary>
         <span class="pl num">${p.platz?p.platz+".":"–"}</span>
         <span class="nm mit-bild">${bild(p)}<span><b>${esc(p.name)}</b><small>${esc(bierZeile(p))}${p.eigen&&!/kolding/i.test(p.brauerei||"")?" · selbst gebraut":""}</small></span></span>
         <span class="sc"><b class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</b></span>
-        <small class="mt">${p.anzahl} Bew.${meinTxt(p)?` · <b class="meine">${meinTxt(p)}</b>`:""}</small>
+        <small class="mt">${p.anzahl} Bew.${titelVon(p).map(s => ` · ${esc(VK_TITEL[s][0])}`).join("")}${meinTxt(p)?` · <b class="meine">${meinTxt(p)}</b>`:""}</small>
         <span class="bar"><i class="${gradeCls(p.schnitt)}" style="width:${p.schnitt==null?0:Math.round(p.schnitt*10)}%"></i></span>
       </summary>
       <div class="erg-detail">
@@ -89,7 +93,60 @@ async function ergebnisLaden(){
   main().innerHTML = h;
   Bilder.bierFotosVerdrahten(main());
   const tb = $("#titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
+  // Siegerehrung: direkt nach dem Aufdecken von selbst (Gästeseite und Verwaltung hängen „&ehrung=1“ an), sonst über
+  // den Knopf. Der Zusatz verschwindet gleich wieder aus der Adresse, damit ein Neuladen sie nicht wiederholt.
+  const ehrung = () => siegerehrung({v, proben, titelVon, meine});
+  const es = $("#ehrungStart"); if(es) es.onclick = ehrung;
+  if(params.get("ehrung") === "1"){
+    try{ const u = new URL(location.href); u.searchParams.delete("ehrung"); history.replaceState(null, "", u); }catch(_){}
+    if(es) ehrung();
+  }
   ergebnisGalerie(v.id);
+}
+
+/* Siegerehrung (seit 14.11.2026): eine Karte pro Bier, vom letzten Platz bis zum Sieger – bildschirmfüllend über der
+   Ergebnisseite, damit darunter nichts vorab zu sehen ist. Jeder blättert am eigenen Gerät; „Überspringen“ geht immer.
+   Die Rangliste selbst bleibt ohne Podest (Wunsch der Tester vom 10.11.2026). */
+function siegerehrung({v, proben, titelVon, meine}){
+  const reihe = proben.filter(p => p.platz).slice().reverse();
+  if(reihe.length < 2 || $(".ehrung")) return;
+  let i = 0, startX = null;
+  const el = document.createElement("div");
+  el.className = "ehrung"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Siegerehrung");
+  const rest = [...document.body.children]; rest.forEach(x => { x.inert = true; });
+  document.body.appendChild(el); document.body.style.overflow = "hidden";
+  const zu = () => { document.removeEventListener("keydown", taste); el.remove(); rest.forEach(x => { x.inert = false; }); document.body.style.overflow = "";
+    window.scrollTo(0, 0); const es = $("#ehrungStart"); if(es) es.focus({preventScroll: true}); };
+  const weiter = () => { if(i < reihe.length - 1){ i++; zeigen(); } else zu(); };
+  const zurueck = () => { if(i > 0){ i--; zeigen(); } };
+  function taste(e){ if(e.key === "Escape") zu(); else if(e.key === "ArrowRight") weiter(); else if(e.key === "ArrowLeft") zurueck(); }
+  function zeigen(){
+    const p = reihe[i], letzte = i === reihe.length - 1, geteilt = reihe.filter(x => x.platz === p.platz).length > 1;
+    const z = (p.zusammenfassung||"").trim(), t = vkTitelHtml(titelVon(p));
+    el.innerHTML = `<div class="eh-kopf"><p class="kicker">Siegerehrung · ${esc(v.titel)}</p><button type="button" class="btn ghost" data-eh="zu">Überspringen</button></div>
+      <div class="eh-karte${p.platz === 1 ? " sieger" : ""}" aria-live="polite">
+        ${p.platz === 1 ? `<p class="kicker eh-sieger">Sieger des Abends</p>` : ""}
+        <p class="eh-platz">Platz ${p.platz}<small>${geteilt ? "geteilt · " : ""}von ${reihe.length}</small></p>
+        <div class="eh-bild"><span class="bb-nr">${Bilder.bier(p, "gross")}${v.blind ? `<span class="probe-nr num" title="Probe ${p.nummer}" aria-hidden="true">${p.nummer}</span>` : ""}</span></div>
+        <h3>${esc(p.name)}</h3>
+        <p class="hint">${esc([v.blind ? "Probe Nr. "+p.nummer : "", bierZeile(p)].filter(Boolean).join(" · "))}</p>
+        <p class="eh-note"><b class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</b><span class="hint">${p.anzahl} Bewertungen · ${p.nochmal||0} von ${p.anzahl} empfehlen${meine[p.bier_id] != null ? ` · deine Note ${esc(meine[p.bier_id])}` : ""}</span></p>
+        ${t ? `<p class="vk-titel-zeile">${t}</p>` : ""}
+        ${z ? `<p class="eh-text">${esc(z)}</p>` : ""}
+      </div>
+      <div class="eh-fuss"><span class="eh-stand num" aria-label="Karte ${i+1} von ${reihe.length}">${i+1} / ${reihe.length}</span><span class="spacer"></span>
+        ${i > 0 ? `<button type="button" class="btn" data-eh="zurueck">Zurück</button>` : ""}<button type="button" class="btn primary" data-eh="weiter">${letzte ? "Zur Rangliste" : "Weiter"}</button></div>`;
+    el.querySelector("[data-eh=zu]").onclick = zu;
+    el.querySelector("[data-eh=weiter]").onclick = weiter;
+    const zb = el.querySelector("[data-eh=zurueck]"); if(zb) zb.onclick = zurueck;
+    el.scrollTop = 0; el.querySelector("[data-eh=weiter]").focus({preventScroll: true});
+  }
+  // Wischen blättert ebenfalls (wie in der Foto-Großansicht): nach links = weiter, nach rechts = zurück
+  el.addEventListener("touchstart", e => { startX = e.touches.length === 1 ? e.touches[0].clientX : null; }, {passive: true});
+  el.addEventListener("touchend", e => { if(startX == null) return; const dx = e.changedTouches[0].clientX - startX; startX = null;
+    if(Math.abs(dx) > 60){ if(dx < 0) weiter(); else zurueck(); } }, {passive: true});
+  document.addEventListener("keydown", taste);
+  zeigen();
 }
 
 /* Fotos vom Abend – nur für Teilnehmer dieser Verkostung (seit 10.11.2026). Der Browser schickt alle bei sich

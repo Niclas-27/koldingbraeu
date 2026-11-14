@@ -89,8 +89,8 @@ const rpcs={
  vk_ergebnis(){const P=(nr,n,s,no,nm,ext)=>Object.assign({nummer:nr,bier_id:"b"+nr,name:n,brauerei:n.split(" ")[0],eigen:false,stil:s,alkohol:null,schnitt:no,anzahl:3,nochmal:nm,noten:[no,no,no],merkmale:{},geruch:{},fehler:{},kommentare:[]},ext||{});
    return {data:{verkostung:{id:"v9",titel:"Pils & Lager",datum:"2026-10-18",ort:"Röntbarg",blind:localStorage.getItem("test_blind")==="1",bild_titel:"verkostungen/v9/titel-a.jpg"},galerie:["verkostungen/v9/galerie/a.jpg","verkostungen/v9/galerie/b.jpg"],teilnehmer:["Niels","Carsten","Jan"],proben:[
     P(1,"Tyskie","Lager",6,3,{merkmale:{suesse:{wert:3,n:1},koerper:{wert:3,n:1}},kreis:[[6,3]],kommentare:["Wenig Charakter."]}),
-    P(2,"Einbecker","Pils",9,3,{noten:[10,9,8],merkmale:{bitter:{wert:7,n:1},kohlensaeure:{wert:7,n:1}},kreis:[[3,8],[2,7],[4,9]],geruch:{blumig:1},kommentare:["Geheimtipp! Prickelbitterness.","Geheimtipp – der Hopfen ist gut da."]}),
-    P(3,"Störtebeker","Pils",4,0),P(4,"Budweiser","Lager",5,0,{fehler:{Butter:2}}),P(5,"Flensburger","Pils",2,0),
+    P(2,"Einbecker","Pils",9,3,{noten:[10,9,8],merkmale:{bitter:{wert:7,n:1},kohlensaeure:{wert:7,n:1}},kreis:[[3,8],[2,7],[4,9]],geruch:{blumig:1},kommentare:["Geheimtipp! Prickelbitterness.","Geheimtipp – der Hopfen ist gut da."],zusammenfassung:"Dreimal fiel das Wort Geheimtipp: florales Hopfenaroma und gute Bittere."}),
+    P(3,"Störtebeker","Pils",4,0),P(4,"Budweiser","Lager",5,0,{fehler:{Butter:2},noten:[8,5,2]}),P(5,"Flensburger","Pils",2,0,{zusammenfassung:"Metallisch bitter – mehr gab es nicht zu sagen."}),
     P(6,"Pilsner Urquell","Pils",8,3,{geruch:{brotig:1,"röstig":1},kreis:[[4,7],[5,6]]}),P(7,"Staropramen","Lager",7,3)]},error:null};},
  liga_daten(){const r=[];const add=(id,n,br,e,s,d,sum,an,no)=>r.push({bier_id:id,name:n,brauerei:br,eigen:e,stil:s,verkostung_id:"v"+d,titel:"Runde "+d,datum:d,summe:sum,anzahl:an,nochmal:no});
    add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2026-04-01",45,6,4);add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2025-10-01",30,4,2);
