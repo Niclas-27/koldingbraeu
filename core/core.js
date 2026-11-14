@@ -412,7 +412,7 @@ async function boot(){
 const KB = window.KB = {
   CONFIG, ROLLEN, $, esc, state, isBM, isAdmin, siteUrl, sb: null, seite: null,
   fmtDate, fmtDateLong, fmtDateTime, fmtZahl, gradeCls, personName, todayIso, toast, notice, lsGet, lsSet,
-  ladeHtml, ladeFuellen,
+  ladeHtml, ladeFuellen, ladeFlasche,
   sheet, openSheet, closeSheet, bestaetigen, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
 };
 document.addEventListener("DOMContentLoaded", boot);

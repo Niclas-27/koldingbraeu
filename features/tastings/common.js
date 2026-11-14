@@ -53,6 +53,20 @@ const KREIS_BEGRIFFE = [
   ["trocken","🌵","Das Gegenteil von süß: kaum Restsüße, endet knackig und sauber – man will gleich den nächsten Schluck. Typisch für Pils und Kölsch."],
   ["ausgewogen","⚖️","Die Mitte der Karte: nichts sticht heraus."],
 ];
+/* Notenseite (seit 14.11.2026): Wort und kurze Erklärung je Note 0–10, damit klar ist, was eine 3 gegenüber einer 9 heißt */
+const NOTE_STUFEN = [
+  ["Ausguss","Ab in den Ausguss."],
+  ["Furchtbar","Kein zweiter Schluck."],
+  ["Schlecht","Deutliche Fehler im Geschmack."],
+  ["Mag ich nicht","Trinkbar, aber nicht meins."],
+  ["Naja","Lässt mich ziemlich kalt."],
+  ["Okay","Solide, nichts Besonderes."],
+  ["Ganz gut","Würde ich trinken."],
+  ["Gut","Gerne wieder."],
+  ["Sehr gut","Würde ich mir kaufen."],
+  ["Hervorragend","Empfehle ich weiter."],
+  ["Spitze","Eins der besten, die ich kenne."],
+];
 /* Geschmackskarte (seit 13.11.2026 statt des Kreises): Quadrat mit den vier Polen am Rand (die Bierstil-Beispiele in
    den Ecken gab es nur am 13.11.). Gemeinsam für den Bogen (Eingabe) und die Ergebnisseite (Punktwolke). Lage als x/y von -1 bis 1:
    x = Süße (links trocken, rechts süß), y = Bittere (unten mild, oben bitter) – 1:1 die Werte 0–10 in merkmale. */
