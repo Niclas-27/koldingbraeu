@@ -226,7 +226,8 @@ Ziel: ein lustigerer Abschluss. Drei Bausteine, bewusst klein gehalten – der N
   Note“, Titel, Zusammenfassung. „Weiter“/„Zurück“, Wischen, Pfeiltasten; „Überspringen“ bzw. Escape geht immer.
   Jeder blättert am eigenen Gerät (keine Synchronisierung). Startet von selbst nur direkt nach dem Aufdecken –
   Gästeseite und Verwaltung hängen dafür `&ehrung=1` an die Ergebnis-Adresse, der Zusatz wird sofort wieder entfernt –
-  sonst über den Knopf „Siegerehrung ansehen“. Die Rangliste bleibt ohne Podest.
+  sonst über den Knopf „Siegerehrung ansehen“. Die Rangliste bleibt ohne Podest. Auf der Sieger-Karte (Platz 1) regnet einmal
+  Konfetti in den Seitenfarben (`konfetti()`), außer bei „Bewegung reduzieren“.
 
 **Verwaltung:** „Abschließen und aufdecken“ öffnet den Zwischenschritt „Abschluss vorbereiten“ (`zusammenfassungen()`
 in `admin.js`): Rangfolge mit Titeln und einem Textfeld je Bier, Hinweis auf fehlende Texte, „Texte neu laden“ (holt
