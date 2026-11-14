@@ -183,6 +183,11 @@ Wort, darunter kurze Beispiele („Apfel, Beeren, Pfirsich“), Haken oben recht
 dritte Feld in `TAGS_GERUCH`/`TAGS_GESCHMACK` und ersetzen auf diesen Seiten Hinweistext und Glossar; rechts in der
 Überschrift steht klein „mehrere möglich“. Das Glossar („?“) gibt es nur noch beim Geschmacksbild.
 
+**Notenseite mit Stufen (14.11.2026):** Fünf Stufen (`NOTE_STUFEN` in common.js: Weg damit 0–2, Geht so 3–4, Okay 5–6,
+Gut 7–8, Großartig 9–10) mit Emoji und Erklärung, die Zahlen als runde Knöpfe direkt in der Zeile. Das Textfeld ist eine
+eigene Karte und fragt passend zur Stufe nach („Was hat dir gefehlt?“, „Was macht es so besonders?“); beim ersten Wählen
+rollt es ins Bild, ohne die Tastatur zu öffnen. (Kurz probiert: Logo-Flasche als Skala – verworfen.)
+
 **Punktwolke auf der Ergebnisseite (seit 13.11.2026):** Im aufgeklappten Bier zeigt „Geschmacksbild · n Stimmen“ die
 Karte mit einem Punkt je Bewertung, einem Kreuz für den Schnitt und – nur auf dem Gerät des Gastes – seinem eigenen
 Punkt in Röstmalz-Dunkel (`--ink`; nicht Grün, das steht auf der Seite für gute Noten) (`localStorage` `kb_meine_k_<id>`, `[suesse, bitter]` je Bier, legt `guest.js` beim Aufdecken mit ab).
