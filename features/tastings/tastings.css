@@ -37,22 +37,23 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .probe.done .pg b{display:inline-block;min-width:36px;text-align:center;font-size:1.2rem;color:var(--hop)}
 /* Bewertungsbogen: seit 13.11.2026 vier Seiten (Riechen, Schmecken, Geschmacksbild, Urteil) nebeneinander auf einer Spur, die per
    „Weiter“/Wischen verschoben wird; Bedienelemente fürs Handy vergrößert */
-#bogenInhalt{overflow:hidden;margin:0 -20px;flex:none} /* flex:none: sonst schrumpft der Bogen auf kleinen Handys und schneidet unten ab, statt zu scrollen */
+#bogenInhalt{overflow:hidden;margin:-20px -20px 0;padding-top:20px;flex:none} /* flex:none: sonst schrumpft der Bogen auf kleinen Handys und schneidet unten ab, statt zu scrollen */
 .bogen-spur{display:flex;align-items:flex-start;transition:transform .28s ease}
 @media (prefers-reduced-motion:reduce){.bogen-spur{transition:none}}
 .bogen-seite{flex:0 0 100%;min-width:0;padding:0 20px;box-sizing:border-box}
 .bogen-seite fieldset{display:flex;flex-direction:column;gap:16px}
 .bogen-seite .hint{margin:0}
-.glossar-auf{align-self:flex-start;font-size:.92rem}
 #b_kom{font-size:1.05rem;padding:12px 14px;margin-top:4px}
-.bogen-fuss{display:flex;flex-direction:column;gap:10px;flex:1}
-.fortschritt{display:flex;align-items:center;gap:10px}
-.fortschritt .punkte{display:flex;gap:5px;flex:1}
-.fortschritt .punkte i{flex:1;height:5px;border-radius:3px;background:var(--line);transition:background .2s}
+/* Fußleiste des Bogens (seit 14.11.2026 kompakt): Fortschritt als 3-px-Linie an der Oberkante statt eigener Zeile */
+.sheet-foot:has(.bogen-fuss){position:relative;border-top:0;padding-top:12px;padding-bottom:12px}
+.bogen-fuss{display:flex;flex-direction:column;flex:1}
+.fortschritt{position:absolute;top:0;left:0;right:0}
+.fortschritt .punkte{display:flex;gap:3px}
+.fortschritt .punkte i{flex:1;height:3px;background:var(--line);transition:background .2s}
 .fortschritt .punkte i.ab{background:var(--amber)}
 .fortschritt .zahl{font-size:.78rem;color:var(--muted);flex:none;font-family:var(--font-data)}
 .bogen-knoepfe{display:flex;gap:10px;flex:1}
-.bogen-knoepfe .btn{flex:1;min-height:48px}
+.bogen-knoepfe .btn{flex:1;min-height:46px}
 .bogen-knoepfe #bZurueck{flex:0 0 64px}
 /* Glossar zu den Tags (Fenster über dem Bogen, Grundgerüst .frage aus base.css) */
 .glossar .frage-k{max-height:min(80vh,640px);overflow-y:auto}
@@ -78,8 +79,19 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .sl.unset input[type=range]::-webkit-slider-thumb{background:var(--muted)}
 .sl.unset input[type=range]::-moz-range-thumb{background:var(--muted)}
 .sl-ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-8px}
-.tagpick{display:flex;flex-wrap:wrap;gap:8px}
-.tagpick .chip{padding:10px 16px;font-size:.92rem;min-height:44px}
+/* Riechen/Schmecken: Kacheln in zwei Spalten (seit 14.11.2026 statt Chips) – Emoji, Wort, Beispiele, Haken oben rechts */
+.tagpick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kachel{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;min-height:98px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.kachel .k-emoji{font-size:1.7rem;line-height:1;margin-bottom:auto}
+.kachel b{font-size:1.05rem;font-weight:600;line-height:1.3}
+.kachel small{font-size:.78rem;line-height:1.25;color:var(--muted)}
+.kachel::after{content:"";position:absolute;top:12px;right:12px;width:20px;height:20px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;font-weight:700;line-height:1}
+.kachel[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.kachel[aria-pressed="true"]::after{content:"✓";border-color:var(--amber);background:var(--amber);color:var(--bg)}
+.kachel:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+#bogenInhalt fieldset:has(.tagpick){gap:12px}
+.kopf-hinweis{font:400 .8rem/1 var(--font-body);color:var(--muted)}
+@media (max-height:620px){.kachel{min-height:70px;padding:7px 12px}.kachel .k-emoji{font-size:1.35rem}.kachel::after{top:8px;right:10px}}
 #bWeiter,#bZurueck{min-height:48px;font-size:1rem;flex:1;justify-content:center}
 /* Braumeister-Ansicht */
 .qrbox{align-items:flex-start}
@@ -191,7 +203,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
    Polen am Rand und Bierstil-Beispielen in den Ecken. Die Beschriftung sitzt in der Karte, damit sie exakt mittig
    steht. Höhe begrenzt, damit die Seite auch auf kleinen Handys ohne Scrollen passt. touch-action:none, damit Ziehen
    weder scrollt noch blättert. */
-.karte{position:relative;width:100%;max-width:max(220px,min(100%,calc(100svh - 430px)));aspect-ratio:1;margin:0 auto;border-radius:var(--radius);overflow:hidden;
+.karte{position:relative;width:100%;max-width:max(200px,min(100%,calc(100svh - 305px)));aspect-ratio:1;margin:0 auto;border-radius:var(--radius);overflow:hidden;
   background:var(--surface);border:1px solid var(--line);box-sizing:border-box}
 #karteFeld{touch-action:none;cursor:crosshair;-webkit-tap-highlight-color:transparent;overflow:visible}
 #karteFeld{border-color:color-mix(in srgb,var(--ink) 35%,var(--line))}
@@ -202,26 +214,28 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .k-pol{position:absolute;z-index:1;font-weight:600;font-size:.84rem;line-height:1.2;color:var(--ink);background:var(--surface);padding:3px 10px;border:1px solid var(--line);border-radius:999px;white-space:nowrap;pointer-events:none}
 .k-pol.o{top:8px;left:50%;transform:translateX(-50%)}.k-pol.u{bottom:8px;left:50%;transform:translateX(-50%)}
 .k-pol.l{left:8px;top:50%;transform:translateY(-50%)}.k-pol.r{right:8px;top:50%;transform:translateY(-50%)}
-.k-ecke{position:absolute;font-size:.7rem;line-height:1.25;color:var(--muted);pointer-events:none}
-.k-ecke b{display:block;color:var(--ink);font-size:.74rem}
-.k-ecke.ol{top:42px;left:10px}.k-ecke.or{top:42px;right:10px;text-align:right}
-.k-ecke.ul{bottom:42px;left:10px}.k-ecke.ur{bottom:42px;right:10px;text-align:right}
 .k-punkt{position:absolute;z-index:2;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--amber);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--amber),0 2px 6px rgba(0,0,0,.18);pointer-events:none}
 .k-punkt[hidden]{display:none}
 #karteFeld.zieht .k-punkt{box-shadow:0 0 0 1px var(--amber),0 0 0 12px var(--amber-soft)}
 .kreis-text{margin:0;text-align:center;font-weight:700;font-size:1.05rem;min-height:1.4em}
-.kreis-links{display:flex;justify-content:space-between;gap:12px;font-size:.92rem}
-/* Blase über dem Daumen (im oberen Bereich darunter), solange man tippt/zieht, und noch kurz danach */
+/* Blase immer über dem Daumen, solange man tippt/zieht, und noch kurz danach; ganz oben ragt sie über die Überschrift */
 .kreis-blase{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 30px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.kreis-blase.unten{transform:translate(-50%,30px)}
 .kreis-blase.an{opacity:1}
 @media (prefers-reduced-motion:reduce){.kreis-blase{transition:none}}
-.bogen-seite fieldset:has(.karte){gap:12px}
+.bogen-seite fieldset:has(.karte){gap:10px}
+/* Überschrift mit Symbol-Knöpfen (Geschmacksbild: Zurücksetzen, Glossar) */
+#bogenInhalt legend.mit-knoepfen{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:0}
+.kopf-knoepfe{display:flex;gap:8px}
+.ikon-knopf{display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--ink);font:600 1.05rem/1 var(--font-body);cursor:pointer}
+.ikon-knopf:hover{border-color:var(--muted)}
+.ikon-knopf[hidden]{display:none}
+/* Kleine Handys (iPhone SE & Co.): Kopf des Bogens flacher, damit die Karte ohne Scrollen passt */
+@media (max-height:620px){.sheet:has(#bogenInhalt) .sheet-head{padding-top:10px;padding-bottom:10px}}
+.vh{position:absolute!important;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* Ergebnisseite: Punktwolke je Bier und alle Biere auf einer Karte (seit 13.11.2026) */
 .karte.klein{max-width:340px;margin:0}
 .karte.klein .k-pol{font-size:.72rem;font-weight:500;color:var(--muted);padding:1px 8px}
-.karte.klein .k-ecke{display:none}
 .k-gast{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:color-mix(in srgb,var(--amber) 55%,transparent);border:2px solid var(--surface)}
 /* eigene Wahl: Röstmalz statt Grün – Grün heißt auf der Seite „gute Note“ */
 .k-gast.du{z-index:2;width:18px;height:18px;margin:-9px 0 0 -9px;background:var(--ink)}

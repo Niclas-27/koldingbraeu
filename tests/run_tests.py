@@ -149,14 +149,14 @@ async def main():
             await pg.click(".probe >> nth=2")
             # Seit 13.11.2026 vier Seiten: Riechen, Schmecken (Tags), Geschmacksbild (Kreis), Urteil (Note + Satz) – keine Regler
             pruefe("Bogen hat vier Seiten ohne Regler", await pg.locator(".bogen-seite").count() == 4 and await pg.locator("#bogenInhalt input[type=range]").count() == 0)
-            await pg.click(".bogen-seite[data-i='0'] .chip[data-t='fruchtig']")
-            await pg.click(".bogen-seite[data-i='0'] [data-glossar]"); await pg.wait_for_selector(".glossar")
-            pruefe("Glossar erklärt die Begriffe", "Kaffee" in await pg.inner_text(".glossar"))
-            await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
-            pruefe("Escape schließt nur das Glossar, nicht den Bogen", await pg.locator(".glossar").count() == 0 and await pg.locator("#bogenInhalt").count() == 1)
+            await pg.click(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']")
+            pruefe("Riechen: acht Kacheln mit Beispielen, Auswahl markiert, kein Glossar-Link mehr", await pg.locator(".bogen-seite[data-i='0'] .kachel").count() == 8
+                   and "Apfel" in await pg.inner_text(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']")
+                   and await pg.get_attribute(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']", "aria-pressed") == "true"
+                   and await pg.locator(".bogen-seite[data-i='0'] [data-glossar], .bogen-seite[data-i='1'] [data-glossar]").count() == 0)
             await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
             pruefe("Wischen blättert zur Seite „Schmecken“", "2 / 4" in await pg.inner_text(".fortschritt .zahl"))
-            await pg.click(".bogen-seite[data-i='1'] .chip[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
+            await pg.click(".bogen-seite[data-i='1'] .kachel[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
             # Geschmackskarte: Tippen oben rechts = bitter + süß; Wischen auf der Karte blättert nicht; Karte mittig
             box = await pg.locator("#karteFeld").bounding_box()
             vb = await pg.evaluate("(() => { const r = document.querySelector(`.bogen-seite[data-i='2'] fieldset`).getBoundingClientRect(); return {x: r.x, width: r.width}; })()")
@@ -164,6 +164,14 @@ async def main():
             await pg.mouse.click(box["x"] + box["width"]*0.75, box["y"] + box["height"]*0.2)
             pruefe("Kreis beschreibt die Wahl in Worten", "bitter" in (await pg.inner_text("#kreisText")).lower())
             await pg.mouse.click(box["x"] + box["width"]*0.98, box["y"] + box["height"]*0.02)
+            lage = await pg.evaluate("[document.querySelector('.kreis-blase').getBoundingClientRect().bottom, document.querySelector('.k-punkt').getBoundingClientRect().top]")
+            pruefe("Blase steht auch ganz oben über dem Punkt (nicht unter dem Daumen)", lage[0] <= lage[1])
+            await pg.click(".bogen-seite[data-i='2'] [data-glossar]"); await pg.wait_for_selector(".glossar")
+            pruefe("Glossar beim Geschmacksbild erklärt die Begriffe", "Grapefruit" in await pg.inner_text(".glossar"))
+            await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
+            pruefe("Escape schließt nur das Glossar, nicht den Bogen", await pg.locator(".glossar").count() == 0 and await pg.locator("#bogenInhalt").count() == 1)
+            pruefe("Kein Hinweistext und keine Links unter der Karte mehr", await pg.locator(".bogen-seite[data-i='2'] .hint, .kreis-links").count() == 0
+                   and await pg.locator("#kreisWeg.ikon-knopf").count() == 1)
             pruefe("Ecke der Karte erreichbar (sehr bitter und sehr süß)", "sehr bitter und sehr süß" in (await pg.inner_text("#kreisText")).lower())
             await wische(pg, "#karteFeld", -200); await pg.wait_for_timeout(350)
             pruefe("Wischen auf der Karte blättert nicht", "3 / 4" in await pg.inner_text(".fortschritt .zahl"))
