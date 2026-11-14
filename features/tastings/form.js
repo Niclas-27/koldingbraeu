@@ -59,9 +59,14 @@ function bogenZeigen(opts){
           innen: `<span class="k-punkt" hidden></span><span class="kreis-blase" aria-hidden="true"></span>`})}
         <p class="kreis-text" id="kreisText" aria-live="polite"></p>`;
     } else {
-      h += `<div class="scale" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${Array.from({length:11},(_,n)=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}">${n}</button>`).join("")}</div>
-        <div class="sl-ends"><span>0 = gar nicht</span><span>10 = großartig</span></div>
-        <label class="f" for="b_kom">Dein Satz zum Bier (optional)<input id="b_kom" maxlength="140" value="${esc(f.kommentar)}" placeholder="z. B. „Schmeckt nach Sommer“" autocomplete="off" enterkeyhint="done"></label>`;
+      // Seit 14.11.2026: fünf Stufen mit Erklärung, Zahlen direkt in der Zeile. Das Textfeld darunter fragt passend zur
+      // gewählten Stufe nach („Was hat dir gefehlt?“) und rollt nach der Wahl ins Bild, damit es nicht untergeht.
+      const st = f.note == null ? null : noteStufe(f.note);
+      h += `<div class="nstufen" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${NOTE_STUFEN.map(([e,t,d,ns]) =>
+          `<div class="nstufe${ns.includes(f.note)?" an":""}"><span class="ns-e" aria-hidden="true">${e}</span><div class="ns-t"><b>${esc(t)}</b><small>${esc(d)}</small></div>
+            <div class="ns-n">${ns.map(n=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}" aria-label="${n} – ${esc(t)}">${n}</button>`).join("")}</div></div>`).join("")}</div>
+        <label class="note-satz" for="b_kom"><span class="ns-frage" id="noteFrage">${esc(st ? st[4] : "Dein Satz zum Bier")}</span><small>optional – ein Satz reicht</small>
+          <input id="b_kom" maxlength="140" value="${esc(f.kommentar)}" placeholder="z. B. „Schmeckt nach Sommer“" autocomplete="off" enterkeyhint="done"></label>`;
     }
     return h + `</fieldset></section>`;
   };
@@ -88,7 +93,7 @@ function bogenZeigen(opts){
     $("#sheetBody").scrollTop = 0;
   }
 
-  inhalt.querySelectorAll(".scale button").forEach(b => b.onclick = () => { f.note = +b.dataset.n; $("#bErr").textContent = ""; inhalt.querySelectorAll(".scale button").forEach(x=>x.setAttribute("aria-checked", String(x===b))); });
+  noteVerdrahten(inhalt, f);
   inhalt.querySelectorAll(".tagpick .kachel").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); });
   inhalt.querySelectorAll("[data-glossar]").forEach(b => b.onclick = () => glossarZeigen(BOGEN_SEITEN[+b.dataset.glossar]));
   const kom = $("#b_kom");
@@ -114,7 +119,7 @@ function bogenZeigen(opts){
   $("#bZurueck").onclick = () => zeigen(seite - 1);
   $("#bWeiter").onclick = async () => {
     if(seite < letzte){ zeigen(seite + 1); return; }
-    if(f.note == null){ $("#bErr").textContent = "Bitte eine Note wählen."; inhalt.querySelector(".scale button")?.focus(); return; }
+    if(f.note == null){ $("#bErr").textContent = "Bitte eine Note wählen."; inhalt.querySelector(".nstufen button")?.focus(); return; }
     $("#bWeiter").disabled = true; $("#bErr").textContent = "";
     const merkmale = {...(alt.merkmale || {})};
     if(f.kreis) Object.assign(merkmale, kreisZuMerkmalen(f.kreis));
@@ -181,6 +186,21 @@ function kreisVerdrahten(inhalt, f){
   });
   inhalt.querySelector("#kreisWeg").onclick = () => { f.kreis = null; f.kreisGeloescht = true; anzeigen(); feld.focus(); };
   anzeigen();
+}
+
+/* Notenseite: Zahl antippen wählt die Note, markiert die Stufe und stellt die Frage am Textfeld passend; beim ersten
+   Wählen rollt das Textfeld ins Bild (ohne Tastatur zu öffnen). Wert in f.note (0–10 oder null). */
+function noteVerdrahten(inhalt, f){
+  const knoepfe = [...inhalt.querySelectorAll(".nstufen button")];
+  if(!knoepfe.length) return;
+  knoepfe.forEach(b => b.onclick = () => {
+    const erste = f.note == null;
+    f.note = +b.dataset.n; $("#bErr").textContent = "";
+    knoepfe.forEach(x => x.setAttribute("aria-checked", String(x === b)));
+    inhalt.querySelectorAll(".nstufe").forEach(z => z.classList.toggle("an", z.contains(b)));
+    inhalt.querySelector("#noteFrage").textContent = noteStufe(f.note)[4];
+    if(erste) inhalt.querySelector(".note-satz").scrollIntoView({block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+  });
 }
 
 /* Kleines Glossar zu den Begriffen einer Seite – eigenes Fenster über dem Bogen (wie bestaetigen() in core.js),
