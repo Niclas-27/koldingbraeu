@@ -172,6 +172,12 @@ Bock, Märzen). Jede Achse wird einzeln auf -1…1 begrenzt, damit bilden die We
 ist an die Bildschirmhöhe gekoppelt (mind. 220 px), damit die Seite auch auf einem iPhone SE ohne Scrollen passt. Die
 Blase springt im oberen Bereich unter den Punkt. Im Code heißt es weiter „kreis“ (`f.kreis`, `kreisText`, `#kreisText`).
 
+**Kompakter (14.11.2026):** Ohne Bierstil-Ecken und ohne Hinweistext; „Was heißt das?“ und „Zurücksetzen“ sind kleine
+Symbol-Knöpfe (? und ↺) rechts in der Überschrift. Die Blase steht immer über dem Finger und ragt ganz oben über die
+Überschrift (`#bogenInhalt` hat dafür oben 20 px Innenabstand bei −20 px Außenabstand). Der Fortschritt ist eine
+3-px-Linie an der Oberkante der Fußleiste, „3 / 4“ nur noch für Screenreader. Karte bis `100svh − 305px` (iPhone volle
+Breite, iPhone SE ~250 px), auf niedrigen Bildschirmen ist der Kopf des Bogens flacher.
+
 **Punktwolke auf der Ergebnisseite (seit 13.11.2026):** Im aufgeklappten Bier zeigt „Geschmacksbild · n Stimmen“ die
 Karte mit einem Punkt je Bewertung, einem Kreuz für den Schnitt und – nur auf dem Gerät des Gastes – seinem eigenen
 Punkt in Röstmalz-Dunkel (`--ink`; nicht Grün, das steht auf der Seite für gute Noten) (`localStorage` `kb_meine_k_<id>`, `[suesse, bitter]` je Bier, legt `guest.js` beim Aufdecken mit ab).

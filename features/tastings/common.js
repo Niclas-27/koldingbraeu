@@ -52,16 +52,14 @@ const KREIS_BEGRIFFE = [
   ["trocken","🌵","Das Gegenteil von süß: kaum Restsüße, endet knackig und sauber – man will gleich den nächsten Schluck. Typisch für Pils und Kölsch."],
   ["ausgewogen","⚖️","Die Mitte der Karte: nichts sticht heraus."],
 ];
-/* Geschmackskarte (seit 13.11.2026 statt des Kreises): Quadrat mit den vier Polen am Rand und Bierstil-Beispielen in
-   den Ecken. Gemeinsam für den Bogen (Eingabe) und die Ergebnisseite (Punktwolke). Lage als x/y von -1 bis 1:
+/* Geschmackskarte (seit 13.11.2026 statt des Kreises): Quadrat mit den vier Polen am Rand (die Bierstil-Beispiele in
+   den Ecken gab es nur am 13.11.). Gemeinsam für den Bogen (Eingabe) und die Ergebnisseite (Punktwolke). Lage als x/y von -1 bis 1:
    x = Süße (links trocken, rechts süß), y = Bittere (unten mild, oben bitter) – 1:1 die Werte 0–10 in merkmale. */
-const KARTE_ECKEN = [["ol","herb & trocken","Pils, IPA"],["or","bitter & süß","Imperial Stout"],
-                     ["ul","mild & trocken","Weizen, Kölsch"],["ur","mild & süß","Bock, Märzen"]];
-function karteHtml({ecken = true, klein = false, attr = "", innen = ""} = {}){
+function karteHtml({klein = false, attr = "", innen = ""} = {}){
   return `<div class="karte${klein?" klein":""}"${attr}><i class="k-achse v" aria-hidden="true"></i><i class="k-achse h" aria-hidden="true"></i>
     <span class="k-pol o" aria-hidden="true">${klein?"":"☕ "}Bitter</span><span class="k-pol u" aria-hidden="true">${klein?"":"🥛 "}Mild</span>
     <span class="k-pol l" aria-hidden="true">${klein?"":"🌵 "}Trocken</span><span class="k-pol r" aria-hidden="true">Süß${klein?"":" 🍯"}</span>
-    ${ecken?KARTE_ECKEN.map(([k,t,b]) => `<span class="k-ecke ${k}" aria-hidden="true"><b>${esc(t)}</b>${esc(b)}</span>`).join(""):""}${innen}</div>`;
+    ${innen}</div>`;
 }
 // Position in Prozent aus den gespeicherten Werten 0–10 (suesse, bitter)
 const kartePos = (suesse, bitter) => `left:${(suesse*10).toFixed(1)}%;top:${(100 - bitter*10).toFixed(1)}%`;

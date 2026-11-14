@@ -164,6 +164,10 @@ async def main():
             await pg.mouse.click(box["x"] + box["width"]*0.75, box["y"] + box["height"]*0.2)
             pruefe("Kreis beschreibt die Wahl in Worten", "bitter" in (await pg.inner_text("#kreisText")).lower())
             await pg.mouse.click(box["x"] + box["width"]*0.98, box["y"] + box["height"]*0.02)
+            lage = await pg.evaluate("[document.querySelector('.kreis-blase').getBoundingClientRect().bottom, document.querySelector('.k-punkt').getBoundingClientRect().top]")
+            pruefe("Blase steht auch ganz oben über dem Punkt (nicht unter dem Daumen)", lage[0] <= lage[1])
+            pruefe("Kein Hinweistext und keine Links unter der Karte mehr", await pg.locator(".bogen-seite[data-i='2'] .hint, .kreis-links").count() == 0
+                   and await pg.locator("#kreisWeg.ikon-knopf").count() == 1)
             pruefe("Ecke der Karte erreichbar (sehr bitter und sehr süß)", "sehr bitter und sehr süß" in (await pg.inner_text("#kreisText")).lower())
             await wische(pg, "#karteFeld", -200); await pg.wait_for_timeout(350)
             pruefe("Wischen auf der Karte blättert nicht", "3 / 4" in await pg.inner_text(".fortschritt .zahl"))
