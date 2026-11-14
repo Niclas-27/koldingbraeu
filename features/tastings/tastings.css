@@ -18,7 +18,7 @@
   .ankuendigungen .vk-card .ank-bild{width:100%;aspect-ratio:16/9}
 }
 .vk-item{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
-.vk-item:hover{background:var(--surface)}
+@media (hover:hover){.vk-item:hover{background:var(--surface)}}
 .vk-item .d{color:var(--muted);font-size:.85rem}
 .vk-item .t b{display:block;font-size:1.1rem;font-family:var(--font-display)}
 .vk-item .t small{color:var(--muted)}
@@ -27,7 +27,9 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 /* Proben (Gäste) */
 .proben{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .probe{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px;cursor:pointer;min-height:64px}
-.probe:hover{border-color:var(--muted)}
+/* Hover nur auf Geräten mit Maus: auf dem Handy blieb der Rahmen an der zuletzt angetippten Stelle hängen (14.11.2026) */
+@media (hover:hover){.probe:hover{border-color:var(--muted)}}
+.probe:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .probe .pn{font-size:1.4rem;color:var(--amber)}
 .probe .pt{min-width:0}
 .probe .pt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -131,7 +133,7 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .tn{display:flex;flex-wrap:wrap;gap:6px}
 .tn-tag{display:inline-flex;align-items:center;gap:4px}
 .tn-x{border:0;background:transparent;padding:0;margin:0 0 0 2px;color:var(--muted);cursor:pointer;font-size:.8rem;line-height:1}
-.tn-x:hover{color:var(--warn)}
+@media (hover:hover){.tn-x:hover{color:var(--warn)}}
 .stats.mini{grid-template-columns:repeat(3,minmax(0,1fr));padding:12px 0}
 .stats.mini .stat b{font-size:1.7rem}
 .bw{display:flex;flex-direction:column}
@@ -141,7 +143,7 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .bw-row.aus .bw-t b{text-decoration:line-through}
 .picklist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
 .pick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);padding:10px 4px;cursor:pointer}
-.pick:hover{background:var(--surface)}
+@media (hover:hover){.pick:hover{background:var(--surface)}}
 .pick small{color:var(--muted);font-size:.8rem}
 .pick.row{flex-direction:row;justify-content:space-between;align-items:center;cursor:default;flex-wrap:wrap}
 .pick.row small{display:block}
@@ -149,7 +151,7 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 /* --- Ergebnisseiten, Liste der Verkostungen --- */
 .vk-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
 .vk-tile{display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;color:inherit;text-decoration:none;min-width:0}
-.vk-tile:hover{border-color:var(--muted)}
+@media (hover:hover){.vk-tile:hover{border-color:var(--muted)}}
 .vk-tile .d{color:var(--muted);font-size:.82rem}
 .vk-tile .t{font-family:var(--font-display);font-size:1.3rem;font-weight:700;line-height:1.15}
 .vk-tile .m{color:var(--muted);font-size:.85rem}
@@ -243,7 +245,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 #bogenInhalt legend.mit-knoepfen{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:0}
 .kopf-knoepfe{display:flex;gap:8px}
 .ikon-knopf{display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--ink);font:600 1.05rem/1 var(--font-body);cursor:pointer}
-.ikon-knopf:hover{border-color:var(--muted)}
+@media (hover:hover){.ikon-knopf:hover{border-color:var(--muted)}}
 .ikon-knopf[hidden]{display:none}
 /* Kleine Handys (iPhone SE & Co.): Kopf des Bogens flacher, damit die Karte ohne Scrollen passt */
 @media (max-height:620px){.sheet:has(#bogenInhalt) .sheet-head{padding-top:10px;padding-bottom:10px}}
