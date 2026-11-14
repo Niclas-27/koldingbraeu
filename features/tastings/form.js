@@ -3,8 +3,9 @@
    aufs Handy:  1. Riechen (Tags)  2. Schmecken (Tags)  3. Geschmacksbild (Kreis)  4. Urteil: Note 0–10 (einziges
    Pflichtfeld) + „Dein Satz zum Bier“.
    Blättern mit „Weiter“/„Zurück“ oder zusätzlich per Wischen (nur waagerecht, ab einer deutlichen Bewegung, nicht im
-   Textfeld und nicht im Kreis; Wischen speichert nie – gespeichert wird nur mit dem Knopf). „Was heißt das?“ öffnet
-   ein kleines Glossar zu den Begriffen der aktuellen Seite (TAGS_GERUCH / TAGS_GESCHMACK / KREIS_BEGRIFFE, common.js).
+   Textfeld und nicht im Kreis; Wischen speichert nie – gespeichert wird nur mit dem Knopf). Riechen/Schmecken sind
+   seit 14.11.2026 Kacheln mit Beispielen (TAGS_GERUCH / TAGS_GESCHMACK, common.js); ein Glossar („?“) gibt es nur noch
+   beim Geschmacksbild (KREIS_BEGRIFFE).
    Gespeichert wird wie bisher über vk_bewerten / vk_admin_bewerten, ohne Änderung an der Datenbank:
    - Die Tags beider Seiten landen zusammen in bewertungen.geruch (nur das Wort, ohne Emoji).
    - Der Geschmackskreis landet als die früheren Regler „bitter“ und „suesse“ (0–10) in merkmale.
@@ -47,11 +48,11 @@ function bogenZeigen(opts){
     const kopfKnoepfe = s.art === "kreis" ? `<span class="kopf-knoepfe">
         <button type="button" class="ikon-knopf" id="kreisWeg" aria-label="Auswahl zurücksetzen" title="Zurücksetzen">↺</button>
         <button type="button" class="ikon-knopf glossar-auf" data-glossar="${i}" aria-label="Was heißt das?" title="Was heißt das?">?</button></span>` : "";
-    let h = `<section class="bogen-seite" data-i="${i}"${i?` aria-hidden="true"`:""}><fieldset><legend${kopfKnoepfe?` class="mit-knoepfen"`:""}><span>${esc(s.label)}</span>${kopfKnoepfe}</legend>`;
+    const kopfRechts = kopfKnoepfe || (s.art === "tags" ? `<small class="kopf-hinweis">mehrere möglich</small>` : "");
+    let h = `<section class="bogen-seite" data-i="${i}"${i?` aria-hidden="true"`:""}><fieldset><legend${kopfRechts?` class="mit-knoepfen"`:""}><span>${esc(s.label)}</span>${kopfRechts}</legend>`;
     if(s.art === "tags"){
-      h += `<p class="hint">${esc(s.frage)} Tipp an, was passt – gern mehrere, gern keins.</p>
-        <div class="tagpick">${s.tags().map(([t,e])=>`<button type="button" class="chip" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span aria-hidden="true">${e}</span> ${esc(t)}</button>`).join("")}</div>
-        <button type="button" class="linkbtn glossar-auf" data-glossar="${i}">Was heißt das?</button>`;
+      // Kacheln in zwei Spalten (seit 14.11.2026 statt Chips): Emoji, Wort, Beispiele; Haken oben rechts zeigt die Auswahl
+      h += `<div class="tagpick" role="group" aria-label="${esc(s.frage)} Mehrere möglich.">${s.tags().map(([t,e,bsp])=>`<button type="button" class="kachel" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span class="k-emoji" aria-hidden="true">${e}</span><b>${esc(t)}</b><small>${esc(bsp)}</small></button>`).join("")}</div>`;
     } else if(s.art === "kreis"){
       // Ohne Hinweistext und Ecken-Beschriftung (14.11.2026): die Zeile unter der Karte erklärt, was zu tun ist
       h += `${karteHtml({attr: ` id="karteFeld" tabindex="0" role="group" aria-label="Geschmackskarte: oben bitter, unten mild, links trocken, rechts süß. Mitte = ausgewogen, Rand = sehr ausgeprägt. Mit den Pfeiltasten verschieben." aria-describedby="kreisText"`,
@@ -88,7 +89,7 @@ function bogenZeigen(opts){
   }
 
   inhalt.querySelectorAll(".scale button").forEach(b => b.onclick = () => { f.note = +b.dataset.n; $("#bErr").textContent = ""; inhalt.querySelectorAll(".scale button").forEach(x=>x.setAttribute("aria-checked", String(x===b))); });
-  inhalt.querySelectorAll(".tagpick .chip").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); });
+  inhalt.querySelectorAll(".tagpick .kachel").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); });
   inhalt.querySelectorAll("[data-glossar]").forEach(b => b.onclick = () => glossarZeigen(BOGEN_SEITEN[+b.dataset.glossar]));
   const kom = $("#b_kom");
   kom.addEventListener("input", () => { f.kommentar = kom.value; });

@@ -15,29 +15,30 @@ const MERKMALE = [
 ];
 /* MERKMALE: die früheren Regler – der Bogen fragt sie seit 13.11.2026 nicht mehr ab, sie bleiben nur für die Anzeige
    historischer Bewertungen (Geschmacksprofil).
-   Tags für den Bogen (Seite „Riechen“ und „Schmecken“): [wort, emoji, kurze Erklärung fürs Glossar oder ""].
+   Tags für den Bogen (Seite „Riechen“ und „Schmecken“): [wort, emoji, Beispiele]. Die Beispiele stehen seit
+   14.11.2026 direkt auf der Kachel und ersetzen dort das Glossar („Was heißt das?“).
    Gespeichert werden beide Seiten zusammen in bewertungen.geruch (nur das Wort, ohne Emoji) – darum darf kein Wort in
    beiden Listen vorkommen. Ältere Bewertungen enthalten dort noch die früheren Geruchs-Tags (Zitrus, Banane …), die
    zählen bei der Anzeige zum Geruch. */
 const TAGS_GERUCH = [
-  ["fruchtig","🍊","Nach Obst – Apfel, Beeren, Pfirsich oder Tropenfrüchte."],
-  ["zitronig","🍋","Frisch-sauer wie Zitrone, Limette oder Grapefruit."],
-  ["blumig","🌸","Nach Blüten oder Parfüm, leicht süßlich."],
-  ["kräuterig","🌿","Nach frischen Kräutern, Gras, Heu oder Tee."],
-  ["brotig","🍞","Nach frischem Brot, Brotteig oder Getreide."],
-  ["karamellig","🍯","Wie Karamellbonbon oder Toffee – süßlich-warm."],
-  ["röstig","🔥","Wie Kaffee, dunkle Schokolade oder dunkler Toast. Typisch für Stout, Porter, Schwarzbier."],
-  ["bananig","🍌","Nach reifer Banane, manchmal mit Nelke – typisch für Weizenbier."],
+  ["fruchtig","🍊","Apfel, Beeren, Pfirsich"],
+  ["zitronig","🍋","Zitrone, Grapefruit"],
+  ["blumig","🌸","Blüten, Parfüm"],
+  ["kräuterig","🌿","Kräuter, Gras, Heu"],
+  ["brotig","🍞","Brot, Teig, Getreide"],
+  ["karamellig","🍯","Karamell, Toffee"],
+  ["röstig","🔥","Kaffee, Schokolade"],
+  ["bananig","🍌","reife Banane, Nelke"],
 ];
 const TAGS_GESCHMACK = [
-  ["hopfig","🌿","Frisch, grün und würzig – oft nach Zitrus, Kiefer oder Gras, meist mit etwas Bittere. Typisch für IPA und Pils."],
-  ["malzig","🍺","Nach Getreide – wie Brotkruste, Müsli oder Malzbier, eher rund und leicht süßlich. Typisch für Helles, Märzen, Bock."],
-  ["spritzig","🫧","Viel Kohlensäure, prickelt auf der Zunge."],
-  ["leicht","🪶","Schlank und frisch im Mund, fast wie Wasser."],
-  ["kräftig","💪","Voll und rund im Mund, fast cremig."],
-  ["süffig","🍻","Trinkt sich leicht – man will gleich den nächsten Schluck."],
-  ["ungewöhnlich","🤔",""],
-  ["nicht meins","😬",""],
+  ["hopfig","🌿","würzig, leicht bitter"],
+  ["malzig","🍺","Brotkruste, Malzbier"],
+  ["spritzig","🫧","viel Kohlensäure"],
+  ["leicht","🪶","schlank und frisch"],
+  ["kräftig","💪","voll, fast cremig"],
+  ["süffig","🍻","trinkt sich leicht"],
+  ["ungewöhnlich","🤔","anders als erwartet"],
+  ["nicht meins","😬","schmeckt mir nicht"],
 ];
 /* „herb“ und „süß“ waren am 13.11.2026 kurz Geschmacks-Tags – seit dem Geschmackskreis fragt der Kreis das ab.
    Sie bleiben hier nur, damit bereits gespeicherte Bewertungen weiter richtig angezeigt werden. */

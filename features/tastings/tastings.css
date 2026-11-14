@@ -43,7 +43,6 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .bogen-seite{flex:0 0 100%;min-width:0;padding:0 20px;box-sizing:border-box}
 .bogen-seite fieldset{display:flex;flex-direction:column;gap:16px}
 .bogen-seite .hint{margin:0}
-.glossar-auf{align-self:flex-start;font-size:.92rem}
 #b_kom{font-size:1.05rem;padding:12px 14px;margin-top:4px}
 /* Fußleiste des Bogens (seit 14.11.2026 kompakt): Fortschritt als 3-px-Linie an der Oberkante statt eigener Zeile */
 .sheet-foot:has(.bogen-fuss){position:relative;border-top:0;padding-top:12px;padding-bottom:12px}
@@ -80,8 +79,19 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .sl.unset input[type=range]::-webkit-slider-thumb{background:var(--muted)}
 .sl.unset input[type=range]::-moz-range-thumb{background:var(--muted)}
 .sl-ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:-8px}
-.tagpick{display:flex;flex-wrap:wrap;gap:8px}
-.tagpick .chip{padding:10px 16px;font-size:.92rem;min-height:44px}
+/* Riechen/Schmecken: Kacheln in zwei Spalten (seit 14.11.2026 statt Chips) – Emoji, Wort, Beispiele, Haken oben rechts */
+.tagpick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kachel{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;min-height:98px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.kachel .k-emoji{font-size:1.7rem;line-height:1;margin-bottom:auto}
+.kachel b{font-size:1.05rem;font-weight:600;line-height:1.3}
+.kachel small{font-size:.78rem;line-height:1.25;color:var(--muted)}
+.kachel::after{content:"";position:absolute;top:12px;right:12px;width:20px;height:20px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;font-weight:700;line-height:1}
+.kachel[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.kachel[aria-pressed="true"]::after{content:"✓";border-color:var(--amber);background:var(--amber);color:var(--bg)}
+.kachel:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+#bogenInhalt fieldset:has(.tagpick){gap:12px}
+.kopf-hinweis{font:400 .8rem/1 var(--font-body);color:var(--muted)}
+@media (max-height:620px){.kachel{min-height:70px;padding:7px 12px}.kachel .k-emoji{font-size:1.35rem}.kachel::after{top:8px;right:10px}}
 #bWeiter,#bZurueck{min-height:48px;font-size:1rem;flex:1;justify-content:center}
 /* Braumeister-Ansicht */
 .qrbox{align-items:flex-start}
