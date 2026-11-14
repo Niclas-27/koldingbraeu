@@ -15,29 +15,30 @@ const MERKMALE = [
 ];
 /* MERKMALE: die früheren Regler – der Bogen fragt sie seit 13.11.2026 nicht mehr ab, sie bleiben nur für die Anzeige
    historischer Bewertungen (Geschmacksprofil).
-   Tags für den Bogen (Seite „Riechen“ und „Schmecken“): [wort, emoji, kurze Erklärung fürs Glossar oder ""].
+   Tags für den Bogen (Seite „Riechen“ und „Schmecken“): [wort, emoji, Beispiele]. Die Beispiele stehen seit
+   14.11.2026 direkt auf der Kachel und ersetzen dort das Glossar („Was heißt das?“).
    Gespeichert werden beide Seiten zusammen in bewertungen.geruch (nur das Wort, ohne Emoji) – darum darf kein Wort in
    beiden Listen vorkommen. Ältere Bewertungen enthalten dort noch die früheren Geruchs-Tags (Zitrus, Banane …), die
    zählen bei der Anzeige zum Geruch. */
 const TAGS_GERUCH = [
-  ["fruchtig","🍊","Nach Obst – Apfel, Beeren, Pfirsich oder Tropenfrüchte."],
-  ["zitronig","🍋","Frisch-sauer wie Zitrone, Limette oder Grapefruit."],
-  ["blumig","🌸","Nach Blüten oder Parfüm, leicht süßlich."],
-  ["kräuterig","🌿","Nach frischen Kräutern, Gras, Heu oder Tee."],
-  ["brotig","🍞","Nach frischem Brot, Brotteig oder Getreide."],
-  ["karamellig","🍯","Wie Karamellbonbon oder Toffee – süßlich-warm."],
-  ["röstig","🔥","Wie Kaffee, dunkle Schokolade oder dunkler Toast. Typisch für Stout, Porter, Schwarzbier."],
-  ["bananig","🍌","Nach reifer Banane, manchmal mit Nelke – typisch für Weizenbier."],
+  ["fruchtig","🍊","Apfel, Beeren, Pfirsich"],
+  ["zitronig","🍋","Zitrone, Grapefruit"],
+  ["blumig","🌸","Blüten, Parfüm"],
+  ["kräuterig","🌿","Kräuter, Gras, Heu"],
+  ["brotig","🍞","Brot, Teig, Getreide"],
+  ["karamellig","🍯","Karamell, Toffee"],
+  ["röstig","🔥","Kaffee, Schokolade"],
+  ["bananig","🍌","reife Banane, Nelke"],
 ];
 const TAGS_GESCHMACK = [
-  ["hopfig","🌿","Frisch, grün und würzig – oft nach Zitrus, Kiefer oder Gras, meist mit etwas Bittere. Typisch für IPA und Pils."],
-  ["malzig","🍺","Nach Getreide – wie Brotkruste, Müsli oder Malzbier, eher rund und leicht süßlich. Typisch für Helles, Märzen, Bock."],
-  ["spritzig","🫧","Viel Kohlensäure, prickelt auf der Zunge."],
-  ["leicht","🪶","Schlank und frisch im Mund, fast wie Wasser."],
-  ["kräftig","💪","Voll und rund im Mund, fast cremig."],
-  ["süffig","🍻","Trinkt sich leicht – man will gleich den nächsten Schluck."],
-  ["ungewöhnlich","🤔",""],
-  ["nicht meins","😬",""],
+  ["hopfig","🌿","würzig, leicht bitter"],
+  ["malzig","🍺","Brotkruste, Malzbier"],
+  ["spritzig","🫧","viel Kohlensäure"],
+  ["leicht","🪶","schlank und frisch"],
+  ["kräftig","💪","voll, fast cremig"],
+  ["süffig","🍻","trinkt sich leicht"],
+  ["ungewöhnlich","🤔","anders als erwartet"],
+  ["nicht meins","😬","schmeckt mir nicht"],
 ];
 /* „herb“ und „süß“ waren am 13.11.2026 kurz Geschmacks-Tags – seit dem Geschmackskreis fragt der Kreis das ab.
    Sie bleiben hier nur, damit bereits gespeicherte Bewertungen weiter richtig angezeigt werden. */
@@ -52,16 +53,14 @@ const KREIS_BEGRIFFE = [
   ["trocken","🌵","Das Gegenteil von süß: kaum Restsüße, endet knackig und sauber – man will gleich den nächsten Schluck. Typisch für Pils und Kölsch."],
   ["ausgewogen","⚖️","Die Mitte der Karte: nichts sticht heraus."],
 ];
-/* Geschmackskarte (seit 13.11.2026 statt des Kreises): Quadrat mit den vier Polen am Rand und Bierstil-Beispielen in
-   den Ecken. Gemeinsam für den Bogen (Eingabe) und die Ergebnisseite (Punktwolke). Lage als x/y von -1 bis 1:
+/* Geschmackskarte (seit 13.11.2026 statt des Kreises): Quadrat mit den vier Polen am Rand (die Bierstil-Beispiele in
+   den Ecken gab es nur am 13.11.). Gemeinsam für den Bogen (Eingabe) und die Ergebnisseite (Punktwolke). Lage als x/y von -1 bis 1:
    x = Süße (links trocken, rechts süß), y = Bittere (unten mild, oben bitter) – 1:1 die Werte 0–10 in merkmale. */
-const KARTE_ECKEN = [["ol","herb & trocken","Pils, IPA"],["or","bitter & süß","Imperial Stout"],
-                     ["ul","mild & trocken","Weizen, Kölsch"],["ur","mild & süß","Bock, Märzen"]];
-function karteHtml({ecken = true, klein = false, attr = "", innen = ""} = {}){
+function karteHtml({klein = false, attr = "", innen = ""} = {}){
   return `<div class="karte${klein?" klein":""}"${attr}><i class="k-achse v" aria-hidden="true"></i><i class="k-achse h" aria-hidden="true"></i>
     <span class="k-pol o" aria-hidden="true">${klein?"":"☕ "}Bitter</span><span class="k-pol u" aria-hidden="true">${klein?"":"🥛 "}Mild</span>
     <span class="k-pol l" aria-hidden="true">${klein?"":"🌵 "}Trocken</span><span class="k-pol r" aria-hidden="true">Süß${klein?"":" 🍯"}</span>
-    ${ecken?KARTE_ECKEN.map(([k,t,b]) => `<span class="k-ecke ${k}" aria-hidden="true"><b>${esc(t)}</b>${esc(b)}</span>`).join(""):""}${innen}</div>`;
+    ${innen}</div>`;
 }
 // Position in Prozent aus den gespeicherten Werten 0–10 (suesse, bitter)
 const kartePos = (suesse, bitter) => `left:${(suesse*10).toFixed(1)}%;top:${(100 - bitter*10).toFixed(1)}%`;
