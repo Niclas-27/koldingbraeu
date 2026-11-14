@@ -59,16 +59,14 @@ function bogenZeigen(opts){
           innen: `<span class="k-punkt" hidden></span><span class="kreis-blase" aria-hidden="true"></span>`})}
         <p class="kreis-text" id="kreisText" aria-live="polite"></p>`;
     } else {
-      // Seit 14.11.2026: Flasche aus dem Logo (wie die Ladeanimation) als Skala – Antippen/Ziehen füllt sie bis zur Note,
-      // rechts daneben die Zahlen als Knöpfe; Zahl, Wort und Erklärung zeigen, was die Note bedeutet
-      h += `<div class="note-wahl">
-          <div class="note-flasche" id="noteFlasche" role="radiogroup" aria-label="Gesamtnote von 0 bis 10" tabindex="-1">
-            ${KB.ladeFlasche()}
-            <div class="note-skala">${Array.from({length:11},(_,i)=>10-i).map(n=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}" aria-label="${n} – ${esc(NOTE_STUFEN[n][0])}">${n}</button>`).join("")}</div>
-          </div>
-          <div class="note-text" aria-live="polite"><span class="note-zahl num" id="noteZahl"></span><b id="noteWort"></b><small id="noteErkl"></small></div>
-        </div>
-        <label class="f" for="b_kom">Dein Satz zum Bier (optional)<input id="b_kom" maxlength="140" value="${esc(f.kommentar)}" placeholder="z. B. „Schmeckt nach Sommer“" autocomplete="off" enterkeyhint="done"></label>`;
+      // Seit 14.11.2026: fünf Stufen mit Erklärung, Zahlen direkt in der Zeile. Das Textfeld darunter fragt passend zur
+      // gewählten Stufe nach („Was hat dir gefehlt?“) und rollt nach der Wahl ins Bild, damit es nicht untergeht.
+      const st = f.note == null ? null : noteStufe(f.note);
+      h += `<div class="nstufen" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${NOTE_STUFEN.map(([e,t,d,ns]) =>
+          `<div class="nstufe${ns.includes(f.note)?" an":""}"><span class="ns-e" aria-hidden="true">${e}</span><div class="ns-t"><b>${esc(t)}</b><small>${esc(d)}</small></div>
+            <div class="ns-n">${ns.map(n=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}" aria-label="${n} – ${esc(t)}">${n}</button>`).join("")}</div></div>`).join("")}</div>
+        <label class="note-satz" for="b_kom"><span class="ns-frage" id="noteFrage">${esc(st ? st[4] : "Dein Satz zum Bier")}</span><small>optional – ein Satz reicht</small>
+          <input id="b_kom" maxlength="140" value="${esc(f.kommentar)}" placeholder="z. B. „Schmeckt nach Sommer“" autocomplete="off" enterkeyhint="done"></label>`;
     }
     return h + `</fieldset></section>`;
   };
@@ -108,7 +106,7 @@ function bogenZeigen(opts){
   // auf der Geschmackskarte nie (dort zieht man den Punkt).
   let startX = null, startY = null;
   inhalt.addEventListener("touchstart", e => {
-    if(e.touches.length !== 1 || e.target.closest("input, textarea, .karte, .note-flasche")){ startX = null; return; }
+    if(e.touches.length !== 1 || e.target.closest("input, textarea, .karte")){ startX = null; return; }
     startX = e.touches[0].clientX; startY = e.touches[0].clientY;
   }, {passive: true});
   inhalt.addEventListener("touchend", e => {
@@ -121,7 +119,7 @@ function bogenZeigen(opts){
   $("#bZurueck").onclick = () => zeigen(seite - 1);
   $("#bWeiter").onclick = async () => {
     if(seite < letzte){ zeigen(seite + 1); return; }
-    if(f.note == null){ $("#bErr").textContent = "Bitte eine Note wählen."; inhalt.querySelector(".note-skala button[data-n='5']")?.focus(); return; }
+    if(f.note == null){ $("#bErr").textContent = "Bitte eine Note wählen."; inhalt.querySelector(".nstufen button")?.focus(); return; }
     $("#bWeiter").disabled = true; $("#bErr").textContent = "";
     const merkmale = {...(alt.merkmale || {})};
     if(f.kreis) Object.assign(merkmale, kreisZuMerkmalen(f.kreis));
@@ -190,52 +188,19 @@ function kreisVerdrahten(inhalt, f){
   anzeigen();
 }
 
-/* Notenseite: Flasche füllt sich bis zur Note (Clip-Rechteck der Ladeanimation), Ziehen über Flasche und Skala ändert
-   die Note stufenlos in ganzen Schritten, Pfeiltasten ebenso. Bei 10 knallt der Korken. Wert in f.note (0–10 oder null). */
+/* Notenseite: Zahl antippen wählt die Note, markiert die Stufe und stellt die Frage am Textfeld passend; beim ersten
+   Wählen rollt das Textfeld ins Bild (ohne Tastatur zu öffnen). Wert in f.note (0–10 oder null). */
 function noteVerdrahten(inhalt, f){
-  const box = inhalt.querySelector("#noteFlasche");
-  if(!box) return;
-  const svg = box.querySelector("svg"), clip = svg.querySelector(".lr"), korken = svg.querySelector(".lc");
-  const knoepfe = [...box.querySelectorAll(".note-skala button")];
-  const OBEN = 27, UNTEN = 248; // Flaschenrand im Logo (viewBox-Koordinaten)
-  let vorher = f.note;
-  const anzeigen = () => {
-    const n = f.note;
-    const pegel = n == null ? UNTEN : UNTEN - (UNTEN - OBEN) * n / 10;
-    clip.setAttribute("y", pegel); clip.setAttribute("height", Math.max(0, UNTEN - pegel + 4));
-    box.classList.toggle("leer", n == null);
-    knoepfe.forEach(b => b.setAttribute("aria-checked", String(+b.dataset.n === n)));
-    inhalt.querySelector("#noteZahl").textContent = n == null ? "–" : n;
-    inhalt.querySelector("#noteZahl").className = "note-zahl num " + (n == null ? "" : gradeCls(n));
-    inhalt.querySelector("#noteWort").textContent = n == null ? "Noch keine Note" : NOTE_STUFEN[n][0];
-    inhalt.querySelector("#noteErkl").textContent = n == null ? "Tipp auf die Flasche – je voller, desto besser." : NOTE_STUFEN[n][1];
-    if(n === 10 && vorher !== 10){ korken.classList.remove("knall"); void korken.getBBox(); korken.classList.add("knall"); }
-    vorher = n;
-  };
-  const setzen = n => { n = Math.max(0, Math.min(10, n)); if(n === f.note) return; f.note = n; $("#bErr").textContent = ""; anzeigen(); };
-  // Höhe → Note: unten 0, oben 10, bezogen auf den Flaschenrand im SVG
-  const ausZeiger = e => {
-    const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
-    const y = vb.y + (e.clientY - r.top) / r.height * vb.height;
-    return Math.round((UNTEN - y) / (UNTEN - OBEN) * 10);
-  };
-  let zieht = false;
-  box.addEventListener("pointerdown", e => {
-    const knopf = e.target.closest(".note-skala button");
-    zieht = true; box.setPointerCapture(e.pointerId); e.preventDefault();
-    setzen(knopf ? +knopf.dataset.n : ausZeiger(e));
+  const knoepfe = [...inhalt.querySelectorAll(".nstufen button")];
+  if(!knoepfe.length) return;
+  knoepfe.forEach(b => b.onclick = () => {
+    const erste = f.note == null;
+    f.note = +b.dataset.n; $("#bErr").textContent = "";
+    knoepfe.forEach(x => x.setAttribute("aria-checked", String(x === b)));
+    inhalt.querySelectorAll(".nstufe").forEach(z => z.classList.toggle("an", z.contains(b)));
+    inhalt.querySelector("#noteFrage").textContent = noteStufe(f.note)[4];
+    if(erste) inhalt.querySelector(".note-satz").scrollIntoView({block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
   });
-  box.addEventListener("pointermove", e => { if(zieht) setzen(ausZeiger(e)); });
-  const ende = () => { zieht = false; };
-  box.addEventListener("pointerup", ende); box.addEventListener("pointercancel", ende);
-  knoepfe.forEach(b => b.addEventListener("click", () => setzen(+b.dataset.n))); // Tastatur/Screenreader
-  box.addEventListener("keydown", e => {
-    const d = {ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1}[e.key];
-    if(d == null) return;
-    e.preventDefault(); setzen((f.note ?? 5 - d) + d);
-    box.querySelector(`.note-skala button[data-n="${f.note}"]`)?.focus();
-  });
-  anzeigen();
 }
 
 /* Kleines Glossar zu den Begriffen einer Seite – eigenes Fenster über dem Bogen (wie bestaetigen() in core.js),

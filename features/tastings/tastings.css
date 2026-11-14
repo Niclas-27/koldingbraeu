@@ -65,28 +65,22 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .bogen-fertig h3{margin:8px 0 0}
 #bogenInhalt fieldset{gap:20px}
 #bogenInhalt legend{font-family:var(--font-display);font-size:1.4rem;font-weight:800;font-stretch:82%;color:var(--ink);text-transform:none;letter-spacing:0;margin-bottom:2px}
-/* Notenseite (seit 14.11.2026): Flasche aus dem Logo als Skala, Zahlen daneben, rechts Zahl/Wort/Erklärung */
-.note-wahl{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
-.note-flasche{display:flex;gap:10px;align-items:stretch;touch-action:none;cursor:ns-resize;-webkit-tap-highlight-color:transparent;user-select:none}
-.note-flasche svg{height:clamp(190px,calc(100svh - 430px),270px);width:auto;overflow:visible;display:block}
-.note-flasche .lg{fill:var(--ink);opacity:.14}
-.note-flasche .ll{fill:var(--amber)}
-.note-flasche .lr{transition:y .22s cubic-bezier(.3,0,.2,1),height .22s cubic-bezier(.3,0,.2,1)}
-.note-flasche .lc{fill:var(--amber);transform-box:fill-box;transform-origin:50% 100%}
-.note-flasche.leer .lc{fill:var(--ink);opacity:.25}
-.note-flasche .lc.knall{animation:noteKnall .9s cubic-bezier(.3,0,.2,1)}
-@keyframes noteKnall{0%{transform:translateY(0)}12%{transform:translateY(10px) scale(1.06,.85)}30%{transform:translateY(-70px) rotate(200deg)}55%{transform:translateY(-90px) rotate(340deg)}80%{transform:translateY(4px) rotate(360deg) scale(1.05,.9)}100%{transform:translateY(0) rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.note-flasche .lr{transition:none}.note-flasche .lc.knall{animation:none}}
-/* Zahlen 10…0 untereinander, so hoch wie die Flasche; Abstand oben = Flaschenhals (27/262 der Höhe) */
-.note-skala{display:flex;flex-direction:column;justify-content:space-between;padding:calc(.105 * clamp(190px,calc(100svh - 430px),270px) - 10px) 0 calc(.035 * clamp(190px,calc(100svh - 430px),270px) - 10px)}
-.note-skala button{width:34px;height:20px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--muted);font:600 .82rem/20px var(--font-data);cursor:pointer}
-.note-skala button[aria-checked="true"]{background:var(--amber);color:var(--bg)}
-.note-skala button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
-.note-text{display:flex;flex-direction:column;gap:2px;min-width:0}
-.note-zahl{font-family:var(--font-display);font-weight:800;font-stretch:82%;font-size:4.2rem;line-height:1;color:var(--muted)}
-.note-zahl.g1{color:var(--hop)}.note-zahl.g2{color:var(--amber)}.note-zahl.g3{color:var(--warn)}
-.note-text b{font-size:1.3rem;line-height:1.25}
-.note-text small{color:var(--muted);font-size:.95rem;line-height:1.35}
+/* Notenseite (seit 14.11.2026): fünf Stufen mit Emoji und Erklärung, Zahlen als runde Knöpfe in der Zeile */
+.nstufen{display:flex;flex-direction:column;gap:7px}
+.nstufe{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:58px;padding:6px 8px 6px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.nstufe.an{border-color:var(--amber);background:var(--amber-soft)}
+.ns-e{font-size:1.5rem;line-height:1}
+.ns-t{min-width:0}.ns-t b{display:block;font-size:1rem;line-height:1.25}.ns-t small{display:block;color:var(--muted);font-size:.78rem;line-height:1.25}
+.ns-n{display:flex;gap:6px}
+.ns-n button{width:44px;height:44px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 1.05rem/1 var(--font-data);cursor:pointer}
+.ns-n button[aria-checked="true"]{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+.ns-n button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+/* Textfeld als eigene Karte mit Frage passend zur Stufe */
+.note-satz{display:flex;flex-direction:column;gap:2px;margin-top:4px;padding:12px 12px 12px;border:1px dashed color-mix(in srgb,var(--amber) 55%,var(--line));border-radius:var(--radius);scroll-margin-bottom:16px}
+.ns-frage{font-weight:700;font-size:1.02rem}
+.note-satz small{color:var(--muted);font-size:.78rem;margin-bottom:6px}
+.note-satz input{font-size:1.05rem;padding:12px 14px}
+@media (max-height:620px){.nstufe{min-height:50px;padding-top:3px;padding-bottom:3px}.ns-n button{width:40px;height:40px}}
 .scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 0;font-family:var(--font-data);font-size:1.15rem;font-weight:600;cursor:pointer;min-height:52px}
 .scale button[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -113,7 +107,7 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .kachel:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 #bogenInhalt fieldset:has(.tagpick){gap:12px}
 .kopf-hinweis{font:400 .8rem/1 var(--font-body);color:var(--muted)}
-@media (max-height:620px){.note-zahl{font-size:3.2rem}.note-wahl{gap:16px}.kachel{min-height:70px;padding:7px 12px}.kachel .k-emoji{font-size:1.35rem}.kachel::after{top:8px;right:10px}}
+@media (max-height:620px){.kachel{min-height:70px;padding:7px 12px}.kachel .k-emoji{font-size:1.35rem}.kachel::after{top:8px;right:10px}}
 #bWeiter,#bZurueck{min-height:48px;font-size:1rem;flex:1;justify-content:center}
 /* Braumeister-Ansicht */
 .qrbox{align-items:flex-start}

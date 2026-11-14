@@ -183,10 +183,10 @@ Wort, darunter kurze Beispiele („Apfel, Beeren, Pfirsich“), Haken oben recht
 dritte Feld in `TAGS_GERUCH`/`TAGS_GESCHMACK` und ersetzen auf diesen Seiten Hinweistext und Glossar; rechts in der
 Überschrift steht klein „mehrere möglich“. Das Glossar („?“) gibt es nur noch beim Geschmacksbild.
 
-**Notenseite mit Flasche (14.11.2026):** Die Flasche aus dem Logo (dieselbe wie in der Ladeanimation, `KB.ladeFlasche()`)
-ist die Skala: Antippen oder Ziehen füllt sie bis zur Note (Clip-Rechteck `.lr`, Flaschenrand y 27–248 im SVG), daneben
-stehen die Zahlen 10…0 als Knöpfe (role=radio, Pfeiltasten). Rechts große Zahl in der Notenfarbe (`gradeCls`), Wort und
-Erklärung aus `NOTE_STUFEN` (common.js). Bei 10 knallt der Korken (`.lc.knall`). Wischen auf der Flasche blättert nicht.
+**Notenseite mit Stufen (14.11.2026):** Fünf Stufen (`NOTE_STUFEN` in common.js: Weg damit 0–2, Geht so 3–4, Okay 5–6,
+Gut 7–8, Großartig 9–10) mit Emoji und Erklärung, die Zahlen als runde Knöpfe direkt in der Zeile. Das Textfeld ist eine
+eigene Karte und fragt passend zur Stufe nach („Was hat dir gefehlt?“, „Was macht es so besonders?“); beim ersten Wählen
+rollt es ins Bild, ohne die Tastatur zu öffnen. (Kurz probiert: Logo-Flasche als Skala – verworfen.)
 
 **Punktwolke auf der Ergebnisseite (seit 13.11.2026):** Im aufgeklappten Bier zeigt „Geschmacksbild · n Stimmen“ die
 Karte mit einem Punkt je Bewertung, einem Kreuz für den Schnitt und – nur auf dem Gerät des Gastes – seinem eigenen
