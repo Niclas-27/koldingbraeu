@@ -111,6 +111,40 @@ function rangTabelle(zeilen, opts){
       <span class="bar"><i class="${gradeCls(z.schnitt)}" style="width:${w}%"></i></span>
     </li>`;}).join("")}</ol>`;
 }
+/* ---------- Titel pro Bier (seit 14.11.2026) ----------
+   Rein aus den Zahlen berechnet, nichts davon wird gespeichert. Jeder Titel wird höchstens einmal pro Verkostung
+   vergeben und nur, wenn das Ergebnis eindeutig ist; gezählt werden Biere ab drei Bewertungen.
+   Neue Titel: hier einen Eintrag [name, emoji, erklärung] ergänzen und in vkTitel() die Regel dazu. */
+const VK_TITEL = {
+  streitfall: ["Streitfall des Abends", "⚡", "Hier lagen die Noten am weitesten auseinander."],
+  konsens: ["Konsensbier", "🤝", "Hier war sich die Runde am einigsten."],
+  einstimmig: ["Einstimmig empfohlen", "👍", "Alle würden dieses Bier weiterempfehlen."],
+};
+// proben: [{noten: [7,6,…], nochmal: 3}] → Map(probe → ["streitfall", …])
+function vkTitel(proben){
+  const t = new Map(proben.map(p => [p, []]));
+  const k = proben.filter(p => (p.noten||[]).length >= 3).map(p => {
+    const n = p.noten, m = n.reduce((a,b) => a + b, 0) / n.length;
+    return {p, spanne: Math.max(...n) - Math.min(...n), streu: Math.round(Math.sqrt(n.reduce((a,b) => a + (b-m)**2, 0) / n.length) * 1000)};
+  });
+  if(k.length < 2) return t;
+  // genau ein Bier vorn – bei Gleichstand gibt es den Titel nicht
+  const einzig = (liste, cmp) => { const s = liste.slice().sort(cmp); return s.length && (s.length === 1 || cmp(s[0], s[1]) !== 0) ? s[0] : null; };
+  const weit = einzig(k.filter(x => x.spanne >= 3), (a,b) => b.spanne - a.spanne || b.streu - a.streu);
+  if(weit) t.get(weit.p).push("streitfall");
+  const eng = einzig(k.filter(x => x.spanne <= 1), (a,b) => a.spanne - b.spanne || a.streu - b.streu);
+  if(eng) t.get(eng.p).push("konsens");
+  const alle = k.filter(x => x.p.nochmal === x.p.noten.length);
+  if(alle.length === 1) t.get(alle[0].p).push("einstimmig");
+  return t;
+}
+const vkTitelHtml = schluessel => (schluessel||[]).map(s => `<span class="vk-titel" title="${esc(VK_TITEL[s][2])}">${VK_TITEL[s][1]} ${esc(VK_TITEL[s][0])}</span>`).join("");
+// Plätze vergeben (gleicher Schnitt und gleiche Empfehlungs-Zahl = gleicher Platz); liste ist schon nach rangfolge() sortiert
+function plaetzeVergeben(liste){
+  let platz = 0, vorher = null;
+  liste.forEach((p,i) => { const k = p.schnitt==null ? null : `${p.schnitt}|${p.nochmal||0}`; if(k!==vorher){ platz = i+1; vorher = k; } p.platz = p.schnitt==null ? null : platz; });
+  return liste;
+}
 function stopTimer(){ if(timer){clearInterval(timer);timer=null;} }
 function startTimer(fn){ stopTimer(); timer=setInterval(()=>{ if(document.visibilityState==="visible" && $("#sheet").hidden) fn(); }, MIN_LIVE); }
 async function ladeStile(){

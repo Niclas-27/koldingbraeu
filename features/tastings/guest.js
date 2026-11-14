@@ -34,7 +34,8 @@ async function gastLaden(still){
     if(Object.keys(meineK).length) lsSet("kb_meine_k_"+data.verkostung.id, JSON.stringify(meineK));
     // Schlüssel für die Fotos vom Abend auf der Ergebnisseite (die kennt den Code nicht)
     if(data.ich && g) lsSet("kb_gast_e_"+data.verkostung.id, g.token);
-    location.replace("verkostung.html?e="+encodeURIComponent(data.verkostung.id));
+    // „&ehrung=1“: die Ergebnisseite beginnt direkt nach dem Aufdecken mit der Siegerehrung (seit 14.11.2026)
+    location.replace("verkostung.html?e="+encodeURIComponent(data.verkostung.id)+"&ehrung=1");
     return;
   }
   gastZeigen();
