@@ -311,6 +311,12 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
   @keyframes eh-auf{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 }
 
+/* Konfetti zur Sieger-Karte: fällt einmal von oben durchs Bild (results.js konfetti()), liegt über der Karte, fängt
+   aber keine Klicks ab. Farben: Akzent, zwei Kronkorken-Goldtöne, etwas Schriftfarbe – kein Grün/Rot (die gehören den Noten). */
+.eh-konfetti{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+.eh-konfetti i{position:absolute;top:-24px;border-radius:2px;animation:eh-fall var(--d,3s) cubic-bezier(.3,.15,.7,1) var(--w,0s) both}
+@keyframes eh-fall{0%{transform:translate3d(0,0,0) rotate(0);opacity:1}85%{opacity:1}100%{transform:translate3d(var(--x,0),calc(100vh + 48px),0) rotate(var(--r,360deg));opacity:0}}
+
 /* Verwaltung: „Abschluss vorbereiten“ / „Zusammenfassungen“ */
 .zf-hinweis{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .zf-hinweis p{margin:0}

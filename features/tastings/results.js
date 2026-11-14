@@ -104,6 +104,17 @@ async function ergebnisLaden(){
   ergebnisGalerie(v.id);
 }
 
+/* Konfetti zur Sieger-Karte (seit 14.11.2026): regnet einmal über die Karte, in den Farben der Seite. Rein dekorativ
+   (aria-hidden, nicht anklickbar); wer im System „Bewegung reduzieren“ eingestellt hat, bekommt keins. */
+function konfetti(el){
+  if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const k = document.createElement("div"); k.className = "eh-konfetti"; k.setAttribute("aria-hidden", "true");
+  const farben = ["var(--amber)", "#e8a93a", "#f3cb72", "var(--amber)", "#e8a93a", "var(--ink)"], z = (a, b) => a + Math.random() * (b - a);
+  k.innerHTML = Array.from({length: 70}, (_, i) => `<i style="left:${z(0,100).toFixed(1)}%;width:${z(6,10).toFixed(0)}px;height:${z(8,16).toFixed(0)}px;background:${farben[i % farben.length]};--x:${z(-90,90).toFixed(0)}px;--r:${z(-720,720).toFixed(0)}deg;--d:${z(2.4,4.2).toFixed(2)}s;--w:${z(0,1.2).toFixed(2)}s${i % 5 === 0 ? ";border-radius:50%" : ""}"></i>`).join("");
+  el.appendChild(k);
+  setTimeout(() => k.remove(), 6000);
+}
+
 /* Siegerehrung (seit 14.11.2026): eine Karte pro Bier, vom letzten Platz bis zum Sieger – bildschirmfüllend über der
    Ergebnisseite, damit darunter nichts vorab zu sehen ist. Jeder blättert am eigenen Gerät; „Überspringen“ geht immer.
    Die Rangliste selbst bleibt ohne Podest (Wunsch der Tester vom 10.11.2026). */
@@ -140,6 +151,7 @@ function siegerehrung({v, proben, titelVon, meine}){
     el.querySelector("[data-eh=weiter]").onclick = weiter;
     const zb = el.querySelector("[data-eh=zurueck]"); if(zb) zb.onclick = zurueck;
     el.scrollTop = 0; el.querySelector("[data-eh=weiter]").focus({preventScroll: true});
+    if(p.platz === 1) konfetti(el);
   }
   // Wischen blättert ebenfalls (wie in der Foto-Großansicht): nach links = weiter, nach rechts = zurück
   el.addEventListener("touchstart", e => { startX = e.touches.length === 1 ? e.touches[0].clientX : null; }, {passive: true});
