@@ -149,6 +149,10 @@ normalen Entwicklungsumgebung lief es bisher zuverlässiger.
 - **Feedback nach der Verkostung (10.11.2026):** Rangliste ohne Podest, Probennummer am Kronkorken (blind),
   „Trübung“ und „weiterempfehlen“ im Bogen, Gäste-Zuschnitt in einem Schritt, Fotos vom Abend für Teilnehmer
   (Edge Function `galerie-ansehen`, persönlicher Zugangslink), bis zu neun Gäste-Fotos.
+- **Abschluss der Verkostung (14.11.2026):** Zwischenschritt „Abschluss vorbereiten“ vor dem Aufdecken,
+  Zusammenfassung je Bier (`proben.zusammenfassung`, `features/tastings/schema/17_zusammenfassung.sql`), berechnete
+  Titel pro Bier und Siegerehrung vom letzten Platz bis zum Sieger. Die Texte schreibt Claude im Chat direkt in die
+  Datenbank (kein API-Schlüssel) – Ablauf und Regeln in `features/tastings/README.md` unter „Abschluss“.
 
 ### 2.9 Offene Punkte (Stand dieser Übergabe)
 

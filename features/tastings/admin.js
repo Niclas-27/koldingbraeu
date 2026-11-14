@@ -32,7 +32,7 @@ async function detailLaden(){
   if(!isBM()){ stopTimer(); main().innerHTML = `<p class="empty">Diese Ansicht ist nur für angemeldete Braumeister.</p><p class="empty"><a href="verkostung.html">Zur Übersicht</a></p>`; return; }
   const [v, pr, tn, vs, gb] = await Promise.all([
     sb.from("verkostungen").select("*").eq("id", detailId).maybeSingle(),
-    sb.from("proben").select("id,nummer,bier_id,biere(id,name,brauerei,eigen,alkohol,stil_id,sud_id,bild_kronkorken,bild_flasche,bierstile(name))").eq("verkostung_id", detailId).order("nummer"),
+    sb.from("proben").select("id,nummer,bier_id,zusammenfassung,biere(id,name,brauerei,eigen,alkohol,stil_id,sud_id,bild_kronkorken,bild_flasche,bierstile(name))").eq("verkostung_id", detailId).order("nummer"),
     sb.from("teilnehmer").select("id,name,angelegt").eq("verkostung_id", detailId).order("angelegt"),
     sb.from("vorschlaege").select("*").eq("verkostung_id", detailId).order("angelegt"),
     sb.from("verkostung_bilder").select("id,pfad,teilnehmer_id,bildunterschrift,aufgenommen,angelegt").eq("verkostung_id", detailId).order("angelegt"),
@@ -51,6 +51,70 @@ function auswertung(probeId){
   return { anzahl: n, schnitt: n ? Math.round(alle.reduce((a,b)=>a+b.note,0)/n*100)/100 : null, nochmal: alle.filter(b=>b.nochmal).length, alle };
 }
 
+/* Zusammenfassungen und Titel prüfen (seit 14.11.2026).
+   Läuft die Verkostung, ist das der Zwischenschritt „Abschluss vorbereiten“ vor dem Aufdecken (aufdecken = Funktion,
+   die danach den Status setzt); bei abgeschlossenen Verkostungen lassen sich die Texte hier nachträglich ändern.
+   Die Texte (ein, zwei Sätze je Bier, proben.zusammenfassung) schreibt Claude im Chat direkt in die Datenbank –
+   „Texte neu laden“ holt sie in die Felder, ohne selbst Geändertes zu überschreiben. Ohne Texte geht es auch. */
+function zusammenfassungen(aufdecken){
+  const {v, proben} = D;
+  if(aufdecken && v.status !== "laeuft") return;
+  const zeilen = plaetzeVergeben(rangfolge(proben.map(p => { const a = auswertung(p.id);
+    return {p, nummer: p.nummer, schnitt: a.schnitt, anzahl: a.anzahl, nochmal: a.nochmal, noten: a.alle.map(b => b.note)}; })));
+  const titel = vkTitel(zeilen);
+  const bitte = `Schreib die Zusammenfassungen für die Verkostung „${v.titel}“.`;
+  const text = p => (p.zusammenfassung || "").trim();
+  sheet(aufdecken ? "Abschluss vorbereiten" : "Zusammenfassungen", `
+    <p class="hint">${aufdecken
+      ? "So wird gleich aufgedeckt: Alle sehen zuerst die Siegerehrung – eine Karte pro Bier, vom letzten Platz bis zum Sieger, mit Titel und Zusammenfassung – und danach die Rangliste."
+      : "Diese Texte stehen in der Siegerehrung und in den Bierdetails der Ergebnisseite."}</p>
+    <div class="zf-hinweis" id="zfHinweis"></div>
+    <ol class="zf-liste">${zeilen.map(z => `<li>
+      <div class="zf-kopf"><span class="pl num">${z.platz ? z.platz+"." : "–"}</span>${Bilder.bier(z.p.bier)}
+        <span class="zf-name"><b>${esc(z.p.bier.name)}</b><small>${esc(["Nr. "+z.nummer, z.schnitt==null ? "noch keine Bewertung" : "Ø "+note(z.schnitt), z.anzahl ? z.anzahl+" Bew." : ""].filter(Boolean).join(" · "))}</small></span></div>
+      ${vkTitelHtml(titel.get(z)) ? `<p class="vk-titel-zeile">${vkTitelHtml(titel.get(z))}</p>` : ""}
+      <label class="f" for="zf_${esc(z.p.id)}">Zusammenfassung<textarea id="zf_${esc(z.p.id)}" data-zf="${esc(z.p.id)}" maxlength="400" rows="3" placeholder="Ein, zwei Sätze: Wie kam das Bier an?">${esc(text(z.p))}</textarea></label></li>`).join("")}</ol>
+    ${aufdecken ? `<p class="hint">Nach dem Aufdecken kann niemand mehr bewerten, und das Ergebnis erscheint öffentlich in der Liga und bei den Verkostungen. Geänderte Texte werden dabei gespeichert.</p>` : ""}`,
+    `<button class="btn" id="zfNeu">Texte neu laden</button><span class="spacer"></span><button class="btn" id="zfZu">Abbrechen</button><button class="btn primary" id="zfOk">${aufdecken ? "Jetzt aufdecken" : "Speichern"}</button>`);
+  const felder = () => [...document.querySelectorAll("#sheetBody [data-zf]")];
+  const stand = new Map(proben.map(p => [p.id, text(p)]));   // zuletzt aus der Datenbank gelesener Text je Probe
+  const hinweis = () => { const fehlt = felder().filter(f => !f.value.trim()).length;
+    $("#zfHinweis").innerHTML = fehlt
+      ? `<p><b>${fehlt === felder().length ? "Noch keine Texte." : `Für ${fehlt} ${fehlt === 1 ? "Bier fehlt" : "Biere fehlt"} noch der Text.`}</b> Die Texte schreibt Claude im Chat: Nachricht schicken, kurz warten, dann „Texte neu laden“. ${aufdecken ? "Du kannst auch ohne Texte aufdecken oder selbst etwas eintragen." : "Du kannst auch selbst etwas eintragen."}</p>
+         <p class="zf-bitte">${esc(bitte)}</p><button type="button" class="btn" id="zfKopieren">Nachricht kopieren</button>`
+      : `<p>Alle Texte sind da. Du kannst jeden noch ändern.</p>`;
+    const k = $("#zfKopieren"); if(k) k.onclick = async () => { try{ await navigator.clipboard.writeText(bitte); toast("Nachricht kopiert – jetzt im Claude-Chat einfügen"); }catch(_){ toast("Kopieren ging nicht – bitte den Text markieren"); } }; };
+  hinweis();
+  felder().forEach(f => f.oninput = hinweis);
+  const speichern = async () => {
+    for(const f of felder()){
+      const neu = f.value.trim();
+      if(neu === stand.get(f.dataset.zf)) continue;
+      const {error} = await sb.from("proben").update({zusammenfassung: neu || null}).eq("id", f.dataset.zf);
+      if(error){ toast(fehlertext(error)); return false; }
+      stand.set(f.dataset.zf, neu);
+    }
+    return true;
+  };
+  $("#zfZu").onclick = closeSheet;
+  $("#zfNeu").onclick = async () => {
+    const {data, error} = await sb.from("proben").select("id,zusammenfassung").eq("verkostung_id", v.id);
+    if(error){ toast(fehlertext(error)); return; }
+    let n = 0;
+    felder().forEach(f => { const neu = ((data||[]).find(x => x.id === f.dataset.zf)?.zusammenfassung || "").trim(), alt = stand.get(f.dataset.zf);
+      if(neu === alt) return;
+      if(f.value.trim() === alt){ f.value = neu; n++; }   // nur Felder, die du nicht selbst geändert hast
+      stand.set(f.dataset.zf, neu); });
+    hinweis(); toast(n ? `${n} ${n === 1 ? "Text" : "Texte"} aktualisiert` : "Keine neuen Texte");
+  };
+  $("#zfOk").onclick = async () => {
+    $("#zfOk").disabled = true;
+    if(!await speichern()){ $("#zfOk").disabled = false; return; }
+    closeSheet();
+    if(aufdecken) aufdecken(); else { toast("Gespeichert"); detailLaden(); }
+  };
+}
+
 function detailZeigen(){
   const {v, proben, teilnehmer, bewertungen, vorschlaege} = D;
   const link = gastLink(v.code);
@@ -64,7 +128,7 @@ function detailZeigen(){
     <div class="vk-head"><div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
       <p class="hint">${esc([fmtDateLong(v.datum)+(v.uhrzeit?`, ${v.uhrzeit.slice(0,5)} Uhr`:""), v.ort, v.blind?"blind":"offen", teilnehmer.length+" Teilnehmer"].filter(Boolean).join(" · "))}</p></div>
       ${statusTag(v.status)}</div>
-    <div class="top-actions">${aktion}${v.status==="abgeschlossen"?`<a class="btn" href="verkostung.html?e=${esc(v.id)}">Ergebnisseite</a>`:""}<button class="btn" id="vkEdit">Bearbeiten</button>${isAdmin()?`<button class="btn danger" id="vkDel">Löschen</button>`:""}</div>
+    <div class="top-actions">${aktion}${v.status==="abgeschlossen"?`<a class="btn" href="verkostung.html?e=${esc(v.id)}">Ergebnisseite</a><button class="btn" id="zfOpen">Zusammenfassungen</button>`:""}<button class="btn" id="vkEdit">Bearbeiten</button>${isAdmin()?`<button class="btn danger" id="vkDel">Löschen</button>`:""}</div>
     <div class="vk-grid">
       ${v.status!=="abgeschlossen"?`<section class="vk-card einladen"><h3>Gäste einladen</h3>
         <p class="hint">Die Einladung führt auf eine Ankündigungsseite – ohne Code. Mitmachen geht erst am Abend.</p>
@@ -102,10 +166,13 @@ function detailZeigen(){
   main().innerHTML = h;
 
   const setStatus = async s => { const {error} = await sb.from("verkostungen").update({status: s}).eq("id", v.id); if(error){ toast(fehlertext(error)); return; } toast({laeuft:"Verkostung läuft",abgeschlossen:"Abgeschlossen – Ergebnis ist aufgedeckt",vorbereitung:"Zurück in Vorbereitung"}[s]);
-    if(s === "abgeschlossen") { stopTimer(); location.href = "verkostung.html?e="+encodeURIComponent(v.id); return; }  // wie bei den Gästen: direkt aufs Ergebnis
+    if(s === "abgeschlossen") { stopTimer(); location.href = "verkostung.html?e="+encodeURIComponent(v.id)+"&ehrung=1"; return; }  // wie bei den Gästen: direkt aufs Ergebnis, beginnend mit der Siegerehrung
     detailLaden(); };
   $("#stStart") && ($("#stStart").onclick = () => setStatus("laeuft"));
-  $("#stEnde") && ($("#stEnde").onclick = () => bestaetigen("Verkostung abschließen?", "Danach kann niemand mehr bewerten, und das Ergebnis erscheint öffentlich in der Liga und bei den Verkostungen.", "Abschließen", () => setStatus("abgeschlossen")));
+  // Seit 14.11.2026 führt „Abschließen und aufdecken“ erst in die Vorschau „Abschluss vorbereiten“ (Texte und Titel
+  // prüfen); aufgedeckt wird dort mit „Jetzt aufdecken“. Vorher frisch laden, damit Noten und Texte aktuell sind.
+  $("#stEnde") && ($("#stEnde").onclick = async () => { await detailLaden(); zusammenfassungen(() => setStatus("abgeschlossen")); });
+  $("#zfOpen") && ($("#zfOpen").onclick = () => zusammenfassungen());
   $("#stWieder") && ($("#stWieder").onclick = () => bestaetigen("Wieder öffnen?", "Die Gäste können dann wieder bewerten. Das Ergebnis verschwindet so lange aus der öffentlichen Liga.", "Wieder öffnen", () => setStatus("laeuft")));
   $("#vkEdit").onclick = () => vkForm(v);
   $("#vkDel") && ($("#vkDel").onclick = () => bestaetigen("Verkostung löschen?", `„${v.titel}“ mit allen ${bewertungen.length} Bewertungen wird endgültig gelöscht. Die Biere selbst bleiben erhalten.`, "Endgültig löschen", async () => {
