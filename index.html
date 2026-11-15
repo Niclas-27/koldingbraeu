@@ -6,6 +6,10 @@
 <title>Koldingbräu – Braubuch der Hobbybrauerei</title>
 <meta name="description" content="Koldingbräu braut eigenes Bier: das Braubuch mit allen Suden – Schüttung, Hopfen, Hefe, Maischplan und Messwerte – dazu Rezepte, Verkostungen und die Bierliga.">
 <meta name="theme-color" content="#1f1a14">
+<!-- Canonical: ohne Parameter immer die Startseite. Zeigt die App per ?sud=… usw. anderen Inhalt, setzt das Skript
+     das Canonical auf genau diese Adresse (ohne #), damit Google diese Varianten nicht zur Kopie der Startseite macht. -->
+<link rel="canonical" id="canonical" href="https://kolding.de/">
+<script>(function(){try{if(location.search&&location.hostname==="kolding.de"){document.getElementById("canonical").href="https://kolding.de"+location.pathname+location.search;}}catch(e){}})();</script>
 <!-- Allgemeine Vorschau beim Linkteilen (WhatsApp & Co.): für einen einzelnen Sud (?sud=<id>) gibt es, wenn
      er öffentlich ist und ein Etikett hat, eine eigene, bildstarke Vorschauseite unter /sud/<id>/ – siehe
      scripts/build-previews.mjs. Diese Tags hier sind nur der Rückfall für alles andere (Übersicht, interne

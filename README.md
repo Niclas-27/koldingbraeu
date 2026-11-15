@@ -95,8 +95,9 @@ Vor dem Arbeiten den lokalen Stand holen: `git pull` auf `main`.
 - `sitemap.xml` entsteht beim Veröffentlichen in `scripts/build-previews.mjs`: feste Seiten plus alle öffentlichen
   Sude, Rezepte, abgeschlossenen Verkostungen und Liga-Biere – jeweils mit der eigentlichen App-Adresse.
 - Titel und Beschreibungen der Hauptseiten sind auf Suchbegriffe zugeschnitten; `index.html` trägt strukturierte
-  Daten (schema.org `Brewery` + `WebSite`). Bewusst **kein** `canonical` auf den App-Seiten: dieselbe Datei zeigt
-  per `?sud=…` usw. verschiedene Inhalte, ein festes canonical würde sie für Google zur Kopie der Startseite machen.
+  Daten (schema.org `Brewery` + `WebSite`). `index.html` trägt ein `canonical` auf `https://kolding.de/`; bei Query-Adressen (`?sud=…`) setzt ein kleines
+  Skript es auf die jeweilige Adresse, damit sie nicht zur Kopie der Startseite werden (Search Console meldete die
+  Startseite am 15.11.2026 als „Duplikat – vom Nutzer nicht als kanonisch festgelegt“). Die übrigen Hauptseiten haben keins.
 - Bierkeller und die Vorschauseiten unter `/sud/`, `/rezept/` … sind `noindex`.
 - Google Search Console richtet der Betreiber ein (Bestätigung per HTML-Tag in `index.html` oder DNS-Eintrag),
   dort die Sitemap `https://kolding.de/sitemap.xml` einreichen.
