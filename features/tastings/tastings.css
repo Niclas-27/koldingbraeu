@@ -188,6 +188,14 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 .vk-tile.mit-titel .vt-bild{display:block;width:100%;margin:0;aspect-ratio:16/9;object-fit:cover;background:var(--line)}
 .vk-tile.mit-titel .vt-body{display:flex;flex-direction:column;gap:4px;padding:12px 18px 16px}
 .vk-tile .w .bb{align-self:center;width:28px;height:28px}
+/* Vorschaubild als Bierdeckel-Reihe (Bilder.deckelVorschau) – Holztisch, Deckel absolut positioniert */
+.vk-tile.mit-titel .vt-deckel{position:relative;overflow:hidden;background:
+  radial-gradient(80% 90% at 50% 30%,rgba(255,190,110,.14),transparent 70%),
+  repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 2px,transparent 2px 9px),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 23px),
+  linear-gradient(#3a2a1b,#2b1f14)}
+.vt-deckel .kbd{position:absolute;aspect-ratio:1;transform:translate(-50%,-50%) rotate(var(--r));filter:drop-shadow(0 4px 5px rgba(0,0,0,.55)) drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.vt-deckel .kbd svg{display:block;width:100%;height:100%}
 .titelbild{display:block;width:100%;max-height:420px;object-fit:cover;border-radius:var(--radius);margin:4px 0 16px;cursor:zoom-in;background:var(--line)}
 .fotos-admin{max-width:420px}
 h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:16px 0 8px;font-family:var(--font-body)}
