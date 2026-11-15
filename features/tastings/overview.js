@@ -49,9 +49,13 @@ async function listeLaden(){
         <b class="t">${esc(v.titel)}</b>
         <span class="m">${v.proben.length} ${v.proben.length===1?"Bier":"Biere"}${(v.namen||[]).length ? " · mit "+esc(v.namen.join(", ")) : ""}</span>
         ${sieger?`<span class="w">${Bilder.bier(sieger)}<span>${esc(sieger.name)}</span><b class="num ${gradeCls(sieger.schnitt)}">${note(sieger.schnitt)}</b></span>`:""}`;
-      return v.bild_titel
+      // Vorschau: Bierdeckel-Reihe aus den Kronkorken; das eigene Titelfoto nur, wenn „eigenes Foto“ eingeschaltet ist
+      const bild = v.eigenes_foto && v.bild_titel ? `<img class="vt-bild" src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy">`
+        : v.proben.length ? Bilder.deckelVorschau(v)
+        : v.bild_titel ? `<img class="vt-bild" src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy">` : "";
+      return bild
         ? `<a class="vk-tile mit-titel" href="verkostung.html?e=${esc(v.id)}">
-        <img class="vt-bild" src="${esc(Bilder.url(v.bild_titel, true))}" alt="" loading="lazy">
+        ${bild}
         <div class="vt-body">${inhalt}</div>
       </a>`
         : `<a class="vk-tile" href="verkostung.html?e=${esc(v.id)}">${inhalt}</a>`;

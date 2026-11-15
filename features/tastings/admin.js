@@ -158,7 +158,8 @@ function detailZeigen(){
 
   const zeilen = proben.map(p=>{const a=auswertung(p.id);return {id:p.id, nummer:p.nummer, titel:p.bier.name, unter:["Nr. "+p.nummer, bierZeile(p.bier)].filter(Boolean).join(" · "), bild:Bilder.bier(p.bier), schnitt:a.schnitt, anzahl:a.anzahl, nochmal:a.nochmal};});
   h += sec(v.status==="abgeschlossen" ? "Ergebnis" : v.status==="laeuft" ? "Zwischenstand (live)" : "Auswertung", (bewertungen.length ? rangTabelle(zeilen,{klick:true}) + `<p class="hint">Ein Bier auswählen zeigt alle Bewertungen und das Geschmacksprofil.${v.status==="laeuft"?" Aktualisiert sich alle 15 Sekunden.":""}</p>` : `<p class="hint">Noch keine Bewertungen.</p>`));
-  h += sec("Fotos", `<div class="fotos-admin">${Bilder.feldHtml("titelFeld", v.bild_titel, {art:"frei", beschriftung:"Titelbild"})}</div>
+  h += sec("Fotos", `<div class="fotos-admin">${Bilder.feldHtml("titelFeld", v.bild_titel, {art:"frei", beschriftung:"Titelbild"})}
+      <label class="check"><input type="checkbox" id="v_eigenesFoto"${v.eigenes_foto?" checked":""}><span><b>Eigenes Foto als Vorschau</b><br><span class="hint">In der Liste „Bisherige Verkostungen“ das Titelbild zeigen statt der Bierdeckel mit den Kronkorken.</span></span></label></div>
     <h4 class="sub">Galerie (${D.galerie.length})</h4><p class="hint">Nur für Braumeister und Admin sichtbar.</p>
     <div id="galerieBox"></div>`);
   if(teilnehmer.length) h += sec("Teilnehmer", `<div class="tn">${teilnehmer.map(t=>{const n=bewertungen.filter(b=>b.teilnehmer_id===t.id).length;
@@ -196,6 +197,11 @@ function detailZeigen(){
     if(v.bild_titel && v.bild_titel !== p) Bilder.loeschen(v.bild_titel);
     v.bild_titel = p; toast(p ? "Titelbild gespeichert" : "Titelbild entfernt");
   }});
+  $("#v_eigenesFoto").onchange = async e => {
+    const an = e.target.checked, {error} = await sb.from("verkostungen").update({eigenes_foto: an}).eq("id", v.id);
+    if(error){ e.target.checked = !an; toast(fehlertext(error)); return; }
+    v.eigenes_foto = an; toast(an ? (v.bild_titel ? "Vorschau zeigt jetzt das Titelbild" : "Gespeichert – lade noch ein Titelbild hoch") : "Vorschau zeigt jetzt die Bierdeckel");
+  };
   galerieZeigen(v);
   main().querySelectorAll("[data-up],[data-down]").forEach(b => b.onclick = () => { const i = +(b.dataset.up ?? b.dataset.down); tauschen(i, b.dataset.up != null ? i-1 : i+1); });
   main().querySelectorAll("[data-raus]").forEach(b => b.onclick = () => {
