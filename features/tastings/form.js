@@ -108,12 +108,27 @@ function bogenZeigen(opts){
       <div class="fortschritt"><span class="punkte" aria-hidden="true">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span><span class="zahl vh" aria-live="polite"></span></div>
       <div class="bogen-knoepfe"><button class="btn" id="bZurueck" aria-label="Zurück">←</button><button class="btn primary" id="bWeiter"></button></div>
     </div>`;
-  sheet(opts.titel, body, foot);
+  sheet(opts.titel, body, foot, {onClose: opts.geschlossen});   // geschlossen: z. B. Liste neu zeichnen („weitermachen“)
 
   const inhalt = $("#bogenInhalt"), spur = inhalt.querySelector(".bogen-spur");
+  // Ändert sich die sichtbare Seite in der Höhe (Fehlermeldung, Textumbruch, Drehen des Handys), zieht die Höhe nach
+  if(window.ResizeObserver){ const ro = new ResizeObserver(() => { if(spur.isConnected) hoeheSetzen(null); else ro.disconnect(); });
+    [...spur.children].forEach(c => ro.observe(c)); }
+  // Höhe folgt der sichtbaren Seite (seit 19.11.2026): Die Seiten liegen nebeneinander auf einer Spur, sonst wäre der
+  // Bogen so hoch wie die höchste Seite – auf kleinen Handys musste man dadurch auf jeder Seite scrollen. Während des
+  // Blätterns bleibt kurz die größere der beiden Höhen, damit die hinausgleitende Seite nicht abgeschnitten wird.
+  let hoeheZeit = null;
+  const hoeheSetzen = (vorher) => {
+    const h = spur.children[seite].offsetHeight + 20;   // + padding-top von #bogenInhalt
+    clearTimeout(hoeheZeit);
+    if(vorher != null && vorher > h){ inhalt.style.height = vorher + "px"; hoeheZeit = setTimeout(() => { inhalt.style.height = h + "px"; }, 300); }
+    else inhalt.style.height = h + "px";
+  };
   function zeigen(neu){
+    const vorher = inhalt.style.height ? parseFloat(inhalt.style.height) : null;
     seite = Math.max(0, Math.min(letzte, neu));
     spur.style.transform = `translateX(${-seite*100}%)`;
+    hoeheSetzen(vorher);
     spur.querySelectorAll(".bogen-seite").forEach((el,i) => { el.toggleAttribute("aria-hidden", i!==seite); el.inert = i!==seite; });
     $("#sheetFoot").querySelectorAll(".punkte i").forEach((p,i) => p.classList.toggle("ab", i<=seite));
     // Für Screenreader angesagt (aria-live): welche Seite jetzt zu sehen ist
@@ -262,10 +277,22 @@ function kreisVerdrahten(inhalt, f, geaendert = () => {}){
 function noteVerdrahten(inhalt, f, geaendert = () => {}){
   const knoepfe = [...inhalt.querySelectorAll(".nstufen button")];
   if(!knoepfe.length) return;
+  // Optionsgruppe wie gewohnt bedienbar (seit 19.11.2026): nur ein Tab-Stopp (die gewählte Note, sonst die erste),
+  // Pfeiltasten wählen die vorige/nächste Note, Pos1/Ende die erste/letzte – vorher 11 Tab-Stopps ohne Pfeiltasten.
+  const tabStopp = () => { const an = knoepfe.find(x => x.getAttribute("aria-checked") === "true") || knoepfe[0];
+    knoepfe.forEach(x => x.tabIndex = x === an ? 0 : -1); };
+  tabStopp();
+  inhalt.querySelector(".nstufen").addEventListener("keydown", e => {
+    const i = knoepfe.indexOf(document.activeElement); if(i < 0) return;
+    const ziel = {ArrowRight: i+1, ArrowDown: i+1, ArrowLeft: i-1, ArrowUp: i-1, Home: 0, End: knoepfe.length-1}[e.key];
+    if(ziel == null) return;
+    e.preventDefault();
+    const b = knoepfe[(ziel + knoepfe.length) % knoepfe.length]; b.click(); b.focus();
+  });
   knoepfe.forEach(b => b.onclick = () => {
     const erste = f.note == null;
     f.note = +b.dataset.n; $("#bErr").textContent = ""; $("#bNoteErr").textContent = ""; geaendert();
-    knoepfe.forEach(x => x.setAttribute("aria-checked", String(x === b)));
+    knoepfe.forEach(x => x.setAttribute("aria-checked", String(x === b))); tabStopp();
     inhalt.querySelectorAll(".nstufe").forEach(z => z.classList.toggle("an", z.contains(b)));
     inhalt.querySelector("#noteFrage").textContent = noteStufe(f.note)[4];
     if(erste) inhalt.querySelector(".note-satz").scrollIntoView({block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
