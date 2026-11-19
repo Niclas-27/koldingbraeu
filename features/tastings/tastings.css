@@ -57,7 +57,7 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
    Farbe. Vorher war die ganze Karte grün – auch bei Note 2; Grün heißt auf der Seite aber immer „gute Note“. */
 .probe.done .pg{color:inherit;display:flex;flex-direction:column;align-items:center;gap:2px}
 /* kleiner Hinweis, dass man eine bewertete Probe antippen und ändern kann (19.11.2026) */
-.probe .aendern,.en-rechts .aendern{font-size:.72rem;font-weight:500;color:var(--muted)}
+.probe .aendern,.en-rechts .aendern{font-size:.78rem;font-weight:500;color:var(--muted)}
 #bNoteErr:not(:empty){display:block;margin-top:8px}
 /* Tippflächen der Gästeansicht auf mindestens 44 px (19.11.2026) */
 #fotoBtn{min-height:44px}
@@ -336,6 +336,17 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .ikon-knopf[hidden]{display:none}
 /* Kleine Handys (iPhone SE & Co.): Kopf des Bogens flacher, damit die Karte ohne Scrollen passt */
 @media (max-height:620px){.sheet:has(#bogenInhalt) .sheet-head{padding-top:10px;padding-bottom:10px}}
+/* Echtes iPhone SE in Safari (≈ 550 px sichtbar, 19.11.2026): Riechen/Schmecken/Geschmacksbild ohne Scrollen. Die Zeile
+   „Brauerei · Stil · Vol.“ fällt weg (der Name steht im Titel), Kacheln und Abstände etwas kleiner, Karte nach Höhe. */
+@media (max-height:620px){
+  .sheet:has(#bogenInhalt) #sheetBody > .hint{display:none}
+  .tagpick{gap:6px}
+  .kachel{min-height:62px}
+  #bogenInhalt fieldset:has(.tagpick){gap:8px}
+  #karteFeld{max-width:min(100%,44vh);margin-inline:auto}
+}
+/* leere Fehlerzeile unter dem Bogen nimmt keinen Abstand weg (sonst +22 px Scrollen) */
+#sheetBody > #bErr:empty{display:none}
 .vh{position:absolute!important;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* Ergebnisseite: Punktwolke je Bier und alle Biere auf einer Karte (seit 13.11.2026) */
