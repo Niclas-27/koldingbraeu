@@ -73,11 +73,13 @@ function bogenZeigen(opts){
     const kopfKnoepfe = s.art === "kreis" ? `<span class="kopf-knoepfe">
         <button type="button" class="ikon-knopf" id="kreisWeg" aria-label="Auswahl zurücksetzen" title="Zurücksetzen">↺</button>
         <button type="button" class="ikon-knopf glossar-auf" data-glossar="${i}" aria-label="Was heißt das?" title="Was heißt das?">?</button></span>` : "";
-    const kopfRechts = kopfKnoepfe || (s.art === "tags" ? `<small class="kopf-hinweis">mehrere möglich</small>` : "");
+    // Seit 19.11.2026 sagt auch „Dein Urteil“ vorab, was gilt – die anderen Seiten sagen „Freiwillig“
+    const kopfRechts = kopfKnoepfe || (s.art === "tags" ? `<small class="kopf-hinweis">mehrere möglich</small>`
+      : s.art === "urteil" ? `<small class="kopf-hinweis pflicht">Pflicht · nur die Note</small>` : "");
     let h = `<section class="bogen-seite" data-i="${i}"${i?` aria-hidden="true"`:""}><fieldset><legend${kopfRechts?` class="mit-knoepfen"`:""}><span>${esc(s.label)}</span>${kopfRechts}</legend>`;
     // Freiwillige Seiten (seit 19.11.2026): sagen, dass sie freiwillig sind, und bieten den Sprung zur Note an –
     // die Reihenfolge Riechen → Schmecken → Geschmacksbild → Urteil bleibt.
-    if(s.art !== "urteil") h += `<p class="seite-frei">Freiwillig · <button type="button" class="linkbtn zur-note">direkt zur Note →</button></p>`;
+    if(s.art !== "urteil") h += `${s.frage ? `<p class="seite-frage">${esc(s.frage)}</p>` : ""}<p class="seite-frei">Freiwillig · <button type="button" class="linkbtn zur-note">direkt zur Note →</button></p>`;
     if(s.art === "tags"){
       // Kacheln in zwei Spalten (seit 14.11.2026 statt Chips): Emoji, Wort, Beispiele; Haken oben rechts zeigt die Auswahl
       h += `<div class="tagpick" role="group" aria-label="${esc(s.frage)} Mehrere möglich.">${s.tags().map(([t,e,bsp])=>`<button type="button" class="kachel" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span class="k-emoji" aria-hidden="true">${e}</span><b>${esc(t)}</b><small>${esc(bsp)}</small></button>`).join("")}</div>`;
@@ -92,7 +94,7 @@ function bogenZeigen(opts){
       const st = f.note == null ? null : noteStufe(f.note);
       h += `<div class="nstufen" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${NOTE_STUFEN.map(([e,t,d,ns]) =>
           `<div class="nstufe${ns.includes(f.note)?" an":""}"><span class="ns-e" aria-hidden="true">${e}</span><div class="ns-t"><b>${esc(t)}</b><small>${esc(d)}</small></div>
-            <div class="ns-n">${ns.map(n=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}" aria-label="${n} – ${esc(t)}">${n}</button>`).join("")}</div></div>`).join("")}</div>
+            <div class="ns-n">${ns.map(n=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}" data-g="${gradeCls(n)}" aria-label="${n} – ${esc(t)}">${n}</button>`).join("")}</div></div>`).join("")}</div>
         <span class="err" id="bNoteErr" role="alert"></span>
         <label class="note-satz" for="b_kom"><span class="ns-frage" id="noteFrage">${esc(st ? st[4] : "Dein Satz zum Bier")}</span><small>optional – ein Satz reicht</small>
           <input id="b_kom" maxlength="140" value="${esc(f.kommentar)}" placeholder="z. B. „Schmeckt nach Sommer“" autocomplete="off" enterkeyhint="done"></label>`;
@@ -105,7 +107,8 @@ function bogenZeigen(opts){
     <span class="err" id="bErr" role="alert"></span>`;
   // Fortschritt seit 14.11.2026 als dünne Linie an der Oberkante der Fußleiste; „3 / 4“ nur noch für Screenreader
   const foot = `<div class="bogen-fuss">
-      <div class="fortschritt"><span class="punkte" aria-hidden="true">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span><span class="zahl vh" aria-live="polite"></span></div>
+      <div class="fortschritt"><span class="punkte" aria-hidden="true">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span>
+        <span class="schritte" aria-hidden="true">${BOGEN_SEITEN.map(s=>`<b>${esc(s.label.replace("Dein ",""))}</b>`).join("")}</span><span class="zahl vh" aria-live="polite"></span></div>
       <div class="bogen-knoepfe"><button class="btn" id="bZurueck" aria-label="Zurück">←</button><button class="btn primary" id="bWeiter"></button></div>
     </div>`;
   sheet(opts.titel, body, foot, {onClose: opts.geschlossen});   // geschlossen: z. B. Liste neu zeichnen („weitermachen“)
@@ -131,6 +134,8 @@ function bogenZeigen(opts){
     hoeheSetzen(vorher);
     spur.querySelectorAll(".bogen-seite").forEach((el,i) => { el.toggleAttribute("aria-hidden", i!==seite); el.inert = i!==seite; });
     $("#sheetFoot").querySelectorAll(".punkte i").forEach((p,i) => p.classList.toggle("ab", i<=seite));
+    // Seitennamen unter der Linie (seit 19.11.2026): man sieht, wo man ist und was noch kommt
+    $("#sheetFoot").querySelectorAll(".schritte b").forEach((b,i) => b.classList.toggle("jetzt", i===seite));
     // Für Screenreader angesagt (aria-live): welche Seite jetzt zu sehen ist
     $("#sheetFoot").querySelector(".zahl").textContent = `Seite ${seite+1} von ${BOGEN_SEITEN.length}: ${BOGEN_SEITEN[seite].label}`;
     $("#bZurueck").hidden = seite === 0;
@@ -228,7 +233,6 @@ function kreisVerdrahten(inhalt, f, geaendert = () => {}){
   const feld = inhalt.querySelector("#karteFeld");
   if(!feld) return;
   const punkt = feld.querySelector(".k-punkt"), blase = feld.querySelector(".kreis-blase");
-  let blaseWeg = null;
   const anzeigen = () => {
     const p = f.kreis;
     punkt.hidden = !p;
@@ -252,15 +256,19 @@ function kreisVerdrahten(inhalt, f, geaendert = () => {}){
   };
   let zieht = false;
   feld.addEventListener("pointerdown", e => {
-    zieht = true; feld.setPointerCapture(e.pointerId); feld.classList.add("zieht"); setzen(ausZeiger(e)); e.preventDefault();
-    clearTimeout(blaseWeg); blase.classList.add("an");
+    zieht = true; try{ feld.setPointerCapture(e.pointerId); }catch(_){}   // Fangen ist nur fürs Ziehen nötig – scheitert es, zählt der Tipp trotzdem
+    feld.classList.add("zieht"); setzen(ausZeiger(e)); e.preventDefault();
+    blase.classList.add("an");
   });
   feld.addEventListener("pointermove", e => { if(zieht) setzen(ausZeiger(e)); });
-  // Nach dem Loslassen bleibt die Blase noch kurz stehen, damit man sie ohne Daumen lesen kann
-  // Gemerkt wird erst beim Loslassen, nicht bei jeder Bewegung
-  const ende = () => { if(!zieht) return; zieht = false; feld.classList.remove("zieht"); geaendert();
-    clearTimeout(blaseWeg); blaseWeg = setTimeout(() => blase.classList.remove("an"), 1600); };
-  feld.addEventListener("pointerup", ende); feld.addEventListener("pointercancel", ende);
+  // Gemerkt wird erst beim Loslassen, nicht bei jeder Bewegung. Den Finger dabei ausdrücklich wieder freigeben (seit 19.11.2026).
+  const ende = e => {
+    if(e && e.pointerId != null && feld.hasPointerCapture && feld.hasPointerCapture(e.pointerId)) feld.releasePointerCapture(e.pointerId);
+    if(!zieht) return; zieht = false; feld.classList.remove("zieht"); geaendert();
+    // Blase sofort weg (seit 19.11.2026; vorher blieb sie 1,6 s stehen): Solange sie zeitverzögert verschwinden sollte,
+    // wertete Safari auf dem iPhone den ersten Tipp auf „Weiter“ nicht als Klick. Der Text steht ohnehin unter der Karte.
+    blase.classList.remove("an"); };
+  feld.addEventListener("pointerup", ende); feld.addEventListener("pointercancel", ende); feld.addEventListener("lostpointercapture", ende);
   feld.addEventListener("keydown", e => {
     const d = {ArrowUp:[0,1], ArrowDown:[0,-1], ArrowLeft:[-1,0], ArrowRight:[1,0]}[e.key];
     if(!d) return;
@@ -294,7 +302,8 @@ function noteVerdrahten(inhalt, f, geaendert = () => {}){
     f.note = +b.dataset.n; $("#bErr").textContent = ""; $("#bNoteErr").textContent = ""; geaendert();
     knoepfe.forEach(x => x.setAttribute("aria-checked", String(x === b))); tabStopp();
     inhalt.querySelectorAll(".nstufe").forEach(z => z.classList.toggle("an", z.contains(b)));
-    inhalt.querySelector("#noteFrage").textContent = noteStufe(f.note)[4];
+    // Steht schon ein Satz da, bleibt die Frage neutral – sonst stünde z. B. Lob unter „Was hat dir gefehlt?“ (19.11.2026)
+    inhalt.querySelector("#noteFrage").textContent = f.kommentar.trim() ? "Dein Satz zum Bier" : noteStufe(f.note)[4];
     if(erste) inhalt.querySelector(".note-satz").scrollIntoView({block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
   });
 }

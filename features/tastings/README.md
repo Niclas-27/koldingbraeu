@@ -191,6 +191,18 @@ entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
 - Knopfleiste nach dem Speichern: Beschriftungen mittig, ein langer Biername in „Weiter zu …“ bricht um, „Fertig“
   bleibt daneben eine feste Pille und damit erreichbar.
 
+**Dritte UX-Runde (19.11.2026):**
+- „Dein Urteil“ sagt vorab „Pflicht · nur die Note“; die gewählte Note leuchtet sofort in ihrer Ampelfarbe
+  (`data-g` am Knopf), die gewählte Stufe ist neutral in Röstmalz umrandet.
+- Unter der Fortschrittslinie stehen die Seitennamen (Riechen · Schmecken · Geschmacksbild · Urteil), die aktuelle
+  in Röstmalz. Riechen und Schmecken zeigen ihre Frage („Woran erinnert dich der Geruch?“) als Untertitel; auf
+  niedrigen Bildschirmen (≤ 620 px) fällt die Frage weg, damit nichts scrollt.
+- Steht schon ein Kommentar da, wechselt die Frage über dem Feld bei einer anderen Note auf „Dein Satz zum Bier“.
+- Fotos vom Abend: kein Zuschnitt-Schritt mehr für Gäste (`Bilder.waehlen({ohneZuschnitt})`, das ganze Bild wird
+  übernommen, Braumeister können den Ausschnitt später ändern); „Zuletzt hochgeladenes Foto entfernen“ fragt nach.
+- Geschmackskarte: Die Blase über dem Daumen verschwindet beim Loslassen sofort (vorher 1,6 s) – solange sie
+  zeitverzögert verschwinden sollte, reagierte „Weiter“ auf dem iPhone erst beim zweiten Tippen.
+
 **Umspringen beim Aufdecken (19.11.2026):** Die Gästeseite fragt während der Verkostung regelmäßig nach (`startTimer`) –
 seit 19.11.2026 auch bei offenem Blatt (vorher wurde bei offenem Abschluss „Lass sie einfach offen“ gar nicht mehr
 nachgefragt, die Seite sprang erst nach „Fertig“ um). Wer alle Biere bewertet hat, fragt alle 5 statt 15 Sekunden nach
