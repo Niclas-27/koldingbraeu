@@ -191,6 +191,11 @@ entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
 - Knopfleiste nach dem Speichern: Beschriftungen mittig, ein langer Biername in „Weiter zu …“ bricht um, „Fertig“
   bleibt daneben eine feste Pille und damit erreichbar.
 
+**Umspringen beim Aufdecken (19.11.2026):** Die Gästeseite fragt während der Verkostung regelmäßig nach (`startTimer`) –
+seit 19.11.2026 auch bei offenem Blatt (vorher wurde bei offenem Abschluss „Lass sie einfach offen“ gar nicht mehr
+nachgefragt, die Seite sprang erst nach „Fertig“ um). Wer alle Biere bewertet hat, fragt alle 5 statt 15 Sekunden nach
+(`WARTE_LIVE`); beim Entsperren des Handys wird sofort neu geladen. Die Verwaltung lädt weiterhin nur bei geschlossenem Blatt.
+
 **Schlussdurchgang (19.11.2026):**
 - Die Höhe des Bogens folgt der sichtbaren Seite (vorher so hoch wie die höchste Seite). Auf niedrigen Bildschirmen
   (≤ 620 px, z. B. iPhone SE in Safari) fällt die Zeile „Brauerei · Stil · Vol.“ weg, Kacheln und Karte werden kompakter:

@@ -3,7 +3,8 @@
 KB.seite = {
   chrome(){},
   start(){
-    document.addEventListener("visibilitychange", () => { if(document.visibilityState==="visible" && timer && $("#sheet").hidden) KB.seite.laden(); });
+    // Zurück auf der Seite (Handy entsperrt): sofort neu laden – Gäste auch bei offenem Blatt (siehe startTimer)
+    document.addEventListener("visibilitychange", () => { if(document.visibilityState==="visible" && timer && (ansicht === "gast" || $("#sheet").hidden)) KB.seite.laden(); });
   },
   async laden(){
     if(ansicht === "gast"){ await ladeStile(); await gastLaden(); if(isBM()) bmHinweis(); }

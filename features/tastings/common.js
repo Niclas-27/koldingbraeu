@@ -88,6 +88,7 @@ function kreisText(p){
 const eindruck = t => { const e = [...TAGS_GERUCH, ...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].find(([x]) => x === t); return e ? e[1]+" "+t : t; };
 const istGeschmack = t => [...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].some(([x]) => x === t);
 const MIN_LIVE = 15000; // Abstand der Aktualisierung während einer laufenden Verkostung
+const WARTE_LIVE = 5000; // Gast hat alles bewertet und wartet aufs Aufdecken: öfter nachfragen (seit 19.11.2026)
 
 const params = new URLSearchParams(location.search);
 const code = (params.get("v") || "").trim().toLowerCase();
@@ -158,8 +159,15 @@ function plaetzeVergeben(liste){
   liste.forEach((p,i) => { const k = p.schnitt==null ? null : `${p.schnitt}|${p.nochmal||0}`; if(k!==vorher){ platz = i+1; vorher = k; } p.platz = p.schnitt==null ? null : platz; });
   return liste;
 }
-function stopTimer(){ if(timer){clearInterval(timer);timer=null;} }
-function startTimer(fn){ stopTimer(); timer=setInterval(()=>{ if(document.visibilityState==="visible" && $("#sheet").hidden) fn(); }, MIN_LIVE); }
+/* Regelmäßig neu laden, solange die Verkostung läuft. Standard: nur bei geschlossenem Blatt (Verwaltung: beim Bearbeiten
+   soll nichts dazwischenfunken). auchMitBlatt (Gästeansicht, seit 19.11.2026): auch bei offenem Blatt – der Abschluss sagt
+   „Lass sie einfach offen“, und bis dahin wurde dann gar nicht mehr nachgefragt, die Seite sprang nie zur Siegerehrung. */
+let timerAbstand = 0;
+function stopTimer(){ if(timer){clearInterval(timer);timer=null;timerAbstand=0;} }
+function startTimer(fn, {abstand = MIN_LIVE, auchMitBlatt = false} = {}){
+  stopTimer(); timerAbstand = abstand;
+  timer=setInterval(()=>{ if(document.visibilityState==="visible" && (auchMitBlatt || $("#sheet").hidden)) fn(); }, abstand);
+}
 async function ladeStile(){
   if(stile.length) return stile;
   const {data} = await sb.from("bierstile").select("id,name,reihenfolge").order("reihenfolge").order("name");
