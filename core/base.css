@@ -9,6 +9,7 @@
   --line:#dcdcd2;
   --amber:#b8690f;       /* Würze */
   --amber-soft:#f4e3c7;
+  --amber-text:#97550a;  /* Würze als Schrift (seit 19.11.2026): #b8690f erreicht als Text nur 4:1, dieses 5,6:1 auf Papier */
   --hop:#4e7a34;         /* Dolde */
   --hop-soft:#e1ecd5;
   --warn:#a3402a;
@@ -21,13 +22,13 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#16120e; --surface:#201a14; --surface-a:rgba(32,26,20,.86); --ink:#efe8dc; --muted:#a59c8c; --line:#382f25;
-    --amber:#e59a3a; --amber-soft:#3a2a15; --hop:#94c26f; --hop-soft:#22301a;
+    --amber:#e59a3a; --amber-soft:#3a2a15; --amber-text:#e59a3a; --hop:#94c26f; --hop-soft:#22301a;
     --warn:#e2826b; --warn-soft:#3a1d16; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#16120e; --surface:#201a14; --surface-a:rgba(32,26,20,.86); --ink:#efe8dc; --muted:#a59c8c; --line:#382f25;
-  --amber:#e59a3a; --amber-soft:#3a2a15; --hop:#94c26f; --hop-soft:#22301a;
+  --amber:#e59a3a; --amber-soft:#3a2a15; --amber-text:#e59a3a; --hop:#94c26f; --hop-soft:#22301a;
   --warn:#e2826b; --warn-soft:#3a1d16; color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -41,6 +42,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-siz
 .wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
 h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0}
 button,input,select,textarea{font:inherit;color:inherit}
+/* Platzhalter in Treber statt Browser-Grau (19.11.2026): das Standard-Grau kam im Dunkelmodus nur auf 3,7:1 */
+::placeholder{color:var(--muted);opacity:1}
 :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
 /* Kopf */
@@ -200,11 +203,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 select.sort{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px}
 .grade{min-width:42px;text-align:center;font-family:var(--font-display);font-weight:800;font-size:1.1rem;padding:4px 8px;border-radius:8px;background:var(--line);color:var(--ink)}
 .grade.g1{background:var(--hop-soft);color:var(--hop)}
-.grade.g2{background:var(--amber-soft);color:var(--amber)}
+.grade.g2{background:var(--amber-soft);color:var(--amber-text)}
 .grade.g3{background:var(--warn-soft);color:var(--warn)}
 /* Einheitliche Farbcodierung für Noten/Bewertungen (gradeCls in core/core.js), über Sude, Liga und Verkostungen hinweg */
 .g1{color:var(--hop)}
-.g2{color:var(--amber)}
+.g2{color:var(--amber-text)}
 .g3{color:var(--warn)}
 .empty{padding:40px 0;color:var(--muted);text-align:center}
 .notice{padding:12px 16px;border-radius:var(--radius);background:var(--amber-soft);font-size:.9rem}
@@ -224,13 +227,13 @@ select.sort{border:1px solid var(--line);background:var(--surface);border-radius
 .kv div{min-width:0}
 .kv dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .kv dd{margin:2px 0 0;font-family:var(--font-data);font-size:.92rem;overflow-wrap:anywhere}
-.sec h3{font-size:.8rem;font-family:var(--font-body);font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin-bottom:10px}
+.sec h3{font-size:.8rem;font-family:var(--font-body);font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber-text);margin-bottom:10px}
 .note{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;white-space:pre-wrap}
 .tag{font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
 /* Formular */
 form{display:flex;flex-direction:column;gap:22px}
 fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
-legend{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin-bottom:6px;padding:0}
+legend{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--amber-text);margin-bottom:6px;padding:0}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
 @media (max-width:480px){.grid2{grid-template-columns:1fr}}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);min-width:0}
@@ -261,16 +264,16 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0}
 img{max-width:100%}
 [hidden]{display:none!important}
-a{color:var(--amber)}
+a{color:var(--amber-text)}
 /* --- Anmeldung und Konto --- */
 .who{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}
 .who b{color:var(--ink);font-weight:600}
 .role{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;border:1px solid var(--line);border-radius:999px;padding:1px 8px}
-.role.admin{border-color:var(--amber);color:var(--amber)}
+.role.admin{border-color:var(--amber);color:var(--amber-text)}
 .stack{display:flex;flex-direction:column;gap:14px;max-width:420px}
 .hint{color:var(--muted);font-size:.88rem;margin:0}
 .ok{color:var(--hop);font-size:.9rem}
-.linkbtn{background:none;border:0;padding:0;color:var(--amber);cursor:pointer;font:inherit;font-size:.88rem;text-decoration:underline;align-self:flex-start}
+.linkbtn{background:none;border:0;padding:0;color:var(--amber-text);cursor:pointer;font:inherit;font-size:.88rem;text-decoration:underline;align-self:flex-start}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:.92rem;cursor:pointer}
 .check input{margin-top:3px;width:18px;height:18px;accent-color:var(--hop)}
 /* --- Kennzeichnung öffentlich / intern --- */
@@ -306,7 +309,7 @@ a{color:var(--amber)}
 .vk-head h2{font-size:clamp(1.7rem,5vw,2.4rem);font-weight:800;font-stretch:80%;line-height:1.05}
 .vk-head.small h3{font-size:1.25rem;font-weight:700}
 .vk-head .hint{margin-top:4px}
-.kicker{margin:0 0 2px;font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);font-weight:600}
+.kicker{margin:0 0 2px;font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;color:var(--amber-text);font-weight:600}
 /* Kennzahlen-Mini-Tabelle im Kopf einer Detailseite (Rezepte, Sude): 4 Spalten mit Label/Wert/Einheit */
 .kws{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;max-width:520px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:6px 0}
 .kw{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-left:1px solid var(--line)}
@@ -314,7 +317,7 @@ a{color:var(--amber)}
 .kw span{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .kw b{font-size:1.25rem;font-weight:500}
 .kw b.g1{color:var(--hop)}
-.kw b.g2{color:var(--amber)}
+.kw b.g2{color:var(--amber-text)}
 .kw b.g3{color:var(--warn)}
 .kw small{font-size:.72rem;color:var(--muted)}
 @media (max-width:420px){.kw span{font-size:.58rem;letter-spacing:.03em}.kw b{font-size:1.1rem}}
@@ -330,13 +333,13 @@ a{color:var(--amber)}
 }
 .vk-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .vk-card h3{font-size:1.1rem;font-weight:700}
-.vk-card h4{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:6px 0 4px;font-family:var(--font-body)}
+.vk-card h4{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber-text);margin:6px 0 4px;font-family:var(--font-body)}
 .vk-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px;align-items:start}
 @media (max-width:760px){.vk-grid{grid-template-columns:1fr}}
 .vk-status{flex:none;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;border-radius:999px;padding:3px 10px;border:1px solid var(--line);color:var(--muted)}
 .vk-status.laeuft{border-color:var(--hop);color:var(--hop);background:var(--hop-soft)}
 .vk-status.abgeschlossen{border-color:var(--ink);color:var(--ink)}
-.vk-status.vorbereitung{border-color:var(--amber);color:var(--amber)}
+.vk-status.vorbereitung{border-color:var(--amber);color:var(--amber-text)}
 .back{font-size:.9rem;text-decoration:none}
 .vk>p:has(.back){margin:0}
 /* Rangliste */
@@ -371,7 +374,7 @@ a.btn{color:var(--ink);text-decoration:none}
 @media (max-width:560px){.rank.erg summary,.rank.erg li>a{grid-template-areas:"pl nm sc" "pl mt mt" "pl bar bar"}}
 .erg-detail{display:flex;flex-direction:column;gap:16px;padding:8px 4px 18px 52px}
 @media (max-width:560px){.erg-detail{padding-left:8px}}
-.erg-detail h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:0 0 6px;font-family:var(--font-body)}
+.erg-detail h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber-text);margin:0 0 6px;font-family:var(--font-body)}
 .erg-detail p{margin:0}
 .rank .erg-detail li{border-bottom:0}
 /* Geschmacksprofil (Schieberegler-Balken) und Zitate: geteilt zwischen Verkostungsergebnis und Bier-Detailseite */
@@ -420,9 +423,12 @@ img.bb{object-fit:cover;background:var(--surface)}
 .bd-schritt:empty{display:none}
 .bd-schnell{display:flex;flex-wrap:wrap;gap:6px}
 .bd-schnell .tag{cursor:pointer;font:inherit;font-size:.85rem;padding:6px 12px;min-height:36px}
-.bd-schnell .tag.an{background:var(--amber);border-color:var(--amber);color:#fff}
+.bd-schnell .tag.an{background:var(--amber-text);border-color:var(--amber-text);color:#fff}
 .bd-fuss{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .bd-fuss .spacer{flex:1}
+/* Fußleiste ohne sichtbaren Knopf (Startseite des Dialogs, nur ✕ oben) nimmt keinen Platz weg (19.11.2026) */
+.bd-fuss:not(:has(> .btn:not([hidden]))){display:none}
+.bilddialog .err:empty{display:none}
 .lightbox{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 .lightbox img{max-width:96vw;max-height:84vh;border-radius:6px}
 .lb-cap{color:#f1ece2;font-size:.92rem;max-width:560px;text-align:center;padding:0 16px;margin:0}
@@ -444,7 +450,7 @@ img.bb{object-fit:cover;background:var(--surface)}
 .g-cap.leer{font-style:italic;opacity:.6}
 /* Kachel „Fotos hinzufügen" – gleiche Größe wie ein Galerie-Bild, als letztes Raster-Element */
 .g-add{aspect-ratio:1;border:1.5px dashed var(--line);border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:.78rem;font-weight:600;width:100%}
-.g-add:hover{border-color:var(--amber);color:var(--amber)}
+.g-add:hover{border-color:var(--amber);color:var(--amber-text)}
 .g-add svg{width:22px;height:22px}
 .sg-drophint{text-align:center;margin-top:8px!important}
 /* Ganze Galerie-Fläche als Drop-Zone beim Ziehen eines Fotos drüber (z. B. aus der Mac-Fotos-Mediathek) */
@@ -487,7 +493,7 @@ details.mehr>summary::-webkit-details-marker{display:none}
 .g-edit-foot input[type=date]{flex:1;min-width:0;color-scheme:light dark}
 .g-edit-row button{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;color:#fff;display:inline-flex;align-items:center;justify-content:center;padding:0;font-size:.78rem;flex:none}
 
-.g-edit-row .linkbtn{width:auto;height:auto;border-radius:0;color:var(--amber);background:none;font-size:.85rem;align-self:flex-start}
+.g-edit-row .linkbtn{width:auto;height:auto;border-radius:0;color:var(--amber-text);background:none;font-size:.85rem;align-self:flex-start}
 
 
 /* Biere suchen/filtern (lib/bierform.js: BierForm.filter) – Bierkeller und „Bier hinzufügen“ */
