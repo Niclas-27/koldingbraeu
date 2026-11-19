@@ -52,13 +52,17 @@ function gastZeigen(){
     </div>${v.bild_titel?`<img class="titelbild" src="${esc(Bilder.url(v.bild_titel))}" alt="Titelbild der Verkostung">`:""}`;
 
   // Mitmachen erst, wenn die Verkostung läuft (seit 07.11.2026; serverseitig über vk_beitreten, schema/13 Teil B)
+  // Seit 19.11.2026 als Einladung: erst was wartet, dann die eine Frage, Knopf über die volle Breite, der Hinweis zum
+  // Namen kurz darunter statt fünf Zeilen vor dem Feld.
   if(!ich && v.status === "laeuft"){
-    h += `<form id="joinForm" class="vk-card stack" novalidate>
-        <h3>Mitmachen</h3>
-        <p class="hint">Gib deinen Vornamen oder Spitznamen ein. Er gilt nur für diesen Abend und erscheint nach dem Abschluss in der Teilnehmerliste der Ergebnisseite; deine Kommentare werden dort ohne Namen gezeigt.</p>
-        <label class="f" for="j_name">Dein Name<input id="j_name" maxlength="40" autocomplete="given-name" required></label>
+    const n = d.proben.length, t = d.teilnehmer || 0;
+    const titel = n > 1 ? `${n} Biere warten auf dich` : n === 1 ? "Ein Bier wartet auf dich" : "Mach mit";
+    h += `<form id="joinForm" class="vk-card stack mitmachen" novalidate>
+        <div><h3>${titel}</h3>${t ? `<p class="hint">${t === 1 ? "Eine Person ist" : t + " sind"} schon dabei.</p>` : ""}</div>
+        <label class="f" for="j_name">Wie heißt du?<input id="j_name" maxlength="40" autocomplete="given-name" placeholder="Vorname oder Spitzname" required></label>
         <span class="err" id="joinErr"></span>
-        <button class="btn primary" type="submit" id="joinBtn" style="align-self:flex-start">Mitmachen</button>
+        <button class="btn primary" type="submit" id="joinBtn">Mitmachen</button>
+        <p class="hint mm-klein">Kein Konto nötig. Dein Name gilt nur für diesen Abend und steht nach dem Abschluss in der Teilnehmerliste; deine Kommentare erscheinen dort ohne Namen.</p>
       </form>`;
   } else if(ich){
     h += `<p class="hint">Du bist dabei als <b>${esc(ich.name)}</b>. <button class="linkbtn" id="notMe">Nicht du?</button></p>`;
@@ -90,8 +94,9 @@ function gastZeigen(){
       return `<button class="probe${m?" done":""}" data-p="${esc(p.id)}">
         ${offen?Bilder.bier(p.bier):`<span class="pn num">${p.nummer}</span>`}
         <span class="pt"><b>${offen?esc(p.bier.name):"Probe "+p.nummer}</b><small>${offen?esc(bierZeile(p.bier)):"blind"}</small></span>
-        <span class="pg">${m?`<b class="num ${gradeCls(m.note)}">${m.note}</b>`:"bewerten"}</span>
-      </button>`;}).join("")}</div>`);
+        <span class="pg">${m?`<span class="vh">deine Note </span><span class="grade ${gradeCls(m.note)}">${m.note}</span>`:"bewerten"}</span>
+      </button>`;}).join("")}</div>${fertig && fertig === d.proben.length
+        ? `<p class="hint alle-bewertet">Alle bewertet – wenn die Braumeister aufdecken, springt diese Seite von selbst zur Siegerehrung.</p>` : ""}`);
   }
 
   // Zwischenstand erst nach dem Aufdecken: ein Live-Ranking beeinflusst die eigene Bewertung. Die Noten
@@ -174,6 +179,21 @@ function bogen(probeId){
       const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer), i = sortiert.findIndex(x=>x.id===probeId);
       const n = [...sortiert.slice(i+1), ...sortiert.slice(0,i)].find(x=>!bewertet.has(x.id));
       return n ? {label: offen ? `Weiter zu ${n.nummer}. ${n.bier.name}` : `Weiter zu Probe ${n.nummer}`, oeffnen: () => bogen(n.id)} : null;
+    },
+    // Alle Biere bewertet (seit 19.11.2026): Kronkorken-Reihe, die eigenen Noten und was als Nächstes passiert –
+    // vorher schloss sich das Blatt nur mit einem Toast, und Gäste wussten nicht, ob sie fertig sind.
+    abschlussTitel: d.verkostung.titel,
+    abschluss: note => {
+      const noten = new Map((d.ich.bewertungen||[]).map(b=>[b.probe_id, b.note])); noten.set(probeId, note);
+      const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer);
+      const name = x => offen ? `${x.nummer}. ${esc(x.bier.name)}` : "Probe "+x.nummer;
+      return `<div class="bogen-ende">
+        <div class="ende-reihe" aria-hidden="true">${sortiert.map((x,i)=>`<span class="ende-deckel" style="--i:${i}">${offen ? Bilder.bier(x.bier) : `<span class="pn num">${x.nummer}</span>`}</span>`).join("")}</div>
+        <h3>${sortiert.length === 1 ? "Bewertet" : `Alle ${sortiert.length} bewertet`} – prost!</h3>
+        <ul class="ende-noten">${sortiert.map(x=>{ const n = noten.get(x.id);
+          return `<li><span class="en-name">${name(x)}</span>${n == null ? "" : `<span class="grade ${gradeCls(n)}"><span class="vh">deine Note </span>${n}</span>`}</li>`; }).join("")}</ul>
+        <p class="hint">Wenn die Braumeister aufdecken, springt diese Seite von selbst zur Siegerehrung. Lass sie einfach offen. Bis dahin kannst du jede Note noch ändern.</p>
+      </div>`;
     },
   });
 }

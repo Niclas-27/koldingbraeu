@@ -93,6 +93,7 @@ const detailId = params.get("id") || "";
 const ergebnisId = params.get("e") || "";
 const ankuendigungId = params.get("a") || "";
 const ansicht = code ? "gast" : detailId ? "detail" : ergebnisId ? "ergebnis" : ankuendigungId ? "ankuendigung" : "liste";
+if(ansicht === "gast") document.body.classList.add("gast-ansicht");   // Kopf ohne „Login“-Pille, siehe tastings.css
 const main = () => $("#vk");
 let stile = [];            // Bierstile (für Formulare)
 let timer = null;
