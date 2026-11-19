@@ -19,7 +19,7 @@ async function gastLaden(still){
   const g = gast();
   const {data, error} = await sb.rpc("vk_laden", {p_code: code, p_token: g ? g.token : null});
   if(error){ stopTimer(); main().innerHTML = `<div class="vk-head"><h2>Verkostung</h2></div><p class="empty">${esc(fehlertext(error))}</p><p class="empty"><a href="verkostung.html">Zur Übersicht</a></p>`; return; }
-  if(g && !data.ich){ lsSet(gastKey(), null); }   // Schlüssel passt nicht (mehr) – neu beitreten
+  if(g && !data.ich){ lsSet(gastKey(), null); eigeneGespeichert.clear(); }   // Schlüssel passt nicht (mehr) – neu beitreten
   gData = data;
   // Aufgedeckt: alle springen von selbst auf die volle Ergebnisseite (Rangliste, Bier antippen → Details). Die eigenen
   // Noten nehmen wir je Bier mit, damit die Ergebnisseite „deine Note“ zeigen kann (schema/15 liefert dafür id + bier_id).
@@ -44,7 +44,7 @@ async function gastLaden(still){
 
 function gastZeigen(){
   const d = gData, v = d.verkostung, ich = d.ich, offen = !v.blind || v.status === "abgeschlossen";
-  const meine = new Map((ich?.bewertungen||[]).map(b=>[b.probe_id,b]));
+  const meine = ich ? meineBewertungen() : new Map();   // inkl. eben gespeicherter, auch wenn gData noch alt ist
   let h = `<div class="vk-head">
       <div><p class="kicker">Verkostung</p><h2>${esc(v.titel)}</h2>
       <p class="hint">${esc([fmtDateLong(v.datum), v.ort].filter(Boolean).join(" · "))}${v.blind?" · blind":""} · ${d.teilnehmer} Teilnehmer</p></div>
@@ -137,7 +137,7 @@ function gastZeigen(){
   const nm = $("#notMe");
   if(nm) nm.onclick = () => bestaetigen(`Du bist nicht ${ich.name}?`,
     `Dann trägst du dich auf diesem Handy aus und kannst mit deinem eigenen Namen mitmachen. Die Bewertungen von ${ich.name} bleiben gespeichert, sind hier aber nicht mehr zu sehen.`,
-    "Ja, austragen", () => { entwuerfeLoeschen(); lsSet(gastKey(), null); gastLaden(); });
+    "Ja, austragen", () => { entwuerfeLoeschen(); eigeneGespeichert.clear(); lsSet(gastKey(), null); gastLaden(); });
   const vf = $("#vsForm");
   if(vf) vf.onsubmit = async e => { e.preventDefault();
     const name = $("#vs_name").value.trim();
@@ -162,6 +162,17 @@ function entwuerfeLoeschen(){
   try{ Object.keys(localStorage).filter(k => k.startsWith(pre)).forEach(k => localStorage.removeItem(k)); }catch(_){}
 }
 
+/* Eben gespeicherte Bewertungen dieses Gastes, gemerkt bis zum Verlassen der Seite (seit 19.11.2026).
+   Nach dem Speichern lädt gastLaden() den Stand neu – „Weiter zu …“ öffnet das nächste Bier aber sofort. Bei langsamem
+   Netz war gData dann noch alt: Ein gerade bewertetes Bier galt als offen, und nach dem letzten Bier sprang der Bogen
+   zurück zu einem schon bewerteten statt zum Abschluss. Darum zählen hier immer auch die lokal gespeicherten mit. */
+const eigeneGespeichert = new Map();
+function meineBewertungen(){
+  const m = new Map((gData?.ich?.bewertungen||[]).map(b => [b.probe_id, b]));
+  eigeneGespeichert.forEach((b, id) => m.set(id, b));
+  return m;
+}
+
 function bogen(probeId){
   const d = gData, p = d.proben.find(x=>x.id===probeId); if(!p) return;
   const offen = !d.verkostung.blind || d.verkostung.status === "abgeschlossen";
@@ -170,12 +181,17 @@ function bogen(probeId){
     entwurf: pre ? pre + probeId : null,
     titel: offen ? `${p.nummer}. ${p.bier.name}` : `Probe ${p.nummer}`,
     hint: offen ? bierZeile(p.bier) : "",
-    alt: (d.ich.bewertungen||[]).find(b=>b.probe_id===probeId) || {},
-    speichern: f => sb.rpc("vk_bewerten", {p_code: code, p_token: gast().token, p_probe: probeId, ...f}),
+    alt: meineBewertungen().get(probeId) || {},
+    speichern: async f => {
+      const r = await sb.rpc("vk_bewerten", {p_code: code, p_token: gast().token, p_probe: probeId, ...f});
+      if(!r.error) eigeneGespeichert.set(probeId, {probe_id: probeId, note: f.p_note, merkmale: f.p_merkmale, geruch: f.p_geruch,
+        fehler: f.p_fehler, nochmal: f.p_nochmal, kommentar: f.p_kommentar});
+      return r;
+    },
     fertig: () => gastLaden(),
     // Nach dem Speichern „Weiter zu Probe X“: das nächste noch nicht bewertete Bier (in Reihenfolge, danach von vorn)
     naechste: () => {
-      const bewertet = new Set((d.ich.bewertungen||[]).map(b=>b.probe_id)); bewertet.add(probeId);
+      const bewertet = new Set(meineBewertungen().keys()); bewertet.add(probeId);
       const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer), i = sortiert.findIndex(x=>x.id===probeId);
       const n = [...sortiert.slice(i+1), ...sortiert.slice(0,i)].find(x=>!bewertet.has(x.id));
       return n ? {label: offen ? `Weiter zu ${n.nummer}. ${n.bier.name}` : `Weiter zu Probe ${n.nummer}`, oeffnen: () => bogen(n.id)} : null;
@@ -184,7 +200,7 @@ function bogen(probeId){
     // vorher schloss sich das Blatt nur mit einem Toast, und Gäste wussten nicht, ob sie fertig sind.
     abschlussTitel: d.verkostung.titel,
     abschluss: note => {
-      const noten = new Map((d.ich.bewertungen||[]).map(b=>[b.probe_id, b.note])); noten.set(probeId, note);
+      const noten = new Map([...meineBewertungen()].map(([id, b]) => [id, b.note])); noten.set(probeId, note);
       const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer);
       const name = x => offen ? `${x.nummer}. ${esc(x.bier.name)}` : "Probe "+x.nummer;
       return `<div class="bogen-ende">
