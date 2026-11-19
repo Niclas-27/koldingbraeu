@@ -89,6 +89,7 @@ function bogenZeigen(opts){
       h += `<div class="nstufen" role="radiogroup" aria-label="Gesamtnote von 0 bis 10">${NOTE_STUFEN.map(([e,t,d,ns]) =>
           `<div class="nstufe${ns.includes(f.note)?" an":""}"><span class="ns-e" aria-hidden="true">${e}</span><div class="ns-t"><b>${esc(t)}</b><small>${esc(d)}</small></div>
             <div class="ns-n">${ns.map(n=>`<button type="button" role="radio" aria-checked="${f.note===n}" data-n="${n}" aria-label="${n} – ${esc(t)}">${n}</button>`).join("")}</div></div>`).join("")}</div>
+        <span class="err" id="bNoteErr" role="alert"></span>
         <label class="note-satz" for="b_kom"><span class="ns-frage" id="noteFrage">${esc(st ? st[4] : "Dein Satz zum Bier")}</span><small>optional – ein Satz reicht</small>
           <input id="b_kom" maxlength="140" value="${esc(f.kommentar)}" placeholder="z. B. „Schmeckt nach Sommer“" autocomplete="off" enterkeyhint="done"></label>`;
     }
@@ -100,7 +101,7 @@ function bogenZeigen(opts){
     <span class="err" id="bErr" role="alert"></span>`;
   // Fortschritt seit 14.11.2026 als dünne Linie an der Oberkante der Fußleiste; „3 / 4“ nur noch für Screenreader
   const foot = `<div class="bogen-fuss">
-      <div class="fortschritt"><span class="punkte" aria-hidden="true">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span><span class="zahl vh"></span></div>
+      <div class="fortschritt"><span class="punkte" aria-hidden="true">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span><span class="zahl vh" aria-live="polite"></span></div>
       <div class="bogen-knoepfe"><button class="btn" id="bZurueck" aria-label="Zurück">←</button><button class="btn primary" id="bWeiter"></button></div>
     </div>`;
   sheet(opts.titel, body, foot);
@@ -111,7 +112,8 @@ function bogenZeigen(opts){
     spur.style.transform = `translateX(${-seite*100}%)`;
     spur.querySelectorAll(".bogen-seite").forEach((el,i) => { el.toggleAttribute("aria-hidden", i!==seite); el.inert = i!==seite; });
     $("#sheetFoot").querySelectorAll(".punkte i").forEach((p,i) => p.classList.toggle("ab", i<=seite));
-    $("#sheetFoot").querySelector(".zahl").textContent = `${seite+1} / ${BOGEN_SEITEN.length}`;
+    // Für Screenreader angesagt (aria-live): welche Seite jetzt zu sehen ist
+    $("#sheetFoot").querySelector(".zahl").textContent = `Seite ${seite+1} von ${BOGEN_SEITEN.length}: ${BOGEN_SEITEN[seite].label}`;
     $("#bZurueck").hidden = seite === 0;
     $("#bWeiter").textContent = seite === letzte ? "Speichern" : "Weiter";
     $("#sheetBody").scrollTop = 0;
@@ -119,7 +121,17 @@ function bogenZeigen(opts){
   }
 
   noteVerdrahten(inhalt, f, merken);
-  inhalt.querySelectorAll(".tagpick .kachel").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); merken(); });
+  inhalt.querySelectorAll(".tagpick .kachel").forEach(c => c.onclick = () => {
+    const t = c.dataset.t;
+    if(f.tags.has(t)) f.tags.delete(t);
+    else {
+      f.tags.add(t);
+      // Gegensatz (z. B. leicht ↔ kräftig) abwählen, TAGS_GEGENSAETZE in common.js
+      TAGS_GEGENSAETZE.forEach(paar => { if(!paar.includes(t)) return; const g = paar.find(x => x !== t);
+        if(f.tags.delete(g)) inhalt.querySelector(`.kachel[data-t="${g}"]`)?.setAttribute("aria-pressed", "false"); });
+    }
+    c.setAttribute("aria-pressed", String(f.tags.has(t))); merken();
+  });
   inhalt.querySelectorAll("[data-glossar]").forEach(b => b.onclick = () => glossarZeigen(BOGEN_SEITEN[+b.dataset.glossar]));
   const kom = $("#b_kom");
   kom.addEventListener("input", () => { f.kommentar = kom.value; merken(); });
@@ -144,14 +156,21 @@ function bogenZeigen(opts){
   $("#bZurueck").onclick = () => zeigen(seite - 1);
   $("#bWeiter").onclick = async () => {
     if(seite < letzte){ zeigen(seite + 1); return; }
-    if(f.note == null){ $("#bErr").textContent = "Bitte eine Note wählen."; inhalt.querySelector(".nstufen button")?.focus(); return; }
-    $("#bWeiter").disabled = true; $("#bErr").textContent = "";
+    // Fehlende Note: Meldung direkt unter den Notenknöpfen (seit 19.11.2026; vorher unter dem Textfeld, weit weg). Kein
+    // Fokus auf „0“ mehr – ein nachfolgender Tipp oder Enter hätte sonst versehentlich 0 gewählt.
+    if(f.note == null){ const ne = $("#bNoteErr"); ne.textContent = "Bitte eine Note wählen – nur die ist Pflicht.";
+      ne.scrollIntoView({block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); return; }
+    const knopf = $("#bWeiter");
+    knopf.disabled = true; knopf.textContent = "Wird gespeichert …"; $("#bErr").textContent = "";
     const merkmale = {...(alt.merkmale || {})};
     if(f.kreis) Object.assign(merkmale, kreisZuMerkmalen(f.kreis));
     else if(f.kreisGeloescht){ delete merkmale.bitter; delete merkmale.suesse; }
-    const {error} = await opts.speichern({p_note: f.note, p_merkmale: merkmale, p_geruch: [...f.tags], p_fehler: alt.fehler || [],
-      p_nochmal: alt.nochmal ?? null, p_kommentar: f.kommentar.trim() || null});
-    if(error){ $("#bWeiter").disabled = false; $("#bErr").textContent = fehlertext(error); return; }
+    // Auch ein Abbruch (Netz weg) landet als Meldung – vorher blieb der Knopf dann für immer grau (seit 19.11.2026)
+    let error;
+    try{ ({error} = await opts.speichern({p_note: f.note, p_merkmale: merkmale, p_geruch: [...f.tags], p_fehler: alt.fehler || [],
+      p_nochmal: alt.nochmal ?? null, p_kommentar: f.kommentar.trim() || null})); }
+    catch(e){ error = e || {}; }
+    if(error){ knopf.disabled = false; knopf.textContent = "Speichern"; $("#bErr").textContent = fehlertext(error) + " Deine Eingaben bleiben erhalten."; return; }
     if(opts.entwurf) lsSet(opts.entwurf, null);
     const weiter = opts.naechste && opts.naechste();
     // Letztes offenes Bier (seit 19.11.2026): eigene Abschlussansicht statt nur Toast, wenn der Aufrufer eine liefert
@@ -237,7 +256,7 @@ function noteVerdrahten(inhalt, f, geaendert = () => {}){
   if(!knoepfe.length) return;
   knoepfe.forEach(b => b.onclick = () => {
     const erste = f.note == null;
-    f.note = +b.dataset.n; $("#bErr").textContent = ""; geaendert();
+    f.note = +b.dataset.n; $("#bErr").textContent = ""; $("#bNoteErr").textContent = ""; geaendert();
     knoepfe.forEach(x => x.setAttribute("aria-checked", String(x === b)));
     inhalt.querySelectorAll(".nstufe").forEach(z => z.classList.toggle("an", z.contains(b)));
     inhalt.querySelector("#noteFrage").textContent = noteStufe(f.note)[4];
