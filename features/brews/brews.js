@@ -789,7 +789,7 @@ function wizardRenderStep(){
   } else if(key==="gaerung"){
     body=`<p class="hint">Dieser Schritt lässt sich beliebig oft erneut besuchen, solange die Gärung läuft – für weitere Zwischenmessungen über Tage/Wochen.</p>
       <div class="grid2">${WIZARD_FIELDS.gaerung.map(f=>field(f,d[f[0]])).join("")}</div>
-      <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);margin:18px 0 10px">Zwischenmessungen</h3>
+      <h3 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.09em;color:var(--amber-text);margin:18px 0 10px">Zwischenmessungen</h3>
       ${wizardMessungenHtml()}`;
   } else if(key==="abfuellung"){
     const refAlk=Bz.alkoholAusRefraktometer(d.refraktometer_anstellen,d.refraktometer_restextrakt);

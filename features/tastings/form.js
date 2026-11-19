@@ -36,7 +36,8 @@ const kreisBegrenzen = p => ({x: Math.max(-1, Math.min(1, p.x)), y: Math.max(-1,
 
 /* opts: {titel, hint, oben (zusätzliches HTML über dem Bogen), alt, speichern(werte) → Promise<{error}>, fertig(),
           naechste() → {label, oeffnen} | null  (optional: nach dem Speichern „Weiter zu Probe X“ anbieten),
-          entwurf (optional: localStorage-Schlüssel für den Entwurf, siehe unten)}
+          entwurf (optional: localStorage-Schlüssel für den Entwurf, siehe unten),
+          startAmUrteil (optional: gleich auf „Dein Urteil“ öffnen, z. B. bei schon bewerteten Bieren)}
    Entwurf (seit 19.11.2026, Gästeansicht): Jede Eingabe wird sofort auf dem Handy gemerkt. Schließt der Gast den Bogen
    versehentlich (✕, Tipp neben das Blatt, Escape) oder lädt die Seite neu, ist beim nächsten Öffnen alles wieder da –
    samt der Seite, auf der er war. Erst erfolgreiches Speichern löscht den Entwurf. Keine Rückfrage beim Schließen. */
@@ -74,6 +75,9 @@ function bogenZeigen(opts){
         <button type="button" class="ikon-knopf glossar-auf" data-glossar="${i}" aria-label="Was heißt das?" title="Was heißt das?">?</button></span>` : "";
     const kopfRechts = kopfKnoepfe || (s.art === "tags" ? `<small class="kopf-hinweis">mehrere möglich</small>` : "");
     let h = `<section class="bogen-seite" data-i="${i}"${i?` aria-hidden="true"`:""}><fieldset><legend${kopfRechts?` class="mit-knoepfen"`:""}><span>${esc(s.label)}</span>${kopfRechts}</legend>`;
+    // Freiwillige Seiten (seit 19.11.2026): sagen, dass sie freiwillig sind, und bieten den Sprung zur Note an –
+    // die Reihenfolge Riechen → Schmecken → Geschmacksbild → Urteil bleibt.
+    if(s.art !== "urteil") h += `<p class="seite-frei">Freiwillig · <button type="button" class="linkbtn zur-note">direkt zur Note →</button></p>`;
     if(s.art === "tags"){
       // Kacheln in zwei Spalten (seit 14.11.2026 statt Chips): Emoji, Wort, Beispiele; Haken oben rechts zeigt die Auswahl
       h += `<div class="tagpick" role="group" aria-label="${esc(s.frage)} Mehrere möglich.">${s.tags().map(([t,e,bsp])=>`<button type="button" class="kachel" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span class="k-emoji" aria-hidden="true">${e}</span><b>${esc(t)}</b><small>${esc(bsp)}</small></button>`).join("")}</div>`;
@@ -153,6 +157,7 @@ function bogenZeigen(opts){
     if(Math.abs(dx) > Math.max(60, inhalt.clientWidth / 4) && Math.abs(dx) > Math.abs(dy) * 1.5) zeigen(seite + (dx < 0 ? 1 : -1));
   }, {passive: true});
 
+  inhalt.querySelectorAll(".zur-note").forEach(b => b.onclick = () => zeigen(letzte));   // Seitenwechsel wird per aria-live angesagt
   $("#bZurueck").onclick = () => zeigen(seite - 1);
   $("#bWeiter").onclick = async () => {
     if(seite < letzte){ zeigen(seite + 1); return; }
@@ -186,7 +191,9 @@ function bogenZeigen(opts){
     }
     if(!weiter){ closeSheet(); toast("Gespeichert"); opts.fertig && opts.fertig(); return; }
     // Gespeichert – direkt zum nächsten noch offenen Bier weiterbieten (kein Wischen zwischen Bieren, siehe README)
-    $("#sheetBody").innerHTML = `<div class="bogen-fertig"><span class="haken" aria-hidden="true">✓</span><h3>Gespeichert</h3><p class="hint">Deine Note: <span class="grade ${gradeCls(f.note)}">${f.note}</span></p></div>`;
+    // Gäste (seit 19.11.2026): Zwischenstand mit Kronkorken-Reihe statt Haken in leerer Fläche (opts.zwischenstand)
+    $("#sheetBody").innerHTML = opts.zwischenstand ? opts.zwischenstand(f.note)
+      : `<div class="bogen-fertig"><span class="haken" aria-hidden="true">✓</span><h3>Gespeichert</h3><p class="hint">Deine Note: <span class="grade ${gradeCls(f.note)}">${f.note}</span></p></div>`;
     $("#sheetFoot").innerHTML = `<div class="bogen-knoepfe"><button class="btn" id="bFertig">Fertig</button><button class="btn primary" id="bNaechste">${esc(weiter.label)} →</button></div>`;
     $("#bFertig").onclick = () => { closeSheet(); opts.fertig && opts.fertig(); };
     $("#bNaechste").onclick = () => { opts.fertig && opts.fertig(); weiter.oeffnen(); };
@@ -194,7 +201,8 @@ function bogenZeigen(opts){
   };
   // Beim Öffnen direkt auf der gemerkten Seite stehen, ohne sichtbar durch die Seiten davor zu gleiten
   spur.style.transition = "none";
-  zeigen(entwurf ? entwurf.seite : 0);
+  // Start: Entwurf → seine Seite; schon bewertet (opts.startAmUrteil) → gleich „Dein Urteil“, zum Ändern der Note
+  zeigen(entwurf ? entwurf.seite : opts.startAmUrteil ? letzte : 0);
   void spur.offsetWidth; spur.style.transition = "";
   if(entwurf) toast("Dein Entwurf ist wieder da");
 }

@@ -6,7 +6,7 @@
 .rz-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .rz-card{display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;color:inherit;text-decoration:none;min-width:0}
 .rz-card:hover{border-color:var(--muted)}
-.rz-card .st{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--amber);font-weight:600}
+.rz-card .st{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--amber-text);font-weight:600}
 .rz-card .nm{font-family:var(--font-display);font-size:1.3rem;line-height:1.15}
 .rz-card .mini{font-size:.82rem;color:var(--ink)}
 .rz-card .ft{font-size:.8rem;color:var(--muted);margin-top:6px}
@@ -14,12 +14,12 @@
 
 .rz-blatt{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px clamp(16px,4vw,32px);display:flex;flex-direction:column;gap:22px;max-width:760px;width:100%;margin:0 auto}
 .rz-kopf{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
-.rz-kopf h2{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:800;font-stretch:80%;color:var(--amber);text-transform:uppercase;letter-spacing:.01em;line-height:1}
+.rz-kopf h2{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:800;font-stretch:80%;color:var(--amber-text);text-transform:uppercase;letter-spacing:.01em;line-height:1}
 .rz-beschr{font-style:italic;max-width:560px;margin:0}
 .rz-skala{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin-top:4px}
 .rz-skala input[type=number]{width:84px;text-align:center;border:1px solid var(--hop);background:var(--hop-soft);color:var(--hop);border-radius:999px;padding:6px 8px;font-weight:700;font-family:var(--font-data)}
 .check.klein{font-size:.85rem;align-items:center}
-.rz-sec h3{font-size:.85rem;font-family:var(--font-body);font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--amber);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px}
+.rz-sec h3{font-size:.85rem;font-family:var(--font-body);font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--amber-text);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px}
 .rz-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
 .rz-row.summe{border-bottom:0;font-weight:600}
 .rz-row small{color:var(--muted)}
@@ -34,7 +34,7 @@
 @media (max-width:520px){.rz-hopfen{grid-template-columns:minmax(0,1fr) auto}.rz-hopfen .hz{grid-column:1/-1;text-align:left}}
 .baum li{padding:3px 0}
 .rz-aktionen{justify-content:center;max-width:760px;margin:0 auto}
-.hinweise{margin:0;padding-left:18px;color:var(--amber);font-size:.88rem}
+.hinweise{margin:0;padding-left:18px;color:var(--amber-text);font-size:.88rem}
 .rowlist.rz2 .r{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 36px}
 .rowlist.rz3 .r{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,.7fr) 36px}
 .rowlist.rz4 .r{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,1.2fr) 36px}
