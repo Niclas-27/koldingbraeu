@@ -118,7 +118,7 @@ function gastZeigen(){
   const kannLoeschen = ich && v.status !== "abgeschlossen" && (ich.bilder||0) > 0;
   const ggAnfrage = ich ? {code, token: gast().token} : null;
   if(ich && v.status !== "abgeschlossen") h += sec("Fotos vom Abend", (darf
-      ? `<button type="button" class="btn foto-knopf" id="fotoBtn">${fotoKnopfHtml(ich.bilder||0)}</button><span class="err" id="fotoErr"></span><p class="hint foto-hinweis">Nur Fotos, mit denen alle Abgebildeten einverstanden sind.</p>`
+      ? `<button type="button" class="btn foto-knopf" id="fotoBtn">${fotoKnopfHtml(ich.bilder||0)}</button><span class="err" id="fotoErr"></span><p class="hint foto-hinweis">Nur Fotos, mit denen alle Abgebildeten einverstanden&nbsp;sind.</p>`
       : `<p class="hint">Du hast alle ${MAX_FOTOS} Fotos hochgeladen – danke!</p>`)
       + (kannLoeschen ? `<button type="button" class="linkbtn" id="fotoLoeschBtn">Zuletzt hochgeladenes Foto entfernen</button><span class="err" id="fotoLoeschErr"></span>` : "")
       + `<div id="gastGalerie">${(() => { const c = gastGalerieAusCache(ggAnfrage); return c ? gastGalerieHtml(c) : `<p class="hint">Fotos werden geladen …</p>`; })()}</div>`);
@@ -157,7 +157,9 @@ function gastZeigen(){
   main().querySelectorAll(".probe[data-p]").forEach(b => b.onclick = () => bogen(b.dataset.p));
   const tb = main().querySelector(".titelbild"); if(tb) tb.onclick = () => Bilder.zeigen(v.bild_titel);
   const fb = $("#fotoBtn"); if(fb) fb.onclick = gastFoto;
-  const flb = $("#fotoLoeschBtn"); if(flb) flb.onclick = gastFotoLoeschen;
+  // Rückfrage vor dem Löschen (seit 19.11.2026): der Link steht direkt unter dem Foto-Knopf, ein Fehltipp war endgültig
+  const flb = $("#fotoLoeschBtn"); if(flb) flb.onclick = () => bestaetigen("Foto entfernen?",
+    "Dein zuletzt hochgeladenes Foto wird aus den Fotos vom Abend gelöscht.", "Ja, entfernen", gastFotoLoeschen);
 }
 
 /* Entwürfe des Bewertungsbogens (bogenZeigen, form.js) hängen am Schlüssel des Gastes – ein anderer Gast auf demselben
@@ -260,7 +262,7 @@ const KAMERA_SVG = `<svg class="kamera" viewBox="0 0 24 24" width="20" height="2
 const fotoKnopfHtml = n => `${KAMERA_SVG}<span>Foto hinzufügen</span><small class="foto-zahl">${n} von ${MAX_FOTOS}</small>`;
 
 async function gastFoto(){
-  const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend", ohneVorschau: true,
+  const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend", ohneVorschau: true, ohneZuschnitt: true,
     hinweis: "Sehen können das Foto nur die Teilnehmer dieser Verkostung und die Braumeister."});
   if(!erg) return;
   const btn = $("#fotoBtn"), err = $("#fotoErr");

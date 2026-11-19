@@ -250,9 +250,9 @@ async def main():
             await pg.click("#fotoBtn"); await pg.wait_for_selector(".bilddialog")
             pruefe("Knopf heißt „Bild auswählen“", await pg.locator(".bilddialog label:has-text('Bild auswählen')").count() == 1)
             await pg.set_input_files(".bilddialog input[type=file] >> nth=1", FOTO)
-            await pg.wait_for_selector(".bd-crop:not([hidden])")
-            pruefe("Gast-Zuschnitt hat nur einen Schritt („Übernehmen“ statt „Weiter“)", (await pg.inner_text(".bilddialog [data-a=ok]")).strip() == "Übernehmen" and (await pg.inner_text(".bd-schritt")).strip() == "")
-            await pg.click(".bilddialog [data-a=ok]"); await pg.wait_for_selector(".bilddialog", state="detached", timeout=5000); await pg.wait_for_timeout(600)
+            # Seit 19.11.2026 ohne Zuschnitt-Schritt: das gewählte Foto wird direkt übernommen
+            await pg.wait_for_selector(".bilddialog", state="detached", timeout=5000); await pg.wait_for_timeout(600)
+            pruefe("Gast-Foto ohne Zuschnitt-Schritt übernommen", await pg.locator(".bilddialog").count() == 0)
             pruefe("Gast-Foto geht an die Edge Function", "galerie-hochladen" in await pg.evaluate("JSON.stringify(window.__calls.filter(c=>c[0]==='fn').map(c=>c[1]))"))
             pruefe("Zähler steht auf 1 von 9", "1 von 9" in await pg.inner_text("#fotoBtn"))
             pruefe("Neues Foto erscheint sofort in der Galerie", await pg.locator("#gastGalerie .gg-raster button").count() == 2 and "von dir" in await pg.inner_text("#gastGalerie"))

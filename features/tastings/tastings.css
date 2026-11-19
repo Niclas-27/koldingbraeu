@@ -65,7 +65,7 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
 .foto-knopf{gap:8px}
 .foto-knopf .kamera{flex:none}
 .foto-zahl{font-size:.78rem;font-weight:500;color:var(--muted)}
-.foto-hinweis{margin-top:8px}
+.foto-hinweis{margin-top:8px;text-wrap:pretty}   /* kein einzelnes Wort in der letzten Zeile */
 .zugang>summary{padding:12px 0;cursor:pointer}
 .alle-bewertet{margin-top:12px}
 /* Bewertungsbogen: seit 13.11.2026 vier Seiten (Riechen, Schmecken, Geschmacksbild, Urteil) nebeneinander auf einer Spur, die per
@@ -85,6 +85,11 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
 .fortschritt .punkte i{flex:1;height:3px;background:var(--line);transition:background .2s}
 .fortschritt .punkte i.ab{background:var(--amber)}
 .fortschritt .zahl{font-size:.78rem;color:var(--muted);flex:none;font-family:var(--font-data)}
+/* Seitennamen unter der Fortschrittslinie (19.11.2026): die aktuelle in Röstmalz, die übrigen in Treber */
+.sheet-foot:has(.bogen-fuss){padding-top:26px}
+.fortschritt .schritte{display:flex;gap:3px;margin-top:5px}
+.fortschritt .schritte b{flex:1;text-align:center;font-size:.72rem;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fortschritt .schritte b.jetzt{color:var(--ink);font-weight:700}
 .bogen-knoepfe{display:flex;gap:10px;flex:1}
 .bogen-knoepfe .btn{flex:1;min-height:46px}
 .bogen-knoepfe #bZurueck{flex:0 0 64px}
@@ -145,12 +150,18 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
 /* Notenseite (seit 14.11.2026): fünf Stufen mit Emoji und Erklärung, Zahlen als runde Knöpfe in der Zeile */
 .nstufen{display:flex;flex-direction:column;gap:7px}
 .nstufe{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:58px;padding:6px 8px 6px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
-.nstufe.an{border-color:var(--amber);background:var(--amber-soft)}
+/* Gewählte Stufe neutral in Röstmalz (seit 19.11.2026; vorher Würze = „mittel“ laut Notenampel) */
+.nstufe.an{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .ns-e{font-size:1.5rem;line-height:1}
 .ns-t{min-width:0}.ns-t b{display:block;font-size:1rem;line-height:1.25}.ns-t small{display:block;color:var(--muted);font-size:.78rem;line-height:1.25}
 .ns-n{display:flex;gap:6px}
 .ns-n button{width:44px;height:44px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 1.05rem/1 var(--font-data);cursor:pointer}
-.ns-n button[aria-checked="true"]{background:var(--amber-text);border-color:var(--amber-text);color:var(--bg)}   /* Fläche mit Schrift: Würze-Text-Ton für den Kontrast */
+/* Gewählte Note gleich in ihrer Ampelfarbe (seit 19.11.2026) – dieselbe Farbe wie danach im Zwischenstand und in der
+   Liste. Kontrast der Zahl auf der Fläche: hell 4,6–5,7:1, dunkel 6,8–9:1. */
+.ns-n button[aria-checked="true"]{color:var(--bg)}
+.ns-n button[aria-checked="true"][data-g="g1"]{background:var(--hop);border-color:var(--hop)}
+.ns-n button[aria-checked="true"][data-g="g2"]{background:var(--amber-text);border-color:var(--amber-text)}
+.ns-n button[aria-checked="true"][data-g="g3"]{background:var(--warn);border-color:var(--warn)}
 .ns-n button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 /* Textfeld als eigene Karte mit Frage passend zur Stufe */
 /* seit 19.11.2026 durchgezogener Rahmen statt gestrichelt – gestrichelt sah nach Ablagefläche für Dateien aus */
@@ -185,7 +196,10 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
 .kachel:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 #bogenInhalt fieldset:has(.tagpick){gap:12px}
 .kopf-hinweis{font:400 .8rem/1 var(--font-body);color:var(--muted)}
+.kopf-hinweis.pflicht{color:var(--ink);font-weight:600}
 /* „Freiwillig · direkt zur Note →“ unter der Überschrift der Seiten 1–3 (19.11.2026); Tippfläche ≥ 44 px ohne höhere Zeile */
+.seite-frage{margin:-6px 0 0;font-size:.95rem;font-weight:600}
+.seite-frage + .seite-frei{margin-top:-14px}
 .seite-frei{margin:-6px 0 0;font-size:.85rem;color:var(--muted)}
 .seite-frei .zur-note{font-size:.85rem;padding:13px 6px;margin:-13px -6px}
 @media (max-height:620px){.kachel{min-height:70px;padding:7px 12px}.kachel .k-emoji{font-size:1.35rem}.kachel::after{top:8px;right:10px}}
@@ -323,7 +337,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .k-punkt[hidden]{display:none}
 #karteFeld.zieht .k-punkt{box-shadow:0 0 0 1px var(--amber),0 0 0 12px var(--amber-soft)}
 .kreis-text{margin:0;text-align:center;font-weight:700;font-size:1.05rem;min-height:1.4em}
-/* Blase immer über dem Daumen, solange man tippt/zieht, und noch kurz danach; ganz oben ragt sie über die Überschrift */
+/* Blase über dem Daumen, solange man tippt/zieht (seit 19.11.2026 nicht mehr danach, siehe kreisVerdrahten); ganz oben ragt sie über die Überschrift */
 .kreis-blase{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 30px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 .kreis-blase.an{opacity:1}
 @media (prefers-reduced-motion:reduce){.kreis-blase{transition:none}}
@@ -341,9 +355,13 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 @media (max-height:620px){
   .sheet:has(#bogenInhalt) #sheetBody > .hint{display:none}
   .tagpick{gap:6px}
-  .kachel{min-height:62px}
+  .kachel{min-height:58px}
+  .sheet-foot:has(.bogen-fuss){padding-top:23px;padding-bottom:8px}
   #bogenInhalt fieldset:has(.tagpick){gap:8px}
-  #karteFeld{max-width:min(100%,44vh);margin-inline:auto}
+  #karteFeld{max-width:min(100%,41vh);margin-inline:auto}
+  /* die Frage der Seite fällt hier weg (bleibt im aria-label der Kacheln), sonst müsste man scrollen */
+  .seite-frage{display:none}
+  .seite-frage + .seite-frei{margin-top:-6px}
 }
 /* leere Fehlerzeile unter dem Bogen nimmt keinen Abstand weg (sonst +22 px Scrollen) */
 #sheetBody > #bErr:empty{display:none}
