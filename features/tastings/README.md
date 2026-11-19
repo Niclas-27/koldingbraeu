@@ -191,6 +191,13 @@ entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
 - Knopfleiste nach dem Speichern: Beschriftungen mittig, ein langer Biername in „Weiter zu …“ bricht um, „Fertig“
   bleibt daneben eine feste Pille und damit erreichbar.
 
+**Schlussdurchgang (19.11.2026):**
+- Die Höhe des Bogens folgt der sichtbaren Seite (vorher so hoch wie die höchste Seite). Auf niedrigen Bildschirmen
+  (≤ 620 px, z. B. iPhone SE in Safari) fällt die Zeile „Brauerei · Stil · Vol.“ weg, Kacheln und Karte werden kompakter:
+  Riechen, Schmecken und Geschmacksbild passen ohne Scrollen, nur „Dein Urteil“ scrollt zum freiwilligen Kommentar.
+- Notenknöpfe: ein Tab-Stopp, Pfeiltasten und Pos1/Ende wählen die Note (Optionsgruppe wie gewohnt).
+- Angefangener Bogen: in der Liste „weitermachen“ statt „bewerten“, sofort nach dem Schließen.
+
 **Zwischenstand nach dem Speichern (19.11.2026, nur Gäste):** Sind noch Biere offen, zeigt das Blatt statt eines Hakens
 die Kronkorken-Reihe des Abends (bewertet voll, offen blass, der eben bewertete landet), „2 von 3 bewertet“ und die eigene
 Note in der Notenampel-Farbe (`opts.zwischenstand` in `bogenZeigen`, gebaut in `guest.js`). Die Verwaltung behält den Haken.
