@@ -267,6 +267,11 @@ Ziel: ein lustigerer Abschluss. Drei Bausteine, bewusst klein gehalten – der N
   Gästeseite und Verwaltung hängen dafür `&ehrung=1` an die Ergebnis-Adresse, der Zusatz wird sofort wieder entfernt –
   sonst über den Knopf „Siegerehrung ansehen“. Die Rangliste bleibt ohne Podest. Auf der Sieger-Karte (Platz 1) regnet einmal
   Konfetti in den Seitenfarben (`konfetti()`), außer bei „Bewegung reduzieren“.
+- **Bewegung der Siegerehrung (seit 19.11.2026):** Die Karte kommt aus der Blätterrichtung („Weiter“/Wischen von rechts,
+  „Zurück“ von links). Der Kronkorken fällt beschleunigt auf die Karte und federt kurz nach, danach zählt die Note von 0
+  auf den Schnitt hoch (`noteHochzaehlen()`, mit Sicherung, falls der Bildschirm aus ist). Beim Sieger fällt „Platz 1“
+  mit Gewicht, der Kronkorken dreht sich ein, und das Konfetti startet erst nach der Landung. Bei „Bewegung reduzieren“
+  nur ein kurzes Überblenden, die Note steht sofort da. Aufgeklappte Biere in der Rangliste blenden ihre Details ein.
 
 **Verwaltung:** „Abschließen und aufdecken“ öffnet den Zwischenschritt „Abschluss vorbereiten“ (`zusammenfassungen()`
 in `admin.js`): Rangfolge mit Titeln und einem Textfeld je Bier, Hinweis auf fehlende Texte, „Texte neu laden“ (holt
