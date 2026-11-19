@@ -106,13 +106,33 @@ async function ergebnisLaden(){
 
 /* Konfetti zur Sieger-Karte (seit 14.11.2026): regnet einmal über die Karte, in den Farben der Seite. Rein dekorativ
    (aria-hidden, nicht anklickbar); wer im System „Bewegung reduzieren“ eingestellt hat, bekommt keins. */
-function konfetti(el){
+function konfetti(el, verzoegerung = 0){
   if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const k = document.createElement("div"); k.className = "eh-konfetti"; k.setAttribute("aria-hidden", "true");
   const farben = ["var(--amber)", "#e8a93a", "#f3cb72", "var(--amber)", "#e8a93a", "var(--ink)"], z = (a, b) => a + Math.random() * (b - a);
-  k.innerHTML = Array.from({length: 70}, (_, i) => `<i style="left:${z(0,100).toFixed(1)}%;width:${z(6,10).toFixed(0)}px;height:${z(8,16).toFixed(0)}px;background:${farben[i % farben.length]};--x:${z(-90,90).toFixed(0)}px;--r:${z(-720,720).toFixed(0)}deg;--d:${z(2.4,4.2).toFixed(2)}s;--w:${z(0,1.2).toFixed(2)}s${i % 5 === 0 ? ";border-radius:50%" : ""}"></i>`).join("");
+  k.innerHTML = Array.from({length: 70}, (_, i) => `<i style="left:${z(0,100).toFixed(1)}%;width:${z(6,10).toFixed(0)}px;height:${z(8,16).toFixed(0)}px;background:${farben[i % farben.length]};--x:${z(-90,90).toFixed(0)}px;--r:${z(-720,720).toFixed(0)}deg;--d:${z(2.4,4.2).toFixed(2)}s;--w:${(verzoegerung + z(0,1.2)).toFixed(2)}s${i % 5 === 0 ? ";border-radius:50%" : ""}"></i>`).join("");
   el.appendChild(k);
-  setTimeout(() => k.remove(), 6000);
+  setTimeout(() => k.remove(), 6000 + verzoegerung * 1000);
+}
+
+/* Note der Siegerehrungs-Karte zählt von 0 auf den Schnitt hoch (seit 19.11.2026), nachdem der Kronkorken gelandet ist –
+   beim Sieger etwas langsamer. Tabellenziffern (.num), damit nichts springt. Bei „Bewegung reduzieren“ steht sie sofort
+   da; ein schneller Kartenwechsel bricht das Zählen ab (das Element ist dann nicht mehr im Dokument). */
+function noteHochzaehlen(b, ziel, sieger){
+  if(!b || ziel == null || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+  const verz = sieger ? 650 : 380, dauer = sieger ? 1100 : 650, start = performance.now() + verz;
+  let fertig = false;
+  b.textContent = note(0);
+  const schritt = () => {
+    if(fertig || !b.isConnected) return;
+    const t = Math.min(1, Math.max(0, (performance.now() - start) / dauer)), e = 1 - Math.pow(1 - t, 4);   // ease-out: bremst zum Ziel
+    b.textContent = note(t >= 1 ? ziel : Math.round(ziel * e * 10) / 10);
+    if(t < 1) requestAnimationFrame(schritt); else fertig = true;
+  };
+  requestAnimationFrame(schritt);
+  // Sicherung: Ohne Bildwiederholung (Bildschirm aus, Tab im Hintergrund) läuft requestAnimationFrame nicht – dann darf
+  // die Note nicht auf 0 stehen bleiben. Spätestens nach der Animationszeit steht der echte Wert da.
+  setTimeout(() => { if(!fertig && b.isConnected){ fertig = true; b.textContent = note(ziel); } }, verz + dauer + 80);
 }
 
 /* Siegerehrung (seit 14.11.2026): eine Karte pro Bier, vom letzten Platz bis zum Sieger – bildschirmfüllend über der
@@ -128,10 +148,10 @@ function siegerehrung({v, proben, titelVon, meine}){
   document.body.appendChild(el); document.body.style.overflow = "hidden";
   const zu = () => { document.removeEventListener("keydown", taste); el.remove(); rest.forEach(x => { x.inert = false; }); document.body.style.overflow = "";
     window.scrollTo(0, 0); const es = $("#ehrungStart"); if(es) es.focus({preventScroll: true}); };
-  const weiter = () => { if(i < reihe.length - 1){ i++; zeigen(); } else zu(); };
-  const zurueck = () => { if(i > 0){ i--; zeigen(); } };
+  const weiter = () => { if(i < reihe.length - 1){ i++; zeigen("vor"); } else zu(); };
+  const zurueck = () => { if(i > 0){ i--; zeigen("zurueck"); } };
   function taste(e){ if(e.key === "Escape") zu(); else if(e.key === "ArrowRight") weiter(); else if(e.key === "ArrowLeft") zurueck(); }
-  function zeigen(){
+  function zeigen(richtung = "start"){
     const p = reihe[i], letzte = i === reihe.length - 1, geteilt = reihe.filter(x => x.platz === p.platz).length > 1;
     const z = (p.zusammenfassung||"").trim(), t = vkTitelHtml(titelVon(p));
     el.innerHTML = `<div class="eh-kopf"><p class="kicker">Siegerehrung · ${esc(v.titel)}</p><button type="button" class="btn ghost" data-eh="zu">Überspringen</button></div>
@@ -141,7 +161,7 @@ function siegerehrung({v, proben, titelVon, meine}){
         <div class="eh-bild"><span class="bb-nr">${Bilder.bier(p, "gross")}${v.blind ? `<span class="probe-nr num" title="Probe ${p.nummer}" aria-hidden="true">${p.nummer}</span>` : ""}</span></div>
         <h3>${esc(p.name)}</h3>
         <p class="hint">${esc([v.blind ? "Probe Nr. "+p.nummer : "", bierZeile(p)].filter(Boolean).join(" · "))}</p>
-        <p class="eh-note"><b class="num ${gradeCls(p.schnitt)}">${note(p.schnitt)}</b><span class="hint">${p.anzahl} Bewertungen · ${p.nochmal||0} von ${p.anzahl} empfehlen${meine[p.bier_id] != null ? ` · deine Note ${esc(meine[p.bier_id])}` : ""}</span></p>
+        <p class="eh-note"><b class="num ${gradeCls(p.schnitt)}" aria-hidden="true">${note(p.schnitt)}</b><span class="vh">Schnitt ${note(p.schnitt)}</span><span class="hint">${p.anzahl} Bewertungen · ${p.nochmal||0} von ${p.anzahl} empfehlen${meine[p.bier_id] != null ? ` · deine Note ${esc(meine[p.bier_id])}` : ""}</span></p>
         ${t ? `<p class="vk-titel-zeile">${t}</p>` : ""}
         ${z ? `<p class="eh-text">${esc(z)}</p>` : ""}
       </div>
@@ -151,7 +171,11 @@ function siegerehrung({v, proben, titelVon, meine}){
     el.querySelector("[data-eh=weiter]").onclick = weiter;
     const zb = el.querySelector("[data-eh=zurueck]"); if(zb) zb.onclick = zurueck;
     el.scrollTop = 0; el.querySelector("[data-eh=weiter]").focus({preventScroll: true});
-    if(p.platz === 1) konfetti(el);
+    // Bewegung (seit 19.11.2026): Richtung fürs Hereinschieben der Karte (CSS), dann landet der Kronkorken und die Note
+    // zählt hoch; beim Sieger fällt das Konfetti erst, wenn der Kronkorken gelandet ist.
+    el.dataset.richtung = richtung;
+    noteHochzaehlen(el.querySelector(".eh-note b"), p.schnitt, p.platz === 1);
+    if(p.platz === 1) konfetti(el, 0.75);
   }
   // Wischen blättert ebenfalls (wie in der Foto-Großansicht): nach links = weiter, nach rechts = zurück
   el.addEventListener("touchstart", e => { startX = e.touches.length === 1 ? e.touches[0].clientX : null; }, {passive: true});
