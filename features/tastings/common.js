@@ -24,7 +24,7 @@ const TAGS_GERUCH = [
   ["fruchtig","🍊","Apfel, Beeren, Pfirsich"],
   ["zitronig","🍋","Zitrone, Grapefruit"],
   ["blumig","🌸","Blüten, Parfüm"],
-  ["kräuterig","🌿","Kräuter, Gras, Heu"],
+  ["kräuterig","🌾","Kräuter, Gras, Heu"],   // seit 19.11.2026 🌾 statt 🌿 – 🌿 trägt „hopfig“
   ["brotig","🍞","Brot, Teig, Getreide"],
   ["karamellig","🍯","Karamell, Toffee"],
   ["röstig","🔥","Kaffee, Schokolade"],
@@ -42,6 +42,8 @@ const TAGS_GESCHMACK = [
 ];
 /* „herb“ und „süß“ waren am 13.11.2026 kurz Geschmacks-Tags – seit dem Geschmackskreis fragt der Kreis das ab.
    Sie bleiben hier nur, damit bereits gespeicherte Bewertungen weiter richtig angezeigt werden. */
+/* Gegensätze: wer das eine antippt, wählt das andere ab (seit 19.11.2026 – „leicht“ und „kräftig“ zugleich ergab keinen Sinn) */
+const TAGS_GEGENSAETZE = [["leicht","kräftig"]];
 const TAGS_GESCHMACK_FRUEHER = [["herb","🍋"],["süß","🍯"]];
 /* Geschmackskreis (Seite „Geschmacksbild“): zwei Achsen, gespeichert als die früheren Regler in merkmale –
    bitter: 0 = mild … 10 = bitter, suesse: 0 = trocken … 10 = süß. Begriffe fürs Glossar der Seite.
@@ -56,7 +58,7 @@ const KREIS_BEGRIFFE = [
 /* Notenseite (seit 14.11.2026): fünf Stufen mit Erklärung, die Zahlen direkt in der Zeile – damit klar ist, was eine
    3 gegenüber einer 9 heißt. [emoji, titel, erklärung, noten, Frage fürs Textfeld nach der Wahl] */
 const NOTE_STUFEN = [
-  ["🚰","Weg damit","Ungenießbar",[0,1,2],"Was war los mit dem Bier?"],
+  ["🤢","Weg damit","Ungenießbar",[0,1,2],"Was war los mit dem Bier?"],   // seit 19.11.2026 statt 🚰 (las sich als „Wasser“)
   ["😕","Geht so","Trinkbar, aber nicht meins",[3,4],"Was hat dir gefehlt?"],
   ["🙂","Okay","Solide, nichts Besonderes",[5,6],"Was fehlt zum richtig guten Bier?"],
   ["😋","Gut","Gerne wieder",[7,8],"Was gefällt dir daran?"],

@@ -178,6 +178,19 @@ Biere bewertet sind.
 Bewertungen auf diesem Handy nicht mehr sieht und beim neuen Beitreten ein zweiter Teilnehmer entsteht. Austragen
 entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
 
+**Feinschliff (19.11.2026):**
+- Speichern zeigt „Wird gespeichert …“; auch ein Abbruch (Netz weg) landet als Meldung („Keine Verbindung … Deine
+  Eingaben bleiben erhalten.“), der Knopf wird wieder frei.
+- „Bitte eine Note wählen“ steht direkt unter den Notenknöpfen (`#bNoteErr`), ohne Fokus auf „0“.
+- Gegensätze schließen sich aus (`TAGS_GEGENSAETZE` in `common.js`, derzeit leicht ↔ kräftig).
+- Emoji: kräuterig 🌾 (🌿 bleibt bei hopfig), „Weg damit“ 🤢 statt 🚰.
+- Kommentarfeld mit durchgezogenem Rahmen, Eingabefeld wie die übrigen Felder.
+- Screenreader hören beim Blättern „Seite 2 von 4: Schmecken“ (`aria-live`).
+- Tippflächen mindestens 44 px: ↺/?-Knöpfe, „+ Foto hinzufügen“, „Fotos auf einem anderen Gerät ansehen“.
+- Bewertete Proben zeigen unter der Note ein kleines „ändern“.
+- Lädt ein Bierfoto nicht, zeigt `lib/bilder.js` den gezeichneten Kronkorken statt des Symbols für kaputte Bilder
+  (gilt auf allen Seiten).
+
 **Glossar:** Seit 14.11.2026 nur noch beim Geschmacksbild („?“ in der Überschrift, Begriffe aus `KREIS_BEGRIFFE`);
 bei Riechen/Schmecken stehen die Beispiele auf den Kacheln. Escape schließt nur das Glossar, nicht den Bogen.
 

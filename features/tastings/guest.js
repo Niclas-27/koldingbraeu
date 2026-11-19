@@ -94,7 +94,7 @@ function gastZeigen(){
       return `<button class="probe${m?" done":""}" data-p="${esc(p.id)}">
         ${offen?Bilder.bier(p.bier):`<span class="pn num">${p.nummer}</span>`}
         <span class="pt"><b>${offen?esc(p.bier.name):"Probe "+p.nummer}</b><small>${offen?esc(bierZeile(p.bier)):"blind"}</small></span>
-        <span class="pg">${m?`<span class="vh">deine Note </span><span class="grade ${gradeCls(m.note)}">${m.note}</span>`:"bewerten"}</span>
+        <span class="pg">${m?`<span class="vh">deine Note </span><span class="grade ${gradeCls(m.note)}">${m.note}</span><span class="aendern" aria-hidden="true">ändern</span>`:"bewerten"}</span>
       </button>`;}).join("")}</div>${fertig && fertig === d.proben.length
         ? `<p class="hint alle-bewertet">Alle bewertet – wenn die Braumeister aufdecken, springt diese Seite von selbst zur Siegerehrung.</p>` : ""}`);
   }
