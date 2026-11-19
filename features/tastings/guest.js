@@ -127,8 +127,12 @@ function gastZeigen(){
       toast("Willkommen, "+data.name+"!"); gastLaden();
     };
   }
+  // Seit 19.11.2026 mit Rückfrage: Austragen nimmt dem Handy den Schlüssel – die eigenen Bewertungen sind hier danach
+  // nicht mehr zu sehen, und wer neu beitritt, wird ein zweiter Teilnehmer.
   const nm = $("#notMe");
-  if(nm) nm.onclick = () => { lsSet(gastKey(), null); gastLaden(); };
+  if(nm) nm.onclick = () => bestaetigen(`Du bist nicht ${ich.name}?`,
+    `Dann trägst du dich auf diesem Handy aus und kannst mit deinem eigenen Namen mitmachen. Die Bewertungen von ${ich.name} bleiben gespeichert, sind hier aber nicht mehr zu sehen.`,
+    "Ja, austragen", () => { entwuerfeLoeschen(); lsSet(gastKey(), null); gastLaden(); });
   const vf = $("#vsForm");
   if(vf) vf.onsubmit = async e => { e.preventDefault();
     const name = $("#vs_name").value.trim();
@@ -145,10 +149,20 @@ function gastZeigen(){
   const flb = $("#fotoLoeschBtn"); if(flb) flb.onclick = gastFotoLoeschen;
 }
 
+/* Entwürfe des Bewertungsbogens (bogenZeigen, form.js) hängen am Schlüssel des Gastes – ein anderer Gast auf demselben
+   Handy sieht sie also nie. Beim Austragen werden sie mit entfernt. */
+const entwurfPrefix = () => { const g = gast(); return g ? "kb_entwurf_"+g.token+"_" : null; };
+function entwuerfeLoeschen(){
+  const pre = entwurfPrefix(); if(!pre) return;
+  try{ Object.keys(localStorage).filter(k => k.startsWith(pre)).forEach(k => localStorage.removeItem(k)); }catch(_){}
+}
+
 function bogen(probeId){
   const d = gData, p = d.proben.find(x=>x.id===probeId); if(!p) return;
   const offen = !d.verkostung.blind || d.verkostung.status === "abgeschlossen";
+  const pre = entwurfPrefix();
   bogenZeigen({
+    entwurf: pre ? pre + probeId : null,
     titel: offen ? `${p.nummer}. ${p.bier.name}` : `Probe ${p.nummer}`,
     hint: offen ? bierZeile(p.bier) : "",
     alt: (d.ich.bewertungen||[]).find(b=>b.probe_id===probeId) || {},

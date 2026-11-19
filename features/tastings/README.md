@@ -153,6 +153,16 @@ gemeinsam als „Eindrücke“ (`liga.html` lädt `common.js` nicht).
 einem Viertel der Breite, nie im Textfeld und nie auf der Geschmackskarte, und Wischen speichert nie – gespeichert wird nur mit dem Knopf. Die Seiten
 liegen nebeneinander auf einer Spur (`.bogen-spur`), damit alle Eingaben beim Hin- und Herblättern erhalten bleiben.
 
+**Entwurf (seit 19.11.2026, nur Gäste):** Jede Eingabe im Bogen wird sofort im localStorage gemerkt
+(`kb_entwurf_<schlüssel>_<probe>`, `opts.entwurf` in `bogenZeigen`). Schließt der Gast den Bogen versehentlich (✕, Tipp
+neben das Blatt, Escape) oder lädt die Seite neu, ist beim nächsten Öffnen alles wieder da, samt der Seite, auf der er
+war, mit dem Hinweis „Dein Entwurf ist wieder da“. Erst erfolgreiches Speichern löscht den Entwurf. Bewusst ohne
+Rückfrage beim Schließen. Der Entwurf hängt am Schlüssel des Gastes, ein anderer Gast auf demselben Handy sieht ihn nie.
+
+**„Nicht du?“ (seit 19.11.2026):** fragt vor dem Austragen nach („Du bist nicht Lena?“), weil der Gast danach seine
+Bewertungen auf diesem Handy nicht mehr sieht und beim neuen Beitreten ein zweiter Teilnehmer entsteht. Austragen
+entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
+
 **Glossar:** Seit 14.11.2026 nur noch beim Geschmacksbild („?“ in der Überschrift, Begriffe aus `KREIS_BEGRIFFE`);
 bei Riechen/Schmecken stehen die Beispiele auf den Kacheln. Escape schließt nur das Glossar, nicht den Bogen.
 

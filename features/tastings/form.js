@@ -35,13 +35,37 @@ const kreisZuMerkmalen = p => ({bitter: Math.round(5 + 5*p.y), suesse: Math.roun
 const kreisBegrenzen = p => ({x: Math.max(-1, Math.min(1, p.x)), y: Math.max(-1, Math.min(1, p.y))});
 
 /* opts: {titel, hint, oben (zusätzliches HTML über dem Bogen), alt, speichern(werte) → Promise<{error}>, fertig(),
-          naechste() → {label, oeffnen} | null  (optional: nach dem Speichern „Weiter zu Probe X“ anbieten)} */
+          naechste() → {label, oeffnen} | null  (optional: nach dem Speichern „Weiter zu Probe X“ anbieten),
+          entwurf (optional: localStorage-Schlüssel für den Entwurf, siehe unten)}
+   Entwurf (seit 19.11.2026, Gästeansicht): Jede Eingabe wird sofort auf dem Handy gemerkt. Schließt der Gast den Bogen
+   versehentlich (✕, Tipp neben das Blatt, Escape) oder lädt die Seite neu, ist beim nächsten Öffnen alles wieder da –
+   samt der Seite, auf der er war. Erst erfolgreiches Speichern löscht den Entwurf. Keine Rückfrage beim Schließen. */
+function entwurfLesen(schluessel){
+  if(!schluessel) return null;
+  let e; try{ e = JSON.parse(lsGet(schluessel) || "null"); }catch(_){ return null; }
+  if(!e || typeof e !== "object") return null;
+  return {
+    note: Number.isInteger(e.note) && e.note >= 0 && e.note <= 10 ? e.note : null,
+    tags: new Set(Array.isArray(e.tags) ? e.tags.filter(t => typeof t === "string") : []),
+    kommentar: typeof e.kommentar === "string" ? e.kommentar.slice(0, 140) : "",
+    kreis: e.kreis && typeof e.kreis.x === "number" && typeof e.kreis.y === "number" ? kreisBegrenzen(e.kreis) : null,
+    kreisGeloescht: !!e.kreisGeloescht,
+    seite: Number.isInteger(e.seite) ? e.seite : 0,
+  };
+}
 function bogenZeigen(opts){
   const alt = opts.alt || {};
-  const f = { note: alt.note ?? null, tags: new Set(alt.geruch||[]), kommentar: alt.kommentar || "",
+  const entwurf = entwurfLesen(opts.entwurf);
+  const f = entwurf || { note: alt.note ?? null, tags: new Set(alt.geruch||[]), kommentar: alt.kommentar || "",
               kreis: kreisAusMerkmalen(alt.merkmale), kreisGeloescht: false };
-  let seite = 0;
+  let seite = 0, hatEntwurf = !!entwurf;
   const letzte = BOGEN_SEITEN.length - 1;
+  const merken = () => {
+    if(!opts.entwurf) return;
+    hatEntwurf = true;
+    lsSet(opts.entwurf, JSON.stringify({note: f.note, tags: [...f.tags], kommentar: f.kommentar, kreis: f.kreis,
+      kreisGeloescht: f.kreisGeloescht, seite}));
+  };
 
   const seiteHtml = (s, i) => {
     // Geschmacksbild: Glossar und Zurücksetzen als kleine Symbol-Knöpfe in der Überschrift, damit die Karte Platz hat
@@ -91,15 +115,16 @@ function bogenZeigen(opts){
     $("#bZurueck").hidden = seite === 0;
     $("#bWeiter").textContent = seite === letzte ? "Speichern" : "Weiter";
     $("#sheetBody").scrollTop = 0;
+    if(hatEntwurf) merken();   // Seite mitmerken, aber erst wenn es schon etwas zu merken gibt
   }
 
-  noteVerdrahten(inhalt, f);
-  inhalt.querySelectorAll(".tagpick .kachel").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); });
+  noteVerdrahten(inhalt, f, merken);
+  inhalt.querySelectorAll(".tagpick .kachel").forEach(c => c.onclick = () => { const t = c.dataset.t; f.tags.has(t) ? f.tags.delete(t) : f.tags.add(t); c.setAttribute("aria-pressed", String(f.tags.has(t))); merken(); });
   inhalt.querySelectorAll("[data-glossar]").forEach(b => b.onclick = () => glossarZeigen(BOGEN_SEITEN[+b.dataset.glossar]));
   const kom = $("#b_kom");
-  kom.addEventListener("input", () => { f.kommentar = kom.value; });
+  kom.addEventListener("input", () => { f.kommentar = kom.value; merken(); });
   kom.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); kom.blur(); } });
-  kreisVerdrahten(inhalt, f);
+  kreisVerdrahten(inhalt, f, merken);
 
   // Wischen: nur eine überwiegend waagerechte Geste über einer Mindestlänge zählt (wie in der Foto-Ansicht, lib/bilder.js),
   // damit ein leicht schräger Tap auf einen Tag nicht blättert. Im Textfeld nie (dort verschiebt man den Cursor) und
@@ -127,6 +152,7 @@ function bogenZeigen(opts){
     const {error} = await opts.speichern({p_note: f.note, p_merkmale: merkmale, p_geruch: [...f.tags], p_fehler: alt.fehler || [],
       p_nochmal: alt.nochmal ?? null, p_kommentar: f.kommentar.trim() || null});
     if(error){ $("#bWeiter").disabled = false; $("#bErr").textContent = fehlertext(error); return; }
+    if(opts.entwurf) lsSet(opts.entwurf, null);
     const weiter = opts.naechste && opts.naechste();
     if(!weiter){ closeSheet(); toast("Gespeichert"); opts.fertig && opts.fertig(); return; }
     // Gespeichert – direkt zum nächsten noch offenen Bier weiterbieten (kein Wischen zwischen Bieren, siehe README)
@@ -136,12 +162,16 @@ function bogenZeigen(opts){
     $("#bNaechste").onclick = () => { opts.fertig && opts.fertig(); weiter.oeffnen(); };
     $("#bNaechste").focus();
   };
-  zeigen(0);
+  // Beim Öffnen direkt auf der gemerkten Seite stehen, ohne sichtbar durch die Seiten davor zu gleiten
+  spur.style.transition = "none";
+  zeigen(entwurf ? entwurf.seite : 0);
+  void spur.offsetWidth; spur.style.transition = "";
+  if(entwurf) toast("Dein Entwurf ist wieder da");
 }
 
 /* Geschmackskarte: Tippen setzt den Punkt, Ziehen verschiebt ihn.
    Pfeiltasten verschieben ihn in Schritten. Der Wert steht in f.kreis ({x, y} oder null). */
-function kreisVerdrahten(inhalt, f){
+function kreisVerdrahten(inhalt, f, geaendert = () => {}){
   const feld = inhalt.querySelector("#karteFeld");
   if(!feld) return;
   const punkt = feld.querySelector(".k-punkt"), blase = feld.querySelector(".kreis-blase");
@@ -174,7 +204,8 @@ function kreisVerdrahten(inhalt, f){
   });
   feld.addEventListener("pointermove", e => { if(zieht) setzen(ausZeiger(e)); });
   // Nach dem Loslassen bleibt die Blase noch kurz stehen, damit man sie ohne Daumen lesen kann
-  const ende = () => { if(!zieht) return; zieht = false; feld.classList.remove("zieht");
+  // Gemerkt wird erst beim Loslassen, nicht bei jeder Bewegung
+  const ende = () => { if(!zieht) return; zieht = false; feld.classList.remove("zieht"); geaendert();
     clearTimeout(blaseWeg); blaseWeg = setTimeout(() => blase.classList.remove("an"), 1600); };
   feld.addEventListener("pointerup", ende); feld.addEventListener("pointercancel", ende);
   feld.addEventListener("keydown", e => {
@@ -182,20 +213,20 @@ function kreisVerdrahten(inhalt, f){
     if(!d) return;
     e.preventDefault();
     const p = f.kreis || {x: 0, y: 0}, schritt = 0.1;
-    setzen({x: p.x + d[0]*schritt, y: p.y + d[1]*schritt});
+    setzen({x: p.x + d[0]*schritt, y: p.y + d[1]*schritt}); geaendert();
   });
-  inhalt.querySelector("#kreisWeg").onclick = () => { f.kreis = null; f.kreisGeloescht = true; anzeigen(); feld.focus(); };
+  inhalt.querySelector("#kreisWeg").onclick = () => { f.kreis = null; f.kreisGeloescht = true; anzeigen(); geaendert(); feld.focus(); };
   anzeigen();
 }
 
 /* Notenseite: Zahl antippen wählt die Note, markiert die Stufe und stellt die Frage am Textfeld passend; beim ersten
    Wählen rollt das Textfeld ins Bild (ohne Tastatur zu öffnen). Wert in f.note (0–10 oder null). */
-function noteVerdrahten(inhalt, f){
+function noteVerdrahten(inhalt, f, geaendert = () => {}){
   const knoepfe = [...inhalt.querySelectorAll(".nstufen button")];
   if(!knoepfe.length) return;
   knoepfe.forEach(b => b.onclick = () => {
     const erste = f.note == null;
-    f.note = +b.dataset.n; $("#bErr").textContent = "";
+    f.note = +b.dataset.n; $("#bErr").textContent = ""; geaendert();
     knoepfe.forEach(x => x.setAttribute("aria-checked", String(x === b)));
     inhalt.querySelectorAll(".nstufe").forEach(z => z.classList.toggle("an", z.contains(b)));
     inhalt.querySelector("#noteFrage").textContent = noteStufe(f.note)[4];
