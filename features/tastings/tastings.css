@@ -33,6 +33,13 @@ ul.plain{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 /* Gästeansicht ohne Anmeldung: keine „Login“-Pille im Kopf – Gäste brauchen kein Konto, und sie hat Erstgäste verunsichert.
    Braumeister melden sich auf jeder anderen Seite an; angemeldet sehen sie hier wie überall ihren Avatar. */
 body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
+/* Geschlossener Raum (seit 19.11.2026): Gäste ohne Anmeldung sehen kein Menü, und das Logo führt nicht von der Verkostung
+   weg – ein versehentlicher Tipp mitten im Abend soll nicht auf den Sud-Seiten landen. Bleiben: Logo, Hell/Dunkel,
+   Impressum/Datenschutz im Fuß. Nach dem Aufdecken landen alle auf der Ergebnisseite mit normaler Navigation.
+   Angemeldete Braumeister (Avatar im Kopf) behalten das Menü. */
+body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .site-header .menu,
+body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .menu-toggle{display:none!important}
+body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-events:none}
 /* „Nicht du?“ (Gäste): Tippfläche auf gut 44 px vergrößert, ohne dass die Textzeile höher wird (19.11.2026) */
 #notMe{padding:13px 8px;margin:-13px -8px}
 /* Proben (Gäste) */
@@ -41,19 +48,24 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 /* Hover nur auf Geräten mit Maus: auf dem Handy blieb der Rahmen an der zuletzt angetippten Stelle hängen (14.11.2026) */
 @media (hover:hover){.probe:hover{border-color:var(--muted)}}
 .probe:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.probe .pn{font-size:1.4rem;color:var(--amber)}
+.probe .pn{font-size:1.4rem;color:var(--amber-text)}
 .probe .pt{min-width:0}
 .probe .pt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .probe .pt small{color:var(--muted);font-size:.8rem}
-.probe .pg{font-size:.85rem;color:var(--amber);font-weight:600}
+.probe .pg{font-size:.85rem;color:var(--amber-text);font-weight:600}
 /* Bewertet (seit 19.11.2026): Karte bleibt neutral, die Note steht als Notenplakette (.grade, base.css) in der Notenampel-
    Farbe. Vorher war die ganze Karte grün – auch bei Note 2; Grün heißt auf der Seite aber immer „gute Note“. */
 .probe.done .pg{color:inherit;display:flex;flex-direction:column;align-items:center;gap:2px}
 /* kleiner Hinweis, dass man eine bewertete Probe antippen und ändern kann (19.11.2026) */
-.probe .aendern{font-size:.72rem;font-weight:500;color:var(--muted)}
+.probe .aendern,.en-rechts .aendern{font-size:.72rem;font-weight:500;color:var(--muted)}
 #bNoteErr:not(:empty){display:block;margin-top:8px}
 /* Tippflächen der Gästeansicht auf mindestens 44 px (19.11.2026) */
 #fotoBtn{min-height:44px}
+/* Foto-Knopf mit Kamera (19.11.2026): normaler Knopf statt gestrichelter Mini-Schaltfläche, Zähler klein dahinter */
+.foto-knopf{gap:8px}
+.foto-knopf .kamera{flex:none}
+.foto-zahl{font-size:.78rem;font-weight:500;color:var(--muted)}
+.foto-hinweis{margin-top:8px}
 .zugang>summary{padding:12px 0;cursor:pointer}
 .alle-bewertet{margin-top:12px}
 /* Bewertungsbogen: seit 13.11.2026 vier Seiten (Riechen, Schmecken, Geschmacksbild, Urteil) nebeneinander auf einer Spur, die per
@@ -76,6 +88,12 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .bogen-knoepfe{display:flex;gap:10px;flex:1}
 .bogen-knoepfe .btn{flex:1;min-height:46px}
 .bogen-knoepfe #bZurueck{flex:0 0 64px}
+/* Seit 19.11.2026: Beschriftung immer mittig (auch „Fertig“ und „Weiter zu …“ nach dem Speichern), und ein langer
+   Biername in „Weiter zu …“ bricht um statt „Fertig“ aus dem Bildschirm zu schieben (.btn hat sonst nowrap). */
+.bogen-knoepfe .btn{justify-content:center;text-align:center;min-width:0}
+/* neben „Weiter zu …“ eine feste Pille, auch wenn der Nachbar zweizeilig wird; allein (Abschluss) volle Breite */
+.bogen-knoepfe #bFertig:not(:only-child){flex:0 0 auto;align-self:center}
+.bogen-knoepfe #bNaechste{white-space:normal;line-height:1.25;padding-block:8px;overflow-wrap:anywhere}
 /* Glossar zu den Tags (Fenster über dem Bogen, Grundgerüst .frage aus base.css) */
 .glossar .frage-k{max-height:min(80vh,640px);overflow-y:auto}
 .glossar dl{margin:0;display:flex;flex-direction:column;gap:12px}
@@ -84,13 +102,26 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .bogen-fertig{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:32px 0 12px}
 .bogen-fertig .haken{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--hop-soft);color:var(--hop);font-size:2rem;font-weight:700}
 .bogen-fertig h3{margin:8px 0 0}
+/* Zwischenstand nach dem Speichern (Gäste, seit 19.11.2026): Kronkorken-Reihe als Fortschritt – bewertet voll, offen
+   blass; der eben bewertete landet (gleiche Bewegung wie .ende-deckel). Kompakt, damit der Weiter-Knopf die Hauptsache bleibt. */
+.bogen-zwischen{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:28px 0 8px}
+.zw-reihe{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:320px}
+.zw-deckel{display:inline-flex;opacity:.35;filter:grayscale(.6)}
+.zw-deckel.an{opacity:1;filter:none}
+.zw-deckel .bb-kronkorken.bb-klein{width:44px;height:44px}
+.zw-deckel .pn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--amber-soft);color:var(--amber-text);font-size:1.1rem}
+.bogen-zwischen h3{font-size:clamp(1.4rem,5.5vw,1.7rem);font-weight:800;font-stretch:80%;line-height:1.05;margin:4px 0 0}
+.bogen-zwischen .hint{margin:0}
+@media (prefers-reduced-motion:no-preference){
+  .zw-deckel.neu{animation:endeLanden .5s cubic-bezier(.16,1,.3,1) .1s backwards}
+}
 /* Abschluss nach dem letzten Bier (seit 19.11.2026): Kronkorken landen nacheinander auf dem Tisch, darunter die eigenen
    Noten und der Hinweis aufs Aufdecken. Ohne Bewegung (reduced motion) stehen die Kronkorken einfach da. */
 .bogen-ende{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:20px 0 8px}
 .ende-reihe{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:320px}
 .ende-deckel{display:inline-flex}
 .ende-deckel .bb-kronkorken.bb-klein{width:44px;height:44px}
-.ende-deckel .pn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--amber-soft);color:var(--amber);font-size:1.1rem}
+.ende-deckel .pn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--amber-soft);color:var(--amber-text);font-size:1.1rem}
 @media (prefers-reduced-motion:no-preference){
   .ende-deckel{animation:endeLanden .5s cubic-bezier(.16,1,.3,1) calc(var(--i) * 90ms + 120ms) backwards}
 }
@@ -101,7 +132,12 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 }
 .bogen-ende h3{font-size:clamp(1.5rem,6vw,1.9rem);font-weight:800;font-stretch:80%;line-height:1.05;margin:2px 0 0}
 .ende-noten{list-style:none;margin:0;padding:0;width:100%;max-width:360px;border-top:2px solid var(--ink);text-align:left}
-.ende-noten li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 2px;border-bottom:1px solid var(--line)}
+.ende-noten li{border-bottom:1px solid var(--line)}
+/* jede Zeile ist ein Knopf: antippen öffnet das Bier auf „Dein Urteil“ (19.11.2026) */
+.en-zeile{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:6px 2px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+@media (hover:hover){.en-zeile:hover .en-name{text-decoration:underline;text-underline-offset:3px}}
+.en-zeile:focus-visible{outline-offset:-2px}
+.en-rechts{display:flex;align-items:center;gap:8px;flex:none}
 .en-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bogen-ende .hint{max-width:34ch}
 #bogenInhalt fieldset{gap:20px}
@@ -114,7 +150,7 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .ns-t{min-width:0}.ns-t b{display:block;font-size:1rem;line-height:1.25}.ns-t small{display:block;color:var(--muted);font-size:.78rem;line-height:1.25}
 .ns-n{display:flex;gap:6px}
 .ns-n button{width:44px;height:44px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 1.05rem/1 var(--font-data);cursor:pointer}
-.ns-n button[aria-checked="true"]{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+.ns-n button[aria-checked="true"]{background:var(--amber-text);border-color:var(--amber-text);color:var(--bg)}   /* Fläche mit Schrift: Würze-Text-Ton für den Kontrast */
 .ns-n button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 /* Textfeld als eigene Karte mit Frage passend zur Stufe */
 /* seit 19.11.2026 durchgezogener Rahmen statt gestrichelt – gestrichelt sah nach Ablagefläche für Dateien aus */
@@ -127,7 +163,7 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 0;font-family:var(--font-data);font-size:1.15rem;font-weight:600;cursor:pointer;min-height:52px}
 .scale button[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .sl-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.95rem;font-weight:600}
-.sl-top output{color:var(--amber);font-weight:700;font-size:1.25rem;font-family:var(--font-data)}
+.sl-top output{color:var(--amber-text);font-weight:700;font-size:1.25rem;font-family:var(--font-data)}
 .sl.unset .sl-top output{color:var(--muted)}
 .sl input[type=range]{-webkit-appearance:none;appearance:none;width:100%;margin:8px 0 0;height:52px;background:transparent}
 .sl input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:6px;background:var(--line)}
@@ -149,6 +185,9 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .kachel:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 #bogenInhalt fieldset:has(.tagpick){gap:12px}
 .kopf-hinweis{font:400 .8rem/1 var(--font-body);color:var(--muted)}
+/* „Freiwillig · direkt zur Note →“ unter der Überschrift der Seiten 1–3 (19.11.2026); Tippfläche ≥ 44 px ohne höhere Zeile */
+.seite-frei{margin:-6px 0 0;font-size:.85rem;color:var(--muted)}
+.seite-frei .zur-note{font-size:.85rem;padding:13px 6px;margin:-13px -6px}
 @media (max-height:620px){.kachel{min-height:70px;padding:7px 12px}.kachel .k-emoji{font-size:1.35rem}.kachel::after{top:8px;right:10px}}
 #bWeiter,#bZurueck{min-height:48px;font-size:1rem;flex:1;justify-content:center}
 /* Braumeister-Ansicht */
@@ -161,7 +200,7 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .vk-code{font-size:1.5rem;letter-spacing:.04em;overflow-wrap:anywhere;user-select:all}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .plist li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
-.plist .pn{color:var(--amber);font-size:1.1rem}
+.plist .pn{color:var(--amber-text);font-size:1.1rem}
 .plist .pt b{display:block}
 .plist .pt small{color:var(--muted);font-size:.8rem}
 .plist .pa{display:flex;gap:4px;align-items:center}
@@ -215,7 +254,7 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .erg-detail .dots{margin-bottom:18px}
 .rank .erg-detail .zitate li{display:block;padding:2px 0 2px 10px}
 .bw-a{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
-.vermerk{display:block;color:var(--amber);font-size:.78rem;margin-top:2px}
+.vermerk{display:block;color:var(--amber-text);font-size:.78rem;margin-top:2px}
 
 /* Bilder */
 .plist li{grid-template-columns:30px 40px minmax(0,1fr) auto}
@@ -238,7 +277,7 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .vt-deckel .kbd svg{display:block;width:100%;height:100%}
 .titelbild{display:block;width:100%;max-height:420px;object-fit:cover;border-radius:var(--radius);margin:4px 0 16px;cursor:zoom-in;background:var(--line)}
 .fotos-admin{max-width:420px}
-h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin:16px 0 8px;font-family:var(--font-body)}
+h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--amber-text);margin:16px 0 8px;font-family:var(--font-body)}
 .bildfelder .bildfeld{align-self:stretch}
 
 
@@ -252,7 +291,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 
 /* Ergebnis: eigene Note des Gastes */
 .meine-detail{margin:0 0 6px;color:var(--muted)}
-.meine-detail b{color:var(--amber)}
+.meine-detail b{color:var(--amber-text)}
 
 /* Ergebnis (blind): ehemalige Probennummer als Kreis am Kronkorken (seit 10.11.2026) */
 .bb-nr{position:relative;display:inline-flex;flex:none}
@@ -327,7 +366,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 
 /* ---------- Titel pro Bier, Zusammenfassung, Siegerehrung (seit 14.11.2026) ----------
    Farbwelt der Seite: flache Flächen, Akzent --amber; Grün/Gelb/Rot nur an der Note (gradeCls). */
-.vk-titel{display:inline-block;font-size:.78rem;font-weight:600;color:var(--amber);border:1px solid var(--amber);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.vk-titel{display:inline-block;font-size:.78rem;font-weight:600;color:var(--amber-text);border:1px solid var(--amber);border-radius:999px;padding:2px 10px;white-space:nowrap}
 .vk-titel-zeile{display:flex;flex-wrap:wrap;gap:6px;margin:0}
 .kurz{display:flex;flex-direction:column;gap:8px}
 .kurz-text{font-size:1.02rem;line-height:1.45}

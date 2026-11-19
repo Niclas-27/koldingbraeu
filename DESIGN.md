@@ -9,6 +9,7 @@ colors:
   fuge: "#dcdcd2"
   wuerze: "#b8690f"
   wuerze-hell: "#f4e3c7"
+  wuerze-text: "#97550a"
   dolde: "#4e7a34"
   dolde-hell: "#e1ecd5"
   sudrot: "#a3402a"
@@ -20,6 +21,7 @@ colors:
   dunkel-fuge: "#382f25"
   dunkel-wuerze: "#e59a3a"
   dunkel-wuerze-hell: "#3a2a15"
+  dunkel-wuerze-text: "#e59a3a"
   dunkel-dolde: "#94c26f"
   dunkel-dolde-hell: "#22301a"
   dunkel-sudrot: "#e2826b"
@@ -142,6 +144,7 @@ Eine Brauerei-Palette: Röstmalz, Kellerputz, Würze und Dolde. Jede Farbe hat e
 ### Primary
 - **Würze** (`wuerze`): der einzige Akzent. Links, Fokusring, Abschnittsüberschriften (Labels in Großbuchstaben), Kronkorken im Logo, Bierpegel der Ladeflasche, mittlere Note (g2). Im Dunkelmodus `dunkel-wuerze`.
 - **Helle Würze** (`wuerze-hell`): Hintergrund für Auswahlzustände (aktiver Menüpunkt, gewählter Chip, Avatar, Hinweise).
+- **Würze als Schrift** (`wuerze-text`, CSS `--amber-text`): jede Schrift in Würze (Links, Labels, Abschnittsüberschriften, „bewerten“, mittlere Note) und Würze-Flächen mit Schrift darauf (gewählte Note). Im Hellmodus dunkler als Würze (5,6:1 auf Papier statt 4:1), im Dunkelmodus gleich Würze.
 
 ### Secondary
 - **Dolde** (`dolde`): gute Note (g1), „läuft“, „öffentlich“, Erfolgsmeldungen, Häkchen. `dolde-hell` als Tonfläche dazu.
@@ -160,6 +163,8 @@ Eine Brauerei-Palette: Röstmalz, Kellerputz, Würze und Dolde. Jede Farbe hat e
 **Die Eine-Würze-Regel.** Bernstein ist der einzige Akzent. Neue Bedeutungen bekommen keine neue Farbe, sondern Würze, Dolde oder Sudrot in ihrer festen Rolle.
 
 **Die Notenampel-Regel.** Grün heißt auf dieser Seite immer „gute Note“, Bernstein „mittel“, Sudrot „schwach“ (g1/g2/g3, `gradeCls` in core.js). Wer eine Auswahl oder eigene Wahl hervorheben will, nimmt Röstmalz, nicht Grün.
+
+**Die Würze-Schrift-Regel.** Würze als Textfarbe heißt immer `--amber-text`, nie `--amber`. `--amber` bleibt für Flächen, Linien, Fokusringe und Bier-Objekte.
 
 **Die Zwei-Modi-Regel.** Jede Farbe kommt als Token aus `:root` und hat eine Dunkelfassung. Feste Hexwerte im Feature-CSS gibt es nur auf Fotos, Lightbox und Holztisch.
 

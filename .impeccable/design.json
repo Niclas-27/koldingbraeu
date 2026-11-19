@@ -11,6 +11,7 @@
       "fuge": { "role": "neutral", "displayName": "Fuge", "canonical": "oklch(89.2% 0.013 107)", "tonalRamp": ["#0b0b09","#22221e","#40403a","#64645c","#87877f","#ababa4","#d1d1cc","#efefea"] },
       "wuerze": { "role": "primary", "displayName": "Würze", "canonical": "oklch(59.8% 0.135 61)", "tonalRamp": ["#1b0400","#3a1600","#643000","#954e00","#ba732f","#d89c6a","#f6c6a0","#ffe7c9"] },
       "wuerze-hell": { "role": "primary", "displayName": "Helle Würze" },
+      "wuerze-text": { "role": "primary", "displayName": "Würze als Schrift" },
       "dolde": { "role": "secondary", "displayName": "Dolde", "canonical": "oklch(53.1% 0.111 135)", "tonalRamp": ["#030f00","#132806","#2b4919","#487030","#6b9455","#95b783","#c0dbb3","#e1f6d7"] },
       "dolde-hell": { "role": "secondary", "displayName": "Helle Dolde" },
       "sudrot": { "role": "tertiary", "displayName": "Sudrot", "canonical": "oklch(50.3% 0.136 34)", "tonalRamp": ["#1e0100","#3f0f05","#6b2718","#9e432f","#c46853","#e29481","#fec0b1","#ffe2d6"] },
@@ -67,6 +68,7 @@
     "rules": [
       { "name": "Die Eine-Würze-Regel", "body": "Bernstein ist der einzige Akzent. Neue Bedeutungen bekommen keine neue Farbe, sondern Würze, Dolde oder Sudrot in ihrer festen Rolle.", "section": "colors" },
       { "name": "Die Notenampel-Regel", "body": "Grün heißt auf dieser Seite immer „gute Note“, Bernstein „mittel“, Sudrot „schwach“ (g1/g2/g3, gradeCls in core.js). Wer eine Auswahl oder eigene Wahl hervorheben will, nimmt Röstmalz, nicht Grün.", "section": "colors" },
+      { "name": "Die Würze-Schrift-Regel", "body": "Würze als Textfarbe heißt immer --amber-text, nie --amber. --amber bleibt für Flächen, Linien, Fokusringe und Bier-Objekte.", "section": "colors" },
       { "name": "Die Zwei-Modi-Regel", "body": "Jede Farbe kommt als Token aus :root und hat eine Dunkelfassung. Feste Hexwerte im Feature-CSS gibt es nur auf Fotos, Lightbox und Holztisch.", "section": "colors" },
       { "name": "Die Messwert-Regel", "body": "Alles, was gemessen, gewogen oder gezählt wurde (°P, EBC, IBU, g, Noten), steht in Plex Mono mit Tabellenziffern (.num).", "section": "typography" },
       { "name": "Die Schmale-Überschrift-Regel", "body": "Bricolage wird für Überschriften immer schmal (80–85 %) und schwer (700–800) gesetzt, nie in voller Breite oder dünn.", "section": "typography" },

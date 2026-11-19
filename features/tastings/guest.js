@@ -112,7 +112,7 @@ function gastZeigen(){
   const kannLoeschen = ich && v.status !== "abgeschlossen" && (ich.bilder||0) > 0;
   const ggAnfrage = ich ? {code, token: gast().token} : null;
   if(ich && v.status !== "abgeschlossen") h += sec("Fotos vom Abend", (darf
-      ? `<button type="button" class="add" id="fotoBtn">+ Foto hinzufügen (${ich.bilder||0} von ${MAX_FOTOS})</button><span class="err" id="fotoErr"></span><p class="hint">Bitte nur Fotos, mit denen alle Abgebildeten einverstanden sind. Sehen können sie nur die Teilnehmer dieser Verkostung und die Braumeister.</p>`
+      ? `<button type="button" class="btn foto-knopf" id="fotoBtn">${fotoKnopfHtml(ich.bilder||0)}</button><span class="err" id="fotoErr"></span><p class="hint foto-hinweis">Nur Fotos, mit denen alle Abgebildeten einverstanden sind.</p>`
       : `<p class="hint">Du hast alle ${MAX_FOTOS} Fotos hochgeladen – danke!</p>`)
       + (kannLoeschen ? `<button type="button" class="linkbtn" id="fotoLoeschBtn">Zuletzt hochgeladenes Foto entfernen</button><span class="err" id="fotoLoeschErr"></span>` : "")
       + `<div id="gastGalerie">${(() => { const c = gastGalerieAusCache(ggAnfrage); return c ? gastGalerieHtml(c) : `<p class="hint">Fotos werden geladen …</p>`; })()}</div>`);
@@ -173,6 +173,10 @@ function meineBewertungen(){
   return m;
 }
 
+// Abschlussansicht (seit 19.11.2026): jede Note dort antippen öffnet das Bier direkt auf „Dein Urteil“ – der Text sagt
+// ja „Bis dahin kannst du jede Note noch ändern“. Ein Fänger für die ganze Seite, weil die Ansicht im Blatt entsteht.
+document.addEventListener("click", e => { const z = e.target.closest(".ende-noten .en-zeile[data-p]"); if(z) bogen(z.dataset.p); });
+
 function bogen(probeId){
   const d = gData, p = d.proben.find(x=>x.id===probeId); if(!p) return;
   const offen = !d.verkostung.blind || d.verkostung.status === "abgeschlossen";
@@ -182,6 +186,7 @@ function bogen(probeId){
     titel: offen ? `${p.nummer}. ${p.bier.name}` : `Probe ${p.nummer}`,
     hint: offen ? bierZeile(p.bier) : "",
     alt: meineBewertungen().get(probeId) || {},
+    startAmUrteil: meineBewertungen().has(probeId),   // schon bewertet: zum Ändern gleich die Note zeigen
     speichern: async f => {
       const r = await sb.rpc("vk_bewerten", {p_code: code, p_token: gast().token, p_probe: probeId, ...f});
       if(!r.error) eigeneGespeichert.set(probeId, {probe_id: probeId, note: f.p_note, merkmale: f.p_merkmale, geruch: f.p_geruch,
@@ -198,6 +203,17 @@ function bogen(probeId){
     },
     // Alle Biere bewertet (seit 19.11.2026): Kronkorken-Reihe, die eigenen Noten und was als Nächstes passiert –
     // vorher schloss sich das Blatt nur mit einem Toast, und Gäste wussten nicht, ob sie fertig sind.
+    // Nach dem Speichern, wenn noch Biere offen sind (seit 19.11.2026): „1 von 3 bewertet“ als Kronkorken-Reihe – bewertete
+    // Kronkorken voll, offene blass, der eben bewertete landet. Darunter die eigene Note in der Notenampel-Farbe.
+    zwischenstand: note => {
+      const bewertet = new Set(meineBewertungen().keys()); bewertet.add(probeId);
+      const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer);
+      return `<div class="bogen-zwischen">
+        <div class="zw-reihe" aria-hidden="true">${sortiert.map(x => `<span class="zw-deckel${bewertet.has(x.id) ? " an" : ""}${x.id === probeId ? " neu" : ""}">${offen ? Bilder.bier(x.bier) : `<span class="pn num">${x.nummer}</span>`}</span>`).join("")}</div>
+        <h3>${bewertet.size} von ${sortiert.length} bewertet</h3>
+        <p class="hint">Deine Note für ${offen ? esc(p.bier.name) : "Probe "+p.nummer}: <span class="grade ${gradeCls(note)}">${note}</span></p>
+      </div>`;
+    },
     abschlussTitel: d.verkostung.titel,
     abschluss: note => {
       const noten = new Map([...meineBewertungen()].map(([id, b]) => [id, b.note])); noten.set(probeId, note);
@@ -207,7 +223,7 @@ function bogen(probeId){
         <div class="ende-reihe" aria-hidden="true">${sortiert.map((x,i)=>`<span class="ende-deckel" style="--i:${i}">${offen ? Bilder.bier(x.bier) : `<span class="pn num">${x.nummer}</span>`}</span>`).join("")}</div>
         <h3>${sortiert.length === 1 ? "Bewertet" : `Alle ${sortiert.length} bewertet`} – prost!</h3>
         <ul class="ende-noten">${sortiert.map(x=>{ const n = noten.get(x.id);
-          return `<li><span class="en-name">${name(x)}</span>${n == null ? "" : `<span class="grade ${gradeCls(n)}"><span class="vh">deine Note </span>${n}</span>`}</li>`; }).join("")}</ul>
+          return `<li><button type="button" class="en-zeile" data-p="${esc(x.id)}" aria-label="${name(x)}, deine Note ${n ?? '–'}, ändern"><span class="en-name">${name(x)}</span>${n == null ? "" : `<span class="en-rechts"><span class="grade ${gradeCls(n)}">${n}</span><span class="aendern" aria-hidden="true">ändern</span></span>`}</button></li>`; }).join("")}</ul>
         <p class="hint">Wenn die Braumeister aufdecken, springt diese Seite von selbst zur Siegerehrung. Lass sie einfach offen. Bis dahin kannst du jede Note noch ändern.</p>
       </div>`;
     },
@@ -229,11 +245,17 @@ async function galerieAuffrischen(anfrage, erzwingen){
 
 /* Gast lädt ein Foto für die Galerie hoch – über die Edge Function „galerie-hochladen“ (prüft Code, Schlüssel, max. 9).
    Seit 10.11.2026 ohne den zweiten Zuschnitt-Schritt (Vorschau-Quadrat wird mittig gesetzt). */
+/* Foto-Knopf (seit 19.11.2026 ein richtiger Knopf mit Kamera statt „+ Foto hinzufügen“ gestrichelt): Fotos gehören zum
+   Ritual und sollen nicht wie Kleingedrucktes aussehen. Der Hinweis, wer die Fotos sieht, steht jetzt im Auswahl-Dialog. */
+const KAMERA_SVG = `<svg class="kamera" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3.5 8.5a2 2 0 0 1 2-2h2.2l1.5-2h5.6l1.5 2h2.2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.8" r="3.6"/></svg>`;
+const fotoKnopfHtml = n => `${KAMERA_SVG}<span>Foto hinzufügen</span><small class="foto-zahl">${n} von ${MAX_FOTOS}</small>`;
+
 async function gastFoto(){
-  const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend", ohneVorschau: true});
+  const erg = await Bilder.waehlen({form: "frei", titel: "Foto vom Abend", ohneVorschau: true,
+    hinweis: "Sehen können das Foto nur die Teilnehmer dieser Verkostung und die Braumeister."});
   if(!erg) return;
   const btn = $("#fotoBtn"), err = $("#fotoErr");
-  btn.disabled = true; btn.textContent = "Wird hochgeladen …"; err.textContent = "";
+  btn.disabled = true; btn.innerHTML = `${KAMERA_SVG}<span>Wird hochgeladen …</span>`; err.textContent = "";
   const fd = new FormData();
   fd.append("code", code); fd.append("token", gast().token);
   fd.append("gross", erg.gross, "foto.jpg"); fd.append("klein", erg.klein, "foto_t.jpg");
@@ -244,7 +266,7 @@ async function gastFoto(){
   const {error} = await sb.functions.invoke("galerie-hochladen", {body: fd});
   if(error){
     let msg = "Hochladen fehlgeschlagen."; try{ const j = await error.context.json(); if(j && j.fehler) msg = j.fehler; }catch(_){}
-    btn.disabled = false; btn.textContent = "+ Foto hinzufügen"; err.textContent = msg; return;
+    btn.disabled = false; btn.innerHTML = fotoKnopfHtml(gData?.ich?.bilder || 0); err.textContent = msg; return;
   }
   toast("Foto hochgeladen"); await gastGalerieLaden({code, token: gast().token}, true); gastLaden();
 }

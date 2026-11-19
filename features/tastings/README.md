@@ -165,6 +165,11 @@ kurz darunter („Kein Konto nötig …“). In der Gästeansicht (`body.gast-an
 „Login“-Pille im Kopf, weil sie Erstgäste glauben ließ, sie bräuchten ein Konto. Angemeldete Braumeister sehen ihren
 Avatar wie überall; abgemeldet melden sie sich auf jeder anderen Seite an.
 
+**Geschlossener Raum (seit 19.11.2026):** Gäste ohne Anmeldung sehen in der Gästeansicht auch kein Menü (kein
+Hamburger), und das Logo führt nicht von der Verkostung weg, damit ein versehentlicher Tipp am Abend nicht auf den
+Sud-Seiten landet. Es bleiben Logo, Hell/Dunkel-Schalter und Impressum/Datenschutz im Fuß. Angemeldete Braumeister
+behalten Menü und Logo-Link. Nach dem Aufdecken landen alle auf der Ergebnisseite mit normaler Navigation.
+
 **Abschluss nach dem letzten Bier (seit 19.11.2026, nur Gäste):** Statt eines Toasts zeigt das Blatt eine eigene
 Ansicht (`opts.abschluss` in `bogenZeigen`, gebaut in `guest.js`): Kronkorken-Reihe, die nacheinander „landet“
 (ohne Bewegung bei reduced motion), „Alle 3 bewertet – prost!“, die eigenen Noten als Notenplaketten und der Hinweis,
@@ -177,6 +182,24 @@ Biere bewertet sind.
 **„Nicht du?“ (seit 19.11.2026):** fragt vor dem Austragen nach („Du bist nicht Lena?“), weil der Gast danach seine
 Bewertungen auf diesem Handy nicht mehr sieht und beim neuen Beitreten ein zweiter Teilnehmer entsteht. Austragen
 entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
+
+**Note schneller erreichen und ändern (19.11.2026, Reihenfolge bleibt):**
+- Ein schon bewertetes Bier öffnet direkt auf „Dein Urteil“ (`opts.startAmUrteil` in `bogenZeigen`); ein Entwurf
+  hat Vorrang und öffnet auf seiner Seite.
+- Riechen, Schmecken und Geschmacksbild zeigen unter der Überschrift „Freiwillig · direkt zur Note →“.
+- In der Abschlussansicht ist jede Zeile ein Knopf: antippen öffnet das Bier auf „Dein Urteil“.
+- Knopfleiste nach dem Speichern: Beschriftungen mittig, ein langer Biername in „Weiter zu …“ bricht um, „Fertig“
+  bleibt daneben eine feste Pille und damit erreichbar.
+
+**Zwischenstand nach dem Speichern (19.11.2026, nur Gäste):** Sind noch Biere offen, zeigt das Blatt statt eines Hakens
+die Kronkorken-Reihe des Abends (bewertet voll, offen blass, der eben bewertete landet), „2 von 3 bewertet“ und die eigene
+Note in der Notenampel-Farbe (`opts.zwischenstand` in `bogenZeigen`, gebaut in `guest.js`). Die Verwaltung behält den Haken.
+
+**Fotos vom Abend (19.11.2026):** Der Foto-Knopf ist ein richtiger Knopf mit Kamera-Symbol („Foto hinzufügen · 0 von 9“)
+statt der gestrichelten Mini-Schaltfläche. Darunter steht nur noch „Nur Fotos, mit denen alle Abgebildeten einverstanden
+sind.“ Wer die Fotos sieht, steht jetzt im Auswahl-Dialog (`Bilder.waehlen({hinweis})`). Im Dialog gibt es auf der
+Startseite nur ✕ zum Schließen; „Abbrechen“ erscheint erst beim Zuschneiden neben „Übernehmen“ (gilt überall, wo der
+Dialog genutzt wird).
 
 **Feinschliff (19.11.2026):**
 - Speichern zeigt „Wird gespeichert …“; auch ein Abbruch (Netz weg) landet als Meldung („Keine Verbindung … Deine
