@@ -39,7 +39,12 @@ async function gastLaden(still){
     return;
   }
   gastZeigen();
-  if(data.verkostung.status !== "abgeschlossen") { if(!timer) startTimer(()=>gastLaden(true)); } else stopTimer();
+  if(data.verkostung.status !== "abgeschlossen"){
+    // Wer alle Biere bewertet hat, wartet nur noch aufs Aufdecken – dann alle 5 statt 15 Sekunden nachfragen
+    const meine = meineBewertungen(), alle = data.ich && data.proben.length && data.proben.every(p => meine.has(p.id));
+    const abstand = alle ? WARTE_LIVE : MIN_LIVE;
+    if(!timer || timerAbstand !== abstand) startTimer(() => gastLaden(true), {abstand, auchMitBlatt: true});
+  } else stopTimer();
 }
 
 function gastZeigen(){
