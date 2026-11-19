@@ -48,7 +48,13 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .probe .pg{font-size:.85rem;color:var(--amber);font-weight:600}
 /* Bewertet (seit 19.11.2026): Karte bleibt neutral, die Note steht als Notenplakette (.grade, base.css) in der Notenampel-
    Farbe. Vorher war die ganze Karte grün – auch bei Note 2; Grün heißt auf der Seite aber immer „gute Note“. */
-.probe.done .pg{color:inherit}
+.probe.done .pg{color:inherit;display:flex;flex-direction:column;align-items:center;gap:2px}
+/* kleiner Hinweis, dass man eine bewertete Probe antippen und ändern kann (19.11.2026) */
+.probe .aendern{font-size:.72rem;font-weight:500;color:var(--muted)}
+#bNoteErr:not(:empty){display:block;margin-top:8px}
+/* Tippflächen der Gästeansicht auf mindestens 44 px (19.11.2026) */
+#fotoBtn{min-height:44px}
+.zugang>summary{padding:12px 0;cursor:pointer}
 .alle-bewertet{margin-top:12px}
 /* Bewertungsbogen: seit 13.11.2026 vier Seiten (Riechen, Schmecken, Geschmacksbild, Urteil) nebeneinander auf einer Spur, die per
    „Weiter“/Wischen verschoben wird; Bedienelemente fürs Handy vergrößert */
@@ -111,10 +117,11 @@ body.gast-ansicht .account-toggle:not(.is-avatar){display:none}
 .ns-n button[aria-checked="true"]{background:var(--amber);border-color:var(--amber);color:var(--bg)}
 .ns-n button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 /* Textfeld als eigene Karte mit Frage passend zur Stufe */
-.note-satz{display:flex;flex-direction:column;gap:2px;margin-top:4px;padding:12px 12px 12px;border:1px dashed color-mix(in srgb,var(--amber) 55%,var(--line));border-radius:var(--radius);scroll-margin-bottom:16px}
+/* seit 19.11.2026 durchgezogener Rahmen statt gestrichelt – gestrichelt sah nach Ablagefläche für Dateien aus */
+.note-satz{display:flex;flex-direction:column;gap:2px;margin-top:4px;padding:12px 12px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);scroll-margin-bottom:16px}
 .ns-frage{font-weight:700;font-size:1.02rem}
 .note-satz small{color:var(--muted);font-size:.78rem;margin-bottom:6px}
-.note-satz input{font-size:1.05rem;padding:12px 14px}
+.note-satz input{font-size:1.05rem;padding:12px 14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;width:100%}
 @media (max-height:620px){.nstufe{min-height:50px;padding-top:3px;padding-bottom:3px}.ns-n button{width:40px;height:40px}}
 .scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .scale button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 0;font-family:var(--font-data);font-size:1.15rem;font-weight:600;cursor:pointer;min-height:52px}
@@ -285,7 +292,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 /* Überschrift mit Symbol-Knöpfen (Geschmacksbild: Zurücksetzen, Glossar) */
 #bogenInhalt legend.mit-knoepfen{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:0}
 .kopf-knoepfe{display:flex;gap:8px}
-.ikon-knopf{display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--ink);font:600 1.05rem/1 var(--font-body);cursor:pointer}
+.ikon-knopf{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--ink);font:600 1.05rem/1 var(--font-body);cursor:pointer}
 @media (hover:hover){.ikon-knopf:hover{border-color:var(--muted)}}
 .ikon-knopf[hidden]{display:none}
 /* Kleine Handys (iPhone SE & Co.): Kopf des Bogens flacher, damit die Karte ohne Scrollen passt */
