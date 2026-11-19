@@ -159,6 +159,21 @@ neben das Blatt, Escape) oder lädt die Seite neu, ist beim nächsten Öffnen al
 war, mit dem Hinweis „Dein Entwurf ist wieder da“. Erst erfolgreiches Speichern löscht den Entwurf. Bewusst ohne
 Rückfrage beim Schließen. Der Entwurf hängt am Schlüssel des Gastes, ein anderer Gast auf demselben Handy sieht ihn nie.
 
+**Einstieg (seit 19.11.2026, nur Gäste):** Das Mitmachen ist eine Einladung statt eines Formulars: „3 Biere warten auf
+dich“, wie viele schon dabei sind, die Frage „Wie heißt du?“, ein Knopf über die volle Breite und der Hinweis zum Namen
+kurz darunter („Kein Konto nötig …“). In der Gästeansicht (`body.gast-ansicht`, gesetzt in `common.js`) fehlt die
+„Login“-Pille im Kopf, weil sie Erstgäste glauben ließ, sie bräuchten ein Konto. Angemeldete Braumeister sehen ihren
+Avatar wie überall; abgemeldet melden sie sich auf jeder anderen Seite an.
+
+**Abschluss nach dem letzten Bier (seit 19.11.2026, nur Gäste):** Statt eines Toasts zeigt das Blatt eine eigene
+Ansicht (`opts.abschluss` in `bogenZeigen`, gebaut in `guest.js`): Kronkorken-Reihe, die nacheinander „landet“
+(ohne Bewegung bei reduced motion), „Alle 3 bewertet – prost!“, die eigenen Noten als Notenplaketten und der Hinweis,
+dass die Seite beim Aufdecken von selbst zur Siegerehrung springt. Unter der Liste steht derselbe Hinweis, sobald alle
+Biere bewertet sind.
+
+**Bewertete Biere in der Liste (seit 19.11.2026):** Die Karte bleibt neutral, die eigene Note steht als Notenplakette
+(`.grade`) in der Notenampel-Farbe. Vorher war die ganze Karte grün, auch bei Note 2.
+
 **„Nicht du?“ (seit 19.11.2026):** fragt vor dem Austragen nach („Du bist nicht Lena?“), weil der Gast danach seine
 Bewertungen auf diesem Handy nicht mehr sieht und beim neuen Beitreten ein zweiter Teilnehmer entsteht. Austragen
 entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
