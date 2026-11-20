@@ -122,12 +122,21 @@ function gastZeigen(){
       : `<p class="hint">Du hast alle ${MAX_FOTOS} Fotos hochgeladen – danke!</p>`)
       + (kannLoeschen ? `<button type="button" class="linkbtn" id="fotoLoeschBtn">Zuletzt hochgeladenes Foto entfernen</button><span class="err" id="fotoLoeschErr"></span>` : "")
       + `<div id="gastGalerie">${(() => { const c = gastGalerieAusCache(ggAnfrage); return c ? gastGalerieHtml(c) : `<p class="hint">Fotos werden geladen …</p>`; })()}</div>`);
-  main().innerHTML = h;
+  // Die Seite fragt während der Verkostung alle 5–15 s nach (gastLaden). Seit 20.11.2026: Hat sich nichts geändert,
+  // bleibt die Seite unangetastet – sonst flackerten die Kronkorken bei jedem Nachfragen. Ändert sich etwas (z. B. ein
+  // weiterer Gast tritt bei), bleibt ein gerade getippter Name erhalten.
+  const tippName = $("#j_name") ? $("#j_name").value : "", tippFokus = document.activeElement && document.activeElement.id === "j_name";
+  if(gastZeigen.zuletzt === h && main().firstElementChild){
+    if(ggAnfrage && v.status !== "abgeschlossen") galerieAuffrischen(ggAnfrage, false);
+    return;
+  }
+  main().innerHTML = h; gastZeigen.zuletzt = h;
   if(ggAnfrage && v.status !== "abgeschlossen") galerieAuffrischen(ggAnfrage, false);
 
   const jf = $("#joinForm");
   if(jf){
-    const g = lsGet("kb_gastname"); if(g) $("#j_name").value = g;
+    const g = lsGet("kb_gastname"); if(tippName) $("#j_name").value = tippName; else if(g) $("#j_name").value = g;
+    if(tippFokus) $("#j_name").focus({preventScroll: true});
     jf.onsubmit = async e => { e.preventDefault();
       const name = $("#j_name").value.trim();
       if(!name){ $("#joinErr").textContent = "Bitte deinen Namen eingeben."; return; }
@@ -191,6 +200,15 @@ function bogen(probeId){
   const d = gData, p = d.proben.find(x=>x.id===probeId); if(!p) return;
   const offen = !d.verkostung.blind || d.verkostung.status === "abgeschlossen";
   const pre = entwurfPrefix();
+  // Nur eine schon gegebene Note geändert (seit 20.11.2026): knapp „Note geändert · 6 → 7“ statt Zwischenstand bzw.
+  // der ganzen „prost!“-Szene, die sich sonst bei jeder Korrektur wiederholt.
+  const geaendertHtml = (vorher, note) => `<div class="bogen-ende geaendert">
+      <div class="ende-reihe" aria-hidden="true"><span class="ende-deckel">${offen ? Bilder.bier(p.bier) : `<span class="pn num">${p.nummer}</span>`}</span></div>
+      <h3>${vorher === note ? "Gespeichert" : "Note geändert"}</h3>
+      <p class="aenderung"><span class="aenderung-sicht" aria-hidden="true">${vorher === note ? "" : `<span class="grade ${gradeCls(vorher)}">${vorher}</span><span class="pfeil">→</span>`}<span class="grade ${gradeCls(note)}">${note}</span></span>
+        <span class="vh">${vorher === note ? `Note ${note}` : `von ${vorher} auf ${note}`}</span></p>
+      <p class="hint">${offen ? esc(p.bier.name) : "Probe "+p.nummer}</p>
+    </div>`;
   bogenZeigen({
     entwurf: pre ? pre + probeId : null,
     titel: offen ? `${p.nummer}. ${p.bier.name}` : `Probe ${p.nummer}`,
@@ -216,22 +234,24 @@ function bogen(probeId){
     // vorher schloss sich das Blatt nur mit einem Toast, und Gäste wussten nicht, ob sie fertig sind.
     // Nach dem Speichern, wenn noch Biere offen sind (seit 19.11.2026): „1 von 3 bewertet“ als Kronkorken-Reihe – bewertete
     // Kronkorken voll, offene blass, der eben bewertete landet. Darunter die eigene Note in der Notenampel-Farbe.
-    zwischenstand: note => {
+    zwischenstand: (note, vorher) => {
+      if(vorher != null) return geaendertHtml(vorher, note);
       const bewertet = new Set(meineBewertungen().keys()); bewertet.add(probeId);
       const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer);
       return `<div class="bogen-zwischen">
-        <div class="zw-reihe" aria-hidden="true">${sortiert.map(x => `<span class="zw-deckel${bewertet.has(x.id) ? " an" : ""}${x.id === probeId ? " neu" : ""}">${offen ? Bilder.bier(x.bier) : `<span class="pn num">${x.nummer}</span>`}</span>`).join("")}</div>
+        <div class="zw-reihe${sortiert.length > 6 ? " viele" : ""}" aria-hidden="true">${sortiert.map(x => `<span class="zw-deckel${bewertet.has(x.id) ? " an" : ""}${x.id === probeId ? " neu" : ""}">${offen ? Bilder.bier(x.bier) : `<span class="pn num">${x.nummer}</span>`}</span>`).join("")}</div>
         <h3>${bewertet.size} von ${sortiert.length} bewertet</h3>
         <p class="hint">Deine Note für ${offen ? esc(p.bier.name) : "Probe "+p.nummer}: <span class="grade ${gradeCls(note)}">${note}</span></p>
       </div>`;
     },
     abschlussTitel: d.verkostung.titel,
-    abschluss: note => {
+    abschluss: (note, vorher) => {
+      if(vorher != null) return geaendertHtml(vorher, note);   // nur eine Note geändert: keine zweite „prost!“-Szene
       const noten = new Map([...meineBewertungen()].map(([id, b]) => [id, b.note])); noten.set(probeId, note);
       const sortiert = d.proben.slice().sort((a,b)=>a.nummer-b.nummer);
       const name = x => offen ? `${x.nummer}. ${esc(x.bier.name)}` : "Probe "+x.nummer;
       return `<div class="bogen-ende">
-        <div class="ende-reihe" aria-hidden="true">${sortiert.map((x,i)=>`<span class="ende-deckel" style="--i:${i}">${offen ? Bilder.bier(x.bier) : `<span class="pn num">${x.nummer}</span>`}</span>`).join("")}</div>
+        <div class="ende-reihe${sortiert.length > 6 ? " viele" : ""}" aria-hidden="true">${sortiert.map((x,i)=>`<span class="ende-deckel" style="--i:${i}">${offen ? Bilder.bier(x.bier) : `<span class="pn num">${x.nummer}</span>`}</span>`).join("")}</div>
         <h3>${sortiert.length === 1 ? "Bewertet" : `Alle ${sortiert.length} bewertet`} – prost!</h3>
         <ul class="ende-noten">${sortiert.map(x=>{ const n = noten.get(x.id);
           return `<li><button type="button" class="en-zeile" data-p="${esc(x.id)}" aria-label="${name(x)}, deine Note ${n ?? '–'}, ändern"><span class="en-name">${name(x)}</span>${n == null ? "" : `<span class="en-rechts"><span class="grade ${gradeCls(n)}">${n}</span><span class="aendern" aria-hidden="true">ändern</span></span>`}</button></li>`; }).join("")}</ul>
@@ -251,7 +271,9 @@ async function galerieAuffrischen(anfrage, erzwingen){
   const d = await gastGalerieLaden(anfrage, erzwingen), box = $("#gastGalerie");
   if(!box) return;
   if(!d){ box.innerHTML = `<p class="hint">Die Fotos konnten gerade nicht geladen werden.</p>`; return; }
-  box.innerHTML = gastGalerieHtml(d); gastGalerieVerdrahten(box, d);
+  // unveränderte Galerie nicht neu zeichnen (sonst flackern die Fotos bei jedem Nachfragen, 20.11.2026)
+  const html = gastGalerieHtml(d); if(box.dataset.zuletzt === html) return;
+  box.innerHTML = html; box.dataset.zuletzt = html; gastGalerieVerdrahten(box, d);
 }
 
 /* Gast lädt ein Foto für die Galerie hoch – über die Edge Function „galerie-hochladen“ (prüft Code, Schlüssel, max. 9).
