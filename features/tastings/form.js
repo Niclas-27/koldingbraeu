@@ -201,7 +201,7 @@ function bogenZeigen(opts){
     // Letztes offenes Bier (seit 19.11.2026): eigene Abschlussansicht statt nur Toast, wenn der Aufrufer eine liefert
     // (Gäste: abschluss in guest.js). Die Liste dahinter wird sofort neu geladen, „Fertig“ schließt nur noch.
     if(!weiter && opts.abschluss){
-      $("#sheetBody").innerHTML = opts.abschluss(f.note);
+      $("#sheetBody").innerHTML = opts.abschluss(f.note, alt.note ?? null);   // alt.note: vorherige Note beim Ändern
       if(opts.abschlussTitel) $("#sheetTitle").textContent = opts.abschlussTitel;
       $("#sheetFoot").innerHTML = `<div class="bogen-knoepfe"><button class="btn primary" id="bFertig">Fertig</button></div>`;
       $("#bFertig").onclick = closeSheet;
@@ -212,7 +212,8 @@ function bogenZeigen(opts){
     if(!weiter){ closeSheet(); toast("Gespeichert"); opts.fertig && opts.fertig(); return; }
     // Gespeichert – direkt zum nächsten noch offenen Bier weiterbieten (kein Wischen zwischen Bieren, siehe README)
     // Gäste (seit 19.11.2026): Zwischenstand mit Kronkorken-Reihe statt Haken in leerer Fläche (opts.zwischenstand)
-    $("#sheetBody").innerHTML = opts.zwischenstand ? opts.zwischenstand(f.note)
+    if(opts.zwischenstand && opts.abschlussTitel) $("#sheetTitle").textContent = opts.abschlussTitel;   // nicht mehr das alte Bier im Titel
+    $("#sheetBody").innerHTML = opts.zwischenstand ? opts.zwischenstand(f.note, alt.note ?? null)
       : `<div class="bogen-fertig"><span class="haken" aria-hidden="true">✓</span><h3>Gespeichert</h3><p class="hint">Deine Note: <span class="grade ${gradeCls(f.note)}">${f.note}</span></p></div>`;
     $("#sheetFoot").innerHTML = `<div class="bogen-knoepfe"><button class="btn" id="bFertig">Fertig</button><button class="btn primary" id="bNaechste">${esc(weiter.label)} →</button></div>`;
     $("#bFertig").onclick = () => { closeSheet(); opts.fertig && opts.fertig(); };

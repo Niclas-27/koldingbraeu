@@ -226,7 +226,7 @@ const zugangsLink = (c, token) => gastLink(c) + "&t=" + encodeURIComponent(token
 function gastGalerieHtml(d){
   const fotos = d.fotos || [];
   return `${fotos.length
-      ? `<div class="gg-raster">${fotos.map((f,i) => `<button type="button" data-gg="${i}" aria-label="Foto ${i+1} groß zeigen"><img src="${esc(f.klein)}" alt="" loading="lazy">${f.von?`<small>von ${esc(f.mein?"dir":f.von)}</small>`:""}</button>`).join("")}</div>`
+      ? `<div class="gg-raster">${fotos.map((f,i) => `<button type="button" data-gg="${i}" aria-label="${f.mein ? "Dein Foto" : f.von ? "Foto von "+esc(f.von) : "Foto "+(i+1)} groß zeigen"><img src="${esc(f.klein)}" alt="" loading="lazy">${f.von?`<small>von ${esc(f.mein?"dir":f.von)}</small>`:""}</button>`).join("")}</div>`
       : `<p class="hint">Noch keine Fotos.</p>`}
     <details class="zugang"><summary class="hint">Fotos auf einem anderen Gerät ansehen</summary>
       <p class="hint">Mit deinem persönlichen Link siehst du die Fotos auch auf einem neuen Handy oder in einem anderen Browser – auch noch Wochen später. Bitte nicht weitergeben: Wer den Link hat, ist als du dabei.</p>

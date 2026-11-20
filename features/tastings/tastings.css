@@ -109,24 +109,26 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
 .bogen-fertig h3{margin:8px 0 0}
 /* Zwischenstand nach dem Speichern (Gäste, seit 19.11.2026): Kronkorken-Reihe als Fortschritt – bewertet voll, offen
    blass; der eben bewertete landet (gleiche Bewegung wie .ende-deckel). Kompakt, damit der Weiter-Knopf die Hauptsache bleibt. */
-.bogen-zwischen{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:28px 0 8px}
-.zw-reihe{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:320px}
+/* seit 20.11.2026 senkrecht mittig im Blatt (margin-block:auto) und mit größeren Kronkorken – mehr Gewicht am Höhepunkt */
+.bogen-zwischen{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:16px 0;margin-block:auto}
+.zw-reihe{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:340px}
 .zw-deckel{display:inline-flex;opacity:.35;filter:grayscale(.6)}
 .zw-deckel.an{opacity:1;filter:none}
-.zw-deckel .bb-kronkorken.bb-klein{width:44px;height:44px}
-.zw-deckel .pn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--amber-soft);color:var(--amber-text);font-size:1.1rem}
-.bogen-zwischen h3{font-size:clamp(1.4rem,5.5vw,1.7rem);font-weight:800;font-stretch:80%;line-height:1.05;margin:4px 0 0}
+.zw-deckel .bb-kronkorken.bb-klein{width:64px;height:64px}
+.zw-reihe.viele .zw-deckel .bb-kronkorken.bb-klein,.ende-reihe.viele .ende-deckel .bb-kronkorken.bb-klein{width:48px;height:48px}
+.zw-deckel .pn{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--amber-soft);color:var(--amber-text);font-size:1.1rem}
+.bogen-zwischen h3{font-size:clamp(1.6rem,6.5vw,2rem);font-weight:800;font-stretch:80%;line-height:1.05;margin:4px 0 0}
 .bogen-zwischen .hint{margin:0}
 @media (prefers-reduced-motion:no-preference){
   .zw-deckel.neu{animation:endeLanden .5s cubic-bezier(.16,1,.3,1) .1s backwards}
 }
 /* Abschluss nach dem letzten Bier (seit 19.11.2026): Kronkorken landen nacheinander auf dem Tisch, darunter die eigenen
    Noten und der Hinweis aufs Aufdecken. Ohne Bewegung (reduced motion) stehen die Kronkorken einfach da. */
-.bogen-ende{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:20px 0 8px}
-.ende-reihe{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:320px}
+.bogen-ende{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:16px 0;margin-block:auto}
+.ende-reihe{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:340px}
 .ende-deckel{display:inline-flex}
-.ende-deckel .bb-kronkorken.bb-klein{width:44px;height:44px}
-.ende-deckel .pn{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--amber-soft);color:var(--amber-text);font-size:1.1rem}
+.ende-deckel .bb-kronkorken.bb-klein{width:64px;height:64px}
+.ende-deckel .pn{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--amber-soft);color:var(--amber-text);font-size:1.1rem}
 @media (prefers-reduced-motion:no-preference){
   .ende-deckel{animation:endeLanden .5s cubic-bezier(.16,1,.3,1) calc(var(--i) * 90ms + 120ms) backwards}
 }
@@ -135,7 +137,7 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
   60%{transform:translateY(2px) rotate(4deg) scale(1.06,.92);opacity:1}
   100%{transform:none}
 }
-.bogen-ende h3{font-size:clamp(1.5rem,6vw,1.9rem);font-weight:800;font-stretch:80%;line-height:1.05;margin:2px 0 0}
+.bogen-ende h3{font-size:clamp(1.7rem,7vw,2.2rem);font-weight:800;font-stretch:80%;line-height:1.05;margin:2px 0 0}
 .ende-noten{list-style:none;margin:0;padding:0;width:100%;max-width:360px;border-top:2px solid var(--ink);text-align:left}
 .ende-noten li{border-bottom:1px solid var(--line)}
 /* jede Zeile ist ein Knopf: antippen öffnet das Bier auf „Dein Urteil“ (19.11.2026) */
@@ -145,6 +147,11 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
 .en-rechts{display:flex;align-items:center;gap:8px;flex:none}
 .en-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bogen-ende .hint{max-width:34ch}
+/* „Note geändert · 6 → 7“ (seit 20.11.2026) */
+.aenderung{margin:0}
+.aenderung-sicht{display:inline-flex;align-items:center;gap:10px}
+.aenderung .grade{font-size:1.5rem;min-width:52px;padding:6px 10px}
+.aenderung .pfeil{font-size:1.3rem;color:var(--muted)}
 #bogenInhalt fieldset{gap:20px}
 #bogenInhalt legend{font-family:var(--font-display);font-size:1.4rem;font-weight:800;font-stretch:82%;color:var(--ink);text-transform:none;letter-spacing:0;margin-bottom:2px}
 /* Notenseite (seit 14.11.2026): fünf Stufen mit Emoji und Erklärung, Zahlen als runde Knöpfe in der Zeile */
@@ -155,7 +162,7 @@ body.gast-ansicht:has(.account-toggle:not(.is-avatar)) .brand-mini{pointer-event
 .ns-e{font-size:1.5rem;line-height:1}
 .ns-t{min-width:0}.ns-t b{display:block;font-size:1rem;line-height:1.25}.ns-t small{display:block;color:var(--muted);font-size:.78rem;line-height:1.25}
 .ns-n{display:flex;gap:6px}
-.ns-n button{width:44px;height:44px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 1.05rem/1 var(--font-data);cursor:pointer}
+.ns-n button{width:44px;height:44px;padding:0;border-radius:50%;border:1px solid color-mix(in srgb,var(--muted) 45%,var(--line));background:var(--bg);color:var(--ink);font:600 1.05rem/1 var(--font-data);cursor:pointer}
 /* Gewählte Note gleich in ihrer Ampelfarbe (seit 19.11.2026) – dieselbe Farbe wie danach im Zwischenstand und in der
    Liste. Kontrast der Zahl auf der Fläche: hell 4,6–5,7:1, dunkel 6,8–9:1. */
 .ns-n button[aria-checked="true"]{color:var(--bg)}
@@ -362,6 +369,12 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
   /* die Frage der Seite fällt hier weg (bleibt im aria-label der Kacheln), sonst müsste man scrollen */
   .seite-frage{display:none}
   .seite-frage + .seite-frei{margin-top:-6px}
+  /* Zwischenstand und Abschluss auf kleinen Handys ohne Scrollen: Kronkorken 48 statt 64 px, engere Abstände */
+  .zw-deckel .bb-kronkorken.bb-klein,.ende-deckel .bb-kronkorken.bb-klein{width:48px;height:48px}
+  .zw-deckel .pn,.ende-deckel .pn{width:48px;height:48px}
+  .bogen-ende{gap:10px;padding:4px 0}
+  .bogen-ende h3{font-size:1.6rem}
+  .en-zeile{min-height:44px}
 }
 /* leere Fehlerzeile unter dem Bogen nimmt keinen Abstand weg (sonst +22 px Scrollen) */
 #sheetBody > #bErr:empty{display:none}

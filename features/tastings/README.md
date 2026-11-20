@@ -191,6 +191,16 @@ entfernt auch seine Entwürfe. Die Tippfläche ist auf gut 44 px vergrößert.
 - Knopfleiste nach dem Speichern: Beschriftungen mittig, ein langer Biername in „Weiter zu …“ bricht um, „Fertig“
   bleibt daneben eine feste Pille und damit erreichbar.
 
+**Ruhige Seite beim Nachfragen (20.11.2026):** Die Gästeseite fragt alle 5–15 s nach (`gastLaden`). Hat sich nichts
+geändert, wird weder die Seite noch die Galerie neu gezeichnet (vorher flackerten Kronkorken und Fotos). Ändert sich
+etwas, bleibt ein gerade getippter Name samt Cursor erhalten. Galerie-Fotos heißen für Screenreader „Foto von Anna“
+bzw. „Dein Foto“; die Rahmen der Notenknöpfe sind im Dunkelmodus kräftiger.
+
+**Zwischenstand und Abschluss mit Gewicht (20.11.2026):** Beide Ansichten stehen senkrecht mittig im Blatt, mit
+Kronkorken in 64 px (ab 7 Bieren 48 px, auf niedrigen Bildschirmen 48 px) und dem Namen der Runde als Titel. Wer nur
+eine schon gegebene Note ändert, sieht statt Zwischenstand bzw. „prost!“ knapp „Note geändert · 6 → 7“
+(`geaendertHtml` in `guest.js`; `bogenZeigen` übergibt dafür die vorherige Note).
+
 **Dritte UX-Runde (19.11.2026):**
 - „Dein Urteil“ sagt vorab „Pflicht · nur die Note“; die gewählte Note leuchtet sofort in ihrer Ampelfarbe
   (`data-g` am Knopf), die gewählte Stufe ist neutral in Röstmalz umrandet.
