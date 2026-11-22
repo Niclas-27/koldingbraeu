@@ -107,7 +107,7 @@ button.wahl-k:hover{border-color:var(--muted)}
 .bogen-knoepfe{display:flex;gap:10px}
 /* Exakt wie #bWeiter/#bZurueck im Verkostungs-Bewertungsbogen (tastings.css): beide Knöpfe gleich breit
    (flex:1) statt Zurück als kleiner Kreis und Weiter als großer Pill-Button. */
-#wzBack,#wzNext{min-height:48px;font-size:1rem;flex:1;justify-content:center}
+#wzBack,#wzNext,#wzAbschliessen{min-height:48px;font-size:1rem;flex:1;justify-content:center}
 .fortschritt{display:flex;align-items:center;gap:10px}
 .fortschritt .punkte{display:flex;gap:5px;flex:1}
 .fortschritt .punkte .punkt{flex:1;border:0;background:transparent;padding:8px 0;cursor:pointer}
@@ -141,3 +141,10 @@ button.wahl-k:hover{border-color:var(--muted)}
 /* Kopf der Sud-Detailseite: Kronkorken (rund) und Flasche (3:4) nebeneinander */
 .sud-kk-fl{display:flex;gap:12px;align-items:flex-end;justify-content:center}
 .sud-flasche{width:90px;height:120px;object-fit:cover;border-radius:10px;display:block;background:var(--surface)}
+
+/* Abfüllung im Assistenten: Zucker/Traubenzucker/Speise als große Knöpfe statt Dropdown (fingerfreundlich),
+   die Empfehlung sitzt direkt unter dem Mengenfeld wie bei der Milchsäure. */
+.wz-speise{margin:4px 0 14px;font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.wz-speise .chip{padding:10px 16px;font-size:.95rem;color:var(--ink);min-height:44px}
+.wz-empf{margin:-8px 0 4px}
+#wzRestCo2{margin-top:0}

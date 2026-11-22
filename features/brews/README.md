@@ -226,6 +226,12 @@ ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt wa
   (Zucker in g für die ganze Biermenge, Speise in l), im Assistenten und im Editor. Der Zucker-Rechner rechnet
   g/l × Biermenge, Traubenzucker × 198/171 (Monohydrat). Für Speise weiter kein Rechner. Die alte Freitextspalte
   `zucker` erscheint nur noch, wenn sie befüllt ist, die Sud-Seite zeigt beides.
+- **Abfüllung neu geordnet (22.11.2026):** drei Blöcke wie am Abfülltag – Abfüllen (Datum, Biermenge, Flaschen),
+  Karbonisieren (Ziel, höchste Gärtemperatur, Knöpfe Haushaltszucker/Traubenzucker/Speise statt Dropdown,
+  Menge mit Empfehlung direkt darunter), Ergebnis (Alkohol). „Sud abschließen“ sitzt in der Fußleiste statt
+  „Weiter“, die Ausschlagwürze bei „Kühlen & Anstellen“ (im Editor und auf der Sud-Seite bei Läutern & Kochen).
+  Die Gärtemperatur (`gaertemperatur`, `schema/13_gaertemperatur.sql`) bestimmt die Restkohlensäure
+  (`Brau.restkohlensaeure`); ohne Wert gilt weiter 1,7 g/l. Im Editor bleibt Speise/Zucker ein Dropdown.
 - **Hefemenge in g:** Zahlenfeld (Feldtyp `gramm`), gespeichert in der bestehenden Textspalte `hefemenge`.
   Alte Einträge wie „2 × 11 g“ bleiben ein Textfeld, bis sie geändert werden; reine Zahlen zeigt die Sud-Seite
   mit „g“.
