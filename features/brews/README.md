@@ -218,10 +218,18 @@ ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt wa
   „+ Rast“/„+ Hopfengabe“ funktionieren identisch, nur mit Autosave statt Sammel-Speichern.
 - **Milchsäure-Rechner** im Wasser-Schritt: aus Karbonathärte (KH, °dH), Ziel-KH und Hauptguss/Nachguss die
   Menge Milchsäure 80 % je Guss (`Brau.milchsaeure` in `lib/brau.js`, Herleitung dort: ≈ 0,035 ml je Liter
-  und °dH, also 1 ml senkt 10 l um knapp 3 °dH). Die Ziel-KH (Standard 2 °dH) wird nicht gespeichert, das
-  Ergebnis bleibt frei überschreibbar. Die Spalte `wasserhaerte` heißt in der Oberfläche jetzt
-  „Karbonathärte (KH)“ – Säure wirkt nur auf die KH, nicht auf die Gesamthärte. Die erste Fassung rechnete
-  `Härte × Liter × 0,09` (ungeprüfter Faktor, ca. 2,6-mal zu viel Säure, dazu oft mit der Gesamthärte).
+  und °dH, also 1 ml senkt 10 l um knapp 3 °dH). Die Ziel-KH steht in `ziel_kh` (`schema/12_ziel_kh_speise.sql`),
+  ohne eigenen Wert zeigt das Feld 2 °dH und speichert ihn beim ersten „übernehmen“ (vorher sprang sie beim
+  Zurückblättern auf 2). Die Spalte `wasserhaerte` heißt in der Oberfläche „Karbonathärte (KH)“ – Säure wirkt
+  nur auf die KH. Die erste Fassung rechnete `Härte × Liter × 0,09` (ca. 2,6-mal zu viel Säure).
+- **Speise/Zucker als Auswahl:** `speise_art` (Haushaltszucker, Traubenzucker, Speise) plus `speise_menge`
+  (Zucker in g für die ganze Biermenge, Speise in l), im Assistenten und im Editor. Der Zucker-Rechner rechnet
+  g/l × Biermenge, Traubenzucker × 198/171 (Monohydrat). Für Speise weiter kein Rechner. Die alte Freitextspalte
+  `zucker` erscheint nur noch, wenn sie befüllt ist, die Sud-Seite zeigt beides.
+- **Hefemenge in g:** Zahlenfeld (Feldtyp `gramm`), gespeichert in der bestehenden Textspalte `hefemenge`.
+  Alte Einträge wie „2 × 11 g“ bleiben ein Textfeld, bis sie geändert werden; reine Zahlen zeigt die Sud-Seite
+  mit „g“.
+- **Kein Undo-Knopf** im Assistenten: bewusst entschieden (22.11.2026), passt nicht zum automatischen Speichern.
 - **Gärung bleibt offen:** Dieser Schritt lässt sich beliebig oft erneut besuchen (über die Sud-Detailseite,
   Knopf „Braugang-Assistent“, oder automatisch beim Öffnen eines noch nicht dokumentierten Suds), um weitere
   Zwischenmessungen nachzutragen, ohne die vorherigen Schritte anzufassen.

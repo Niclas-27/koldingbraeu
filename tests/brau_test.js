@@ -25,6 +25,7 @@ ok("Alkohol aus Refraktometer (OG 14 °Bx, Endwert 7 °Bx) ≈ 5,8 % (gegen unab
 ok("Alkohol aus Refraktometer ohne Endwert → null", Brau.alkoholAusRefraktometer(14, null) === null);
 ok("Zucker je Liter für 5,5 g/l Ziel (Standard-Restkohlensäure) ≈ 7,2 g/l – passt zur Faustregel ~7 g/l", nah(Brau.primingZucker(5.5), 7.2, 0.5), Brau.primingZucker(5.5).toFixed(2));
 ok("Zucker 0, wenn Ziel unter der Restkohlensäure liegt", Brau.primingZucker(1, 1.7) === 0);
+ok("Traubenzucker braucht rund 16 % mehr als Haushaltszucker", nah(Brau.primingZucker(5.5, null, "traubenzucker") / Brau.primingZucker(5.5), 1.16, 0.01));
 ok("Zucker je Liter unabhängig von der Biermenge (reine g/l-Dosierung, keine Gesamtmenge)", Brau.primingZucker(5.5) === Brau.primingZucker(5.5, 1.7));
 ok("Milchsäure: Faustregel 1 ml je 10 l und ~3 °dH KH", nah(Brau.milchsaeure(3, 10, 0), 1, 0.1), Brau.milchsaeure(3, 10, 0).toFixed(2));
 ok("Milchsäure: 24 °dH KH, 25,6 l, Ziel 2 °dH ≈ 19 ml (alte Formel lieferte 55 ml)", nah(Brau.milchsaeure(24, 25.6, 2), 19.5, 0.5), Brau.milchsaeure(24, 25.6, 2).toFixed(2));
