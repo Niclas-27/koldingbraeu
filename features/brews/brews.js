@@ -7,7 +7,7 @@ const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v =
 // Spalten, die Gäste lesen dürfen (ohne notizen, bewertung); Messwerte seit 25.10.2026 Zahl+Einheit statt Freitext
 const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,einmaischtemperatur,abmaischtemperatur,rasten,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,speise_art,speise_menge,flaschen,alkohol,alkohol_geschaetzt,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett,bild_kronkorken,bild_flasche";
 // Spalten, die beim Speichern geschrieben werden
-const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_kronkorken","bild_flasche","wasserhaerte","milchsaeure_hauptguss","milchsaeure_nachguss","ph_vorher","ph_nachher","refraktometer_anstellen","refraktometer_restextrakt","karbonisierung","wizard_notizen","ziel_kh","speise_art","speise_menge"];
+const WRITE_COLS = ["nr","datum","datum_geschaetzt","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","abmaischtemperatur","rasten","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich","rezept_id","bild_foto","bild_kronkorken","bild_flasche","wasserhaerte","milchsaeure_hauptguss","milchsaeure_nachguss","ph_vorher","ph_nachher","refraktometer_anstellen","refraktometer_restextrakt","karbonisierung","wizard_notizen","ziel_kh","speise_art","speise_menge","gaertemperatur"];
 const CAPS = {rot:"#c23b2b",blau:"#2f5fa8",orange:"#e5862b",silber:"#b9bec4",gruen:"#3f8a3a",gold:"#c9a227",schwarz:"#1c1c1c",weiss:"#f4f4f0",gelb:"#e8c82e"};
 const CAP_LABEL = {rot:"Rot",blau:"Blau",orange:"Orange",silber:"Silber",gruen:"Grün",gold:"Gold",schwarz:"Schwarz",weiss:"Weiß",gelb:"Gelb"};
 Object.assign(state, { brews: [], q: "", style: "", sort: "neu" });
@@ -207,13 +207,13 @@ function zeigeDetail(b){
       ${sec("Schüttung",grist)}
       ${sec("Maischplan",steps)}
       ${sec("Läutern & Kochen"+(b.kochzeit!=null?` · ${Bz.fmtZahl(b.kochzeit,0)} min`:""),
-        kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Stammwürze (Refraktometer)",fmtNum(b.refraktometer_anstellen,"°Brix")],["Sudhausausbeute",(v=>v==null?null:Bz.fmtZahl(v)+" % (berechnet aus Schüttung, Ausschlagwürze und Stammwürze)")(Bz.istAusbeute(b.ausschlag,b.stammwuerze,b.malz))]])
+        kv([["Läutern",b.laeutern],["Würzemenge",fmtNum(b.wuerze,"l")],["Ausschlagwürze",fmtNum(b.ausschlag,"l")],["Stammwürze",fmtNum(b.stammwuerze,"°P")],["Stammwürze (Refraktometer)",fmtNum(b.refraktometer_anstellen,"°Brix")],["Sudhausausbeute",(v=>v==null?null:Bz.fmtZahl(v)+" % (berechnet aus Schüttung, Ausschlagwürze und Stammwürze)")(Bz.istAusbeute(b.ausschlag,b.stammwuerze,b.malz))]])
         +(b.hopfensorten?`<p style="margin:12px 0 8px;color:var(--muted);font-size:.9rem">${esc(b.hopfensorten)}</p>`:"")
         +(hops?`<div style="margin-top:${b.hopfensorten?"0":"12px"}">${hops}</div>`:""))}
       ${sec("Gärung",kv([["Hefe",b.hefe],["Hefemenge",hefemengeText(b.hefemenge)],["Messungen",b.messungen],["Restextrakt",fmtNum(b.restextrakt,"°P")],
-        ["Restextrakt (Refraktometer)",fmtNum(b.refraktometer_restextrakt,"°Brix")]]))}
+        ["Restextrakt (Refraktometer)",fmtNum(b.refraktometer_restextrakt,"°Brix")],["Höchste Gärtemperatur",fmtNum(b.gaertemperatur,"°C")]]))}
       <section class="sec" id="sudMessungenSec" hidden><h3>Zwischenmessungen</h3><div id="sudMessungenListe"></div></section>
-      ${sec("Abfüllung",kv([["Ausschlagwürze",fmtNum(b.ausschlag,"l")],["Biermenge",fmtNum(b.biermenge,"l")],["Speise / Zucker",speiseText(b)],
+      ${sec("Abfüllung",kv([["Biermenge",fmtNum(b.biermenge,"l")],["Speise / Zucker",speiseText(b)],
         ["Flaschen",b.flaschen],["Karbonisierung",fmtNum(b.karbonisierung,"g/l")],["Alkohol",fmtNum(b.alkohol,"% vol")],
         ["Abgefüllt am",b.abgefuellt?fmtDate(b.abgefuellt)+b.abgefuellt.slice(0,4):null]]))}
       ${sec("Eigene Angaben",(b.wizard_notizen||[]).length?kv(b.wizard_notizen.map(n=>[n.label||"(ohne Bezeichnung)",n.wert])):"")}
@@ -280,9 +280,9 @@ function confirmDelete(b){
 const FIELDS=[
  ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (0–10, 10 = beste Note)","note"]]],
  ["Brauwasser",[["wasserhaerte","Karbonathärte (KH) in °dH","number"],["ziel_kh","Ziel-KH in °dH","number"],["hauptguss","Hauptguss in Litern","number"],["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],["nachguss","Nachguss in Litern","number"],["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],["ph_vorher","pH-Wert vorher","number"],["ph_nachher","pH-Wert nachher","number"],["wasser","Weitere Hinweise zum Brauwasser (frei)"]]],
- ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["stammwuerze","Stammwürze in °P – Spindel","number"],["refraktometer_anstellen","Stammwürze Refraktometer in °Brix","number"]]],
- ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge in g","gramm"],["restextrakt","Restextrakt in °P – Spindel","number"],["refraktometer_restextrakt","Restextrakt Refraktometer in °Brix","number"]]],
- ["Abfüllung",[["ausschlag","Ausschlagwürze in Litern","number"],["biermenge","Biermenge in Litern","number"],["karbonisierung","Karbonisierung in g/l","number"],["speise_art","Nachgärung mit","speise_art"],["speise_menge","","number"],["flaschen","Flaschen","integer"],["alkohol","Alkohol in % vol","number"],["abgefuellt","Abgefüllt am","date"]]],
+ ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["ausschlag","Ausschlagwürze in Litern","number"],["stammwuerze","Stammwürze in °P – Spindel","number"],["refraktometer_anstellen","Stammwürze Refraktometer in °Brix","number"]]],
+ ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge in g","gramm"],["restextrakt","Restextrakt in °P – Spindel","number"],["refraktometer_restextrakt","Restextrakt Refraktometer in °Brix","number"],["gaertemperatur","Höchste Gärtemperatur in °C","number"]]],
+ ["Abfüllung",[["abgefuellt","Abgefüllt am","date"],["biermenge","Biermenge in Litern","number"],["flaschen","Flaschen","integer"],["karbonisierung","Karbonisierung in g/l","number"],["speise_art","Nachgärung mit","speise_art"],["speise_menge","","number"],["alkohol","Alkohol in % vol","number"]]],
  ["Maischplan",[["einmaischtemperatur","Einmaischtemperatur in °C","number"],["abmaischtemperatur","Abmaischtemperatur in °C","number"]]],
 ];
 function field([k,label,type],v){
@@ -571,11 +571,13 @@ const WIZARD_FIELDS={
   laeutern:[["laeutern","Läutern"],["wuerze","Würzemenge vor dem Ausschlagen in Litern","number"]],
   kochen:[["kochzeit","Kochzeit in Minuten","integer"],["hopfensorten","Hopfensorten mit Alphasäure"]],
   anstellen:[["stammwuerze","Stammwürze gemessen in °P – Spindel","number"],["refraktometer_anstellen","Refraktometer-Wert in °Brix","number"],
-    ["hefe","Hefesorte"],["hefemenge","Hefemenge in g","gramm"]],
+    ["hefe","Hefesorte"],["hefemenge","Hefemenge in g","gramm"],["ausschlag","Ausschlagwürze in Litern","number"]],
   gaerung:[["restextrakt","Restextrakt, endgültig in °P – Spindel","number"],["refraktometer_restextrakt","Refraktometer, endgültig in °Brix","number"]],
-  abfuellung:[["abgefuellt","Abfülldatum","date"],["biermenge","Biermenge in Litern","number"],
-    ["karbonisierung","Gewünschte Karbonisierung in g/l","number"],["flaschen","Flaschen","integer"],["speise_art","Nachgärung mit","speise_art"],["speise_menge","","number"],
-    ["ausschlag","Ausschlagwürze in Litern","number"],["alkohol","Alkohol in % vol","number"]],
+  // Reihenfolge wie am Abfülltag: abfüllen → karbonisieren → Ergebnis. speise_art ist eine Knopfreihe (Chips),
+  // die Ausschlagwürze steht seit 22.11.2026 bei „Kühlen & Anstellen“, wo sie gemessen wird.
+  abfuellung:[["abgefuellt","Abfülldatum","date"],["biermenge","Biermenge in Litern","number"],["flaschen","Flaschen","integer"],
+    ["karbonisierung","Gewünschte Karbonisierung in g/l","number"],["gaertemperatur","Höchste Gärtemperatur in °C","number"],
+    ["speise_menge","","number"],["alkohol","Alkohol in % vol","number"]],
 };
 let wizard=null; // {sud, step, rezept, anlage, messungen}
 let wizardTimer=null,wizardSaving=0,wizardPending={};
@@ -749,31 +751,34 @@ function wizardWasserRechner(){
   $("#wzUebernehmenNg").onclick=()=>{const {rNg}=rechne();if(rNg==null)return;const g=Bz.runde(rNg,1);$("#f_milchsaeure_nachguss").value=g;wizardQueueSave({milchsaeure_nachguss:g,ziel_kh:Bz.zahl(zInp.value)});};
 }
 /* Zucker-Rechner im Abfüllung-Schritt: wie viel Haushalts- oder Traubenzucker für die gewünschte Karbonisierung
-   nötig ist (Brau.primingZucker, siehe lib/brau.js) – je Liter gerechnet und mal Biermenge als Gesamtmenge in g
+   nötig ist (Brau.primingZucker, Restkohlensäure aus der höchsten Gärtemperatur über Brau.restkohlensaeure,
+   siehe lib/brau.js) – je Liter gerechnet und mal Biermenge als Gesamtmenge in g
    übernommen (speise_menge), wie die bisherigen Einträge „145 g“. Hängt nicht von Stammwürze/Restextrakt
    ab (siehe Kommentar bei Brau.primingZucker) – nur von Ziel- und Restkohlensäure. Für "Speise" gibt es bewusst
    KEINEN Rechner – die dafür übliche Formel (Narziss) ergab bei einer Gegenprobe mit Beispielwerten ein
    unplausibles Ergebnis, darum lieber kein Wert als ein möglicherweise falscher. */
 function wizardZuckerRechner(){
-  const kInp=$("#f_karbonisierung"),bInp=$("#f_biermenge"),out=$("#wzRecZucker");
+  const kInp=$("#f_karbonisierung"),bInp=$("#f_biermenge"),tInp=$("#f_gaertemperatur"),out=$("#wzRecZucker");
   if(!kInp||!out)return; // bei Speise gibt es keinen Rechner
   const art=wizard.sud.speise_art==="traubenzucker"?"traubenzucker":"zucker";
   const rechne=()=>{
-    const gl=Bz.primingZucker(Bz.zahl(kInp.value),null,art),l=Bz.zahl(bInp.value);
+    const t=Bz.zahl(tInp.value),rest=Bz.restkohlensaeure(t);
+    const gl=Bz.primingZucker(Bz.zahl(kInp.value),rest,art),l=Bz.zahl(bInp.value);
     const gesamt=gl!=null&&l?gl*l:null;
-    out.textContent=gl==null?"–":`${Bz.fmtZahl(gl,1)} g/l`+(gesamt!=null?` · ${Bz.fmtZahl(gesamt,0)} g für ${Bz.fmtZahl(l)} l`:" · Biermenge fehlt");
+    out.textContent=gl==null?"– (Karbonisierung fehlt)":gesamt!=null?`${Bz.fmtZahl(gesamt,0)} g (${Bz.fmtZahl(gl,1)} g/l × ${Bz.fmtZahl(l)} l)`:`${Bz.fmtZahl(gl,1)} g/l · Biermenge fehlt`;
+    $("#wzRestCo2").textContent=`Restkohlensäure im Bier ca. ${Bz.fmtZahl(rest,1)} g/l `+(t!=null?`bei ${Bz.fmtZahl(t)} °C.`:"(Richtwert für 18–20 °C, mit Gärtemperatur genauer).")
+      +(art==="traubenzucker"?" Traubenzucker braucht rund 16 % mehr als Haushaltszucker.":"");
     return gesamt;
   };
   rechne();
-  [kInp,bInp].forEach(el=>el.addEventListener("input",rechne));
+  [kInp,bInp,tInp].forEach(el=>el.addEventListener("input",rechne));
   $("#wzZuckerUebernehmen").onclick=()=>{
     const g=rechne();
     if(g==null){toast(Bz.zahl(kInp.value)==null?"Bitte erst die gewünschte Karbonisierung eintragen.":"Bitte erst die Biermenge eintragen.");return;}
-    const menge=Math.round(g);
-    $("#f_speise_menge").value=menge;
-    if(!wizard.sud.speise_art){$("#f_speise_art").value="zucker";}
+    const menge=Math.round(g),neu=!wizard.sud.speise_art;
     wizardQueueSave({speise_menge:menge,speise_art:wizard.sud.speise_art||"zucker"});
-    const l=$("#f_speise_menge").closest("label");if(l)l.firstChild.textContent=speiseMengeLabel(wizard.sud.speise_art);
+    if(neu)wizardRenderStep(); // Auswahl „Haushaltszucker“ und Feldbeschriftung nachziehen
+    else $("#f_speise_menge").value=menge;
   };
 }
 /* Fußleiste wie beim Verkostungs-Bewertungsbogen: ganz kleine Punkte + "n / total", Zurück/Weiter. Die Punkte
@@ -786,7 +791,7 @@ function wizardFussHtml(){
       <span class="punkte">${WIZARD_STEPS.map(([,titel],i)=>`<button type="button" class="punkt" data-wz-goto="${i}" aria-label="Schritt ${i+1}: ${esc(titel)}"><i class="${i<=wizard.step?"ab":""}"></i></button>`).join("")}</span>
       <span class="zahl num">${n} / ${total}</span>
     </div>
-    <div class="bogen-knoepfe">${wizard.step>0?`<button type="button" class="btn" id="wzBack" aria-label="Zurück">←</button>`:""}${letzte?"":`<button type="button" class="btn primary" id="wzNext">Weiter</button>`}</div>
+    <div class="bogen-knoepfe">${wizard.step>0?`<button type="button" class="btn" id="wzBack" aria-label="Zurück">←</button>`:""}${letzte?`<button type="button" class="btn primary" id="wzAbschliessen">Sud abschließen ✓</button>`:`<button type="button" class="btn primary" id="wzNext">Weiter</button>`}</div>
   </div>`;
 }
 function wizardPlanHinweis(){
@@ -828,20 +833,23 @@ function wizardRenderStep(){
     const refAlk=Bz.alkoholAusRefraktometer(d.refraktometer_anstellen,d.refraktometer_restextrakt);
     const alkBerechnet=Bz.alkoholAusMessung(d.stammwuerze,d.restextrakt);
     const alkAbweichend=d.alkohol_geschaetzt===false&&alkBerechnet!=null&&Math.abs((d.alkohol??0)-alkBerechnet)>0.05;
-    const speise=d.speise_art==="speise",zuckerName=SPEISE_ART[d.speise_art==="traubenzucker"?"traubenzucker":"zucker"];
-    body=`<div class="grid2">${WIZARD_FIELDS.abfuellung.map(f=>field(speiseFeld(f,d),d[f[0]])).join("")}</div>
+    const F=Object.fromEntries(WIZARD_FIELDS.abfuellung.map(f=>[f[0],f])),fld=k=>field(speiseFeld(F[k],d),d[k]);
+    body=`<p class="f-titel">Abfüllen</p>
+      <div class="grid2">${fld("abgefuellt")}${fld("biermenge")}${fld("flaschen")}</div>
+      <p class="f-titel">Karbonisieren</p>
+      <div class="grid2">${fld("karbonisierung")}${fld("gaertemperatur")}</div>
+      <div class="f wz-speise">Nachgärung mit<div class="chips" role="group" aria-label="Nachgärung mit">${Object.entries(SPEISE_ART).map(([a,l])=>`<button type="button" class="chip" data-speise-art="${a}" aria-pressed="${d.speise_art===a}">${esc(l)}</button>`).join("")}</div></div>
+      ${fld("speise_menge")}
+      ${d.speise_art==="speise"?`<p class="hint wz-empf">Für Speise gibt es keinen Rechner – die übliche Formel ließ sich nicht zuverlässig gegenprüfen.</p>`
+        :`<p class="hint wz-empf">Empfehlung: <b id="wzRecZucker">–</b> <button type="button" class="linkbtn" id="wzZuckerUebernehmen">übernehmen</button></p>
+      <p class="hint" id="wzRestCo2"></p>`}
       ${altFeld("zucker","Speise / Zucker",d)}
-      ${speise?`<p class="hint">Für Speise (unvergorene Würze statt Zucker) gibt es bewusst keinen Rechner – die dafür übliche, von Stammwürze und Restextrakt abhängige Formel ließ sich nicht zuverlässig gegenprüfen.</p>`
-      :`<div class="kws" style="grid-template-columns:1fr;max-width:340px;margin:4px 0">
-        <div class="kw"><span>${esc(zuckerName)}-Empfehlung</span><b id="wzRecZucker">–</b></div>
-      </div>
-      <button type="button" class="btn ghost" id="wzZuckerUebernehmen">Empfehlung als Menge übernehmen</button>
-      <p class="hint">Rechnet je Liter mit einer angenommenen Restkohlensäure von ca. ${esc(Bz.fmtZahl(Bz.REST_CO2_STANDARD_GL))} g/l (Richtwert für ca. 18–20 °C Gärtemperatur) – bei deutlich wärmer oder kälter vergorenem Bier von Hand anpassen – und mal der Biermenge für die Gesamtmenge. Traubenzucker braucht rund 16 % mehr als Haushaltszucker.</p>`}
+      <p class="f-titel">Ergebnis</p>
+      <div class="grid2">${fld("alkohol")}</div>
       ${d.alkohol_geschaetzt?`<p class="hint">Alkohol automatisch aus Stammwürze und Restextrakt (Spindel) berechnet – lässt sich hier jederzeit durch einen gemessenen Wert ersetzen.</p>`
         :alkAbweichend?`<p class="hint" style="color:var(--warn)">Von Hand geändert – weicht von der Berechnung (${esc(Bz.fmtZahl(Bz.runde(alkBerechnet,1)))} % vol) ab. <button type="button" class="linkbtn" id="wzAlkoholZuruecksetzen">↺ Auf Berechnung zurücksetzen</button></p>`:""}
       ${refAlk!=null?`<p class="hint">Zum Vergleich aus den Refraktometer-Werten geschätzt (korrigiert nach der verbreiteten „Sean-Terrill“-Näherungsformel, da Alkohol das Refraktometer sonst verfälscht): ${esc(Bz.fmtZahl(Bz.runde(refAlk,1)))} % vol. Auch das ist nur eine Orientierung, kein Laborwert.</p>`:""}
-      <button type="button" class="btn primary" id="wzAbschliessen" style="margin-top:18px">Sud abschließen ✓</button>
-      <p class="hint">Erst wenn wirklich abgefüllt wurde – bis dahin bleibt der Sud auf „Gärung läuft“.</p>`;
+      <p class="hint">„Sud abschließen“ unten erst, wenn wirklich abgefüllt ist – bis dahin bleibt der Sud auf „Gärung läuft“.</p>`;
   } else {
     body=`<div class="grid2">${WIZARD_FIELDS[key].map(f=>field(f,d[f[0]])).join("")}</div>`;
   }
@@ -851,7 +859,10 @@ function wizardRenderStep(){
   else if(key==="kochen"){wizardWireFields(WIZARD_FIELDS.kochen);wizardWireRowlist("hopfen","#rl_hopfen");}
   else if(key==="gaerung"){wizardWireFields(WIZARD_FIELDS.gaerung);wizardWireMessungen();}
   else if(key==="abfuellung"){
-    wizardWireFields(WIZARD_FIELDS.abfuellung);wizardZuckerRechner();$("#wzAbschliessen").onclick=wizardAbschliessen;
+    wizardWireFields(WIZARD_FIELDS.abfuellung);wizardZuckerRechner();
+    $("#wzBody").querySelectorAll("[data-speise-art]").forEach(b=>b.onclick=()=>{
+      const a=b.dataset.speiseArt;wizardQueueSave({speise_art:wizard.sud.speise_art===a?null:a});wizardRenderStep(); // erneut tippen hebt die Auswahl auf
+    });
     const zur=$("#wzAlkoholZuruecksetzen");
     if(zur)zur.onclick=()=>{const w=Bz.alkoholAusMessung(d.stammwuerze,d.restextrakt);wizardQueueSave({alkohol:Bz.runde(w,1),alkohol_geschaetzt:true});wizardRenderStep();};
   }
@@ -861,6 +872,7 @@ function wizardRenderStep(){
   wizardWireExtra(key);
   $("#wzStepTitel").textContent=titel;
   $("#wzFuss").innerHTML=wizardFussHtml();
+  const abschl=$("#wzAbschliessen");if(abschl)abschl.onclick=wizardAbschliessen;
   const backBtn=$("#wzBack");if(backBtn)backBtn.onclick=()=>{if(wizard.step>0){wizard.step--;wizardRenderStep();}};
   const nextBtn=$("#wzNext");if(nextBtn)nextBtn.onclick=()=>{
     if(WIZARD_STEPS[wizard.step][0]==="anstellen"&&wizard.sud.status==="entwurf")wizardQueueSave({status:"gaerung"});
@@ -928,7 +940,7 @@ function einstiegVerarbeiten(){
 }
 /* --- CSV-Export --- */
 function toCSV(){
-  const cols=["nr","datum","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","rasten","abmaischtemperatur","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","ausschlag","biermenge","zucker","speise_art","speise_menge","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich"];
+  const cols=["nr","datum","stil","etikett","bewertung","hauptguss","nachguss","wasser","malz","einmaischtemperatur","rasten","abmaischtemperatur","laeutern","kochzeit","wuerze","stammwuerze","hopfensorten","hopfen","hefe","hefemenge","messungen","restextrakt","gaertemperatur","ausschlag","biermenge","zucker","speise_art","speise_menge","flaschen","alkohol","alkohol_geschaetzt","abgefuellt","notizen","oeffentlich"];
   const v=(b,c)=>c==="malz"?(b.malz||[]).map(m=>`${m.sorte} ${m.gramm??""}g`).join(" | "):c==="hopfen"?(b.hopfen||[]).map(h=>h.sorte===undefined?`${h.menge} (${h.zeit})`:`${h.gramm??""}g ${h.sorte}${h.alpha!=null?" "+h.alpha+"%":""} (${TYP[h.typ]||h.typ}${h.zeit!=null?" "+h.zeit+" min":""})`).join(" | "):c==="rasten"?(b.rasten||[]).map(r=>`${r.temperatur??""}°C ${r.zeit??""}min`).join(" | "):c==="oeffentlich"||c==="alkohol_geschaetzt"?(b[c]?"ja":"nein"):(b[c]??"");
   const q=x=>`"${String(x).replace(/"/g,'""')}"`;
   return [cols.join(";")].concat(state.brews.slice().sort((a,c)=>(a.datum||"").localeCompare(c.datum||"")).map(b=>cols.map(c=>q(v(b,c))).join(";"))).join("\n");
