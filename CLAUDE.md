@@ -9,8 +9,8 @@ Erst lesen: `README.md` (Aufbau, Regeln), `HANDOVER.md` (Deploy, Datenbank-Reihe
 - Ein Bereich unter `features/` nutzt nur `core/` und `lib/`, nie einen anderen Bereich.
 - Rechte setzt die Datenbank durch (RLS), nicht die Oberfläche.
 - Seitenadressen bleiben stabil.
-- Neue Funktion: eigener Branch (`feature/…`, `fix/…`), PR nach `main`. `main` ist NICHT live.
-- Live geht nur über einen zweiten PR `main` → `production`. Nie von dir aus mergen; frag vorher, ob veröffentlicht werden soll.
+- Neue Funktion: eigener Branch (`feature/…`, `fix/…`), PR nach `main`.
+- `main` IST live: Ein Merge nach `main` steht etwa eine Minute später auf kolding.de. Nie von dir aus mergen – der Merge ist die Entscheidung zu veröffentlichen.
 - Datenbank: Hinzufügen darf vor dem Release laufen, Verhalten ändern oder Daten umschreiben erst danach. SQL-Dateien liegen in `features/*/schema/`. Edge Functions werden in Supabase bereitgestellt, nicht über GitHub.
 - `docs/` ist nur lokal (nicht im Repo) – nichts Wichtiges nur dort ablegen.
 

@@ -47,19 +47,17 @@ Datenbank selbst setzt durch, wer was darf.
 
 ### 2.1 Das Wichtigste zuerst: Wie ein Deploy wirklich funktioniert
 
-**Das steht sonst nirgends im Repo und hat den bisherigen Entwickler schon einmal getäuscht
-(29.10.2026): zwei PRs nach `main` gemergt, in der Annahme die Änderung sei live – war sie nicht.**
-
-- `main` ist nur der **Arbeitsstand**. Ein normaler Feature-PR geht nach `main` und verändert
-  die Live-Seite **nicht**.
-- GitHub Pages deployt ausschließlich bei Push auf den separaten Branch **`production`**
-  (`.github/workflows/pages.yml`, `on: push: branches: [production]`). Damit etwas live geht,
-  braucht es **zusätzlich einen eigenen zweiten PR `main` → `production`**, der gemergt wird.
-- Faustregel: nach jedem Feature-PR nach `main` bewusst entscheiden/fragen, ob *jetzt* auch
-  veröffentlicht werden soll – und wenn ja, den zweiten PR nicht vergessen.
-- Um zu prüfen, ob etwas wirklich live ist: `gh api repos/Niclas-27/koldingbraeu/actions/runs?per_page=3`
-  – nur ein erfolgreicher Lauf mit `head_branch: production` **nach** dem Merge-Zeitpunkt zählt.
-  Ungefähr eine Minute nach dem Merge nach `production` ist die Änderung auf kolding.de sichtbar.
+- **`main` ist live.** GitHub Pages deployt bei jedem Push auf `main`
+  (`.github/workflows/pages.yml`, `on: push: branches: [main]`). Ungefähr eine Minute nach dem
+  Merge eines Feature-PRs ist die Änderung auf kolding.de sichtbar.
+- Der Merge ist damit die Entscheidung zu veröffentlichen. Was noch nicht live gehen soll, bleibt
+  als offener PR liegen.
+- Um zu prüfen, ob etwas wirklich live ist: GitHub → Actions → „Veröffentlichen“ – ein
+  erfolgreicher Lauf auf `main` **nach** dem Merge-Zeitpunkt zählt.
+- Geschichte: Bis 22.11.2026 deployte nur ein separater Branch `production`, auf den per zweitem
+  PR `main` → `production` veröffentlicht wurde. Das hat am 29.10.2026 schon einmal getäuscht (nach
+  `main` gemergt, Änderung war aber nicht live) und war im Alltag nur ein zusätzlicher Klick – deshalb
+  abgeschafft. Ältere Texte (z. B. Köpfe von SQL-Dateien), die „nach production“ sagen, meinen „live“.
 
 Der Workflow läuft außerdem **automatisch jede Stunde** (`schedule: cron: "17 * * * *"`) und per Hand (GitHub → Actions → „Veröffentlichen“ → „Run workflow“),
 auch ohne dass Code geändert wurde – dazu gleich mehr (2.2).
@@ -81,9 +79,9 @@ dort sofort zur eigentlichen Seite weiter.
 - Läuft rein lesend mit dem öffentlichen Supabase-Schlüssel (demselben, der auch im Browser
   steht) und bricht den Gesamt-Build bei einem Fehler nicht ab.
 - **Deshalb der Zeitplan (stündlich):** Ein neuer Sud bekommt ohne diesen automatischen Lauf
-  erst dann eine Vorschauseite, wenn wieder jemand etwas veröffentlicht (`main`→`production`) –
-  das kann tagelang nicht passieren. Der Zeitplan-Lauf checkt deshalb bewusst **fest `production`**
-  aus (nicht den Default-Branch `main`), siehe Kommentar im Workflow.
+  erst dann eine Vorschauseite, wenn wieder jemand etwas nach `main` mergt –
+  das kann tagelang nicht passieren. Der Zeitplan-Lauf baut den Standard-Branch `main`, also genau
+  das, was live steht.
 - `404.html` leitet Adressen wie `/sud/<id>/`, für die noch keine Vorschauseite gebaut wurde,
   trotzdem auf die richtige Seite weiter.
 - Das Skript selbst ist gut kommentiert (Kopf von `scripts/build-previews.mjs` lesen). Kurzfassung
@@ -125,7 +123,7 @@ normalen Entwicklungsumgebung lief es bisher zuverlässiger.
 
 | Was | Wo |
 |---|---|
-| Code-Repo | GitHub `Niclas-27/koldingbraeu`, Arbeitsstand `main`, live `production` |
+| Code-Repo | GitHub `Niclas-27/koldingbraeu`, live ist `main` |
 | Speicher | Supabase Free-Plan: 1 GB Dateien, 500 MB Datenbank; belegt am 07.11.2026 ca. 61 MB Dateien |
 | Arbeitskopie Mac | `~/Documents/koldingbraeu` |
 | Datenbank | Supabase-Projekt `ysmnvtuxckiflvvfxxiy`, Region Frankfurt |
