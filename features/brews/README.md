@@ -177,7 +177,20 @@ Zwischenmessungen werden beim Speichern abgeglichen (`edMessungenSpeichern`: neu
 
 ## Offene Punkte
 
-- Altdaten aufräumen (Hopfen-Freitexte der 22 alten Sude)
+Keine.
+
+**Entscheidung zu den Altdaten (22.11.2026):** Die Hopfen-Freitexte der alten Sude (Nr. 1–21, aus Google Sheets
+übernommen) werden bewusst **nicht** in einem Rutsch umgeschrieben. Sie haben noch die Form
+`{zeit: "40 Min. vor Ende", menge: "14 g Magnum"}` plus den Freitext `hopfensorten`; neue Sude (ab Nr. 22) haben
+`{sorte, gramm, alpha, zeit, typ}`. Beides nebeneinander ist gewollt und funktioniert:
+
+- **Anzeige:** `hopfenLinks()`/`hopfenRechts()` zeigen alte Gaben als Text, neue strukturiert.
+- **Bearbeiten:** `hopfenNeu()` rechnet eine alte Gabe beim Öffnen im Editor um (Gramm, Alpha, Sorte, Minuten aus
+  dem Text; den Originaltext behält das Feld `alt`). Gespeichert wird erst mit „Speichern“ – dann liegt der Sud im
+  neuen Format. Der Freitext `hopfensorten` erscheint nur noch, wenn er befüllt ist.
+- Einzelne Eigenheiten stecken im Inhalt, nicht in der Struktur (Sud 3: „Stopfen“/„Whirlpool“ ohne Menge; Sud 6:
+  Gewürze statt Hopfen; Sud 14: zwei Spalter-Gaben mit verschiedenem Alpha; Sud 21: `hopfensorten` nennt Northern
+  Brewer, die erste Gabe aber Magnum). Wer einen dieser Sude bearbeitet, korrigiert das dabei von Hand.
 
 ## Braugang-Assistent (seit 31.10.2026, Schritt „Abfüllung” + Alkohol-Berechnung 31.10.2026 ergänzt)
 
