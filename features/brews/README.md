@@ -216,9 +216,12 @@ ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt wa
   Stand geladen wird. Kein eigener Zwischenspeicher im Browser nötig.
 - **Schüttung/Maischen/Kochen** nutzen dieselben Listen-Felder (`rowsHTML`) wie der normale Editor – „+ Malz“/
   „+ Rast“/„+ Hopfengabe“ funktionieren identisch, nur mit Autosave statt Sammel-Speichern.
-- **Wasserhärte-Rechner** im Wasser-Schritt: aus Wasserhärte (°dH) und Hauptguss/Nachguss eine empfohlene
-  Milchsäuremenge – bewusst eine vereinfachte Beispielrechnung (Härte × Menge × Faktor), kein geprüfter
-  Brauwert, das Ergebnis bleibt frei überschreibbar.
+- **Milchsäure-Rechner** im Wasser-Schritt: aus Karbonathärte (KH, °dH), Ziel-KH und Hauptguss/Nachguss die
+  Menge Milchsäure 80 % je Guss (`Brau.milchsaeure` in `lib/brau.js`, Herleitung dort: ≈ 0,035 ml je Liter
+  und °dH, also 1 ml senkt 10 l um knapp 3 °dH). Die Ziel-KH (Standard 2 °dH) wird nicht gespeichert, das
+  Ergebnis bleibt frei überschreibbar. Die Spalte `wasserhaerte` heißt in der Oberfläche jetzt
+  „Karbonathärte (KH)“ – Säure wirkt nur auf die KH, nicht auf die Gesamthärte. Die erste Fassung rechnete
+  `Härte × Liter × 0,09` (ungeprüfter Faktor, ca. 2,6-mal zu viel Säure, dazu oft mit der Gesamthärte).
 - **Gärung bleibt offen:** Dieser Schritt lässt sich beliebig oft erneut besuchen (über die Sud-Detailseite,
   Knopf „Braugang-Assistent“, oder automatisch beim Öffnen eines noch nicht dokumentierten Suds), um weitere
   Zwischenmessungen nachzutragen, ohne die vorherigen Schritte anzufassen.

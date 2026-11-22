@@ -189,7 +189,7 @@ function zeigeDetail(b){
     <article class="sud-blatt">
       ${bilder}
       ${header}
-      ${sec("Brauwasser",kv([["Hauptguss",fmtNum(b.hauptguss,"l")],["Nachguss",fmtNum(b.nachguss,"l")],["Wasserhärte",fmtNum(b.wasserhaerte,"°dH")],
+      ${sec("Brauwasser",kv([["Hauptguss",fmtNum(b.hauptguss,"l")],["Nachguss",fmtNum(b.nachguss,"l")],["Karbonathärte",fmtNum(b.wasserhaerte,"°dH")],
         ["pH vorher",b.ph_vorher],["pH nachher",b.ph_nachher],["Milchsäure Hauptguss",fmtNum(b.milchsaeure_hauptguss,"ml")],
         ["Milchsäure Nachguss",fmtNum(b.milchsaeure_nachguss,"ml")],["Wasserbehandlung",b.wasser]]))}
       ${sec("Schüttung",grist)}
@@ -267,7 +267,7 @@ function confirmDelete(b){
 /* --- Editor --- */
 const FIELDS=[
  ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (0–10, 10 = beste Note)","note"]]],
- ["Brauwasser",[["wasserhaerte","Wasserhärte in °dH","number"],["hauptguss","Hauptguss in Litern","number"],["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],["nachguss","Nachguss in Litern","number"],["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],["ph_vorher","pH-Wert vorher","number"],["ph_nachher","pH-Wert nachher","number"],["wasser","Weitere Hinweise zum Brauwasser (frei)"]]],
+ ["Brauwasser",[["wasserhaerte","Karbonathärte (KH) in °dH","number"],["hauptguss","Hauptguss in Litern","number"],["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],["nachguss","Nachguss in Litern","number"],["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],["ph_vorher","pH-Wert vorher","number"],["ph_nachher","pH-Wert nachher","number"],["wasser","Weitere Hinweise zum Brauwasser (frei)"]]],
  ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["stammwuerze","Stammwürze in °P – Spindel","number"],["refraktometer_anstellen","Stammwürze Refraktometer in °Brix","number"]]],
  ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge"],["restextrakt","Restextrakt in °P – Spindel","number"],["refraktometer_restextrakt","Restextrakt Refraktometer in °Brix","number"]]],
  ["Abfüllung",[["ausschlag","Ausschlagwürze in Litern","number"],["biermenge","Biermenge in Litern","number"],["karbonisierung","Karbonisierung in g/l","number"],["zucker","Speise / Zucker"],["flaschen","Flaschen","integer"],["alkohol","Alkohol in % vol","number"],["abgefuellt","Abgefüllt am","date"]]],
@@ -542,7 +542,7 @@ const WIZARD_STEPS=[
 ];
 // [Spalte, Beschriftung, Typ] je Schritt – dieselbe Form wie FIELDS oben, darum auch dieselbe field()-Funktion
 const WIZARD_FIELDS={
-  wasser:[["wasserhaerte","Wasserhärte in °dH","number"],["hauptguss","Hauptguss in Litern","number"],
+  wasser:[["wasserhaerte","Karbonathärte (KH) in °dH","number"],["hauptguss","Hauptguss in Litern","number"],
     ["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],["nachguss","Nachguss in Litern","number"],
     ["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],["ph_vorher","pH-Wert vorher","number"],
     ["ph_nachher","pH-Wert nachher","number"],["wasser","Weitere Hinweise zum Brauwasser (frei)"]],
@@ -700,27 +700,28 @@ function wizardWireMessungen(){
       wizard.messungen.splice(i,1);wizardRenderStep();});
   });
 }
-/* --- Wasserhärte-Rechner: vereinfachte Beispielformel (Härte × Wassermenge × Faktor), keine geprüfte
-   brautechnische Berechnung – dient nur als grobe Orientierung, Ergebnis bleibt frei überschreibbar. */
+/* --- Milchsäure-Rechner: wie viel Milchsäure 80 % je Guss, um die Karbonathärte auf die Ziel-KH zu senken
+   (Brau.milchsaeure, Herleitung siehe lib/brau.js). Die Ziel-KH wird nicht gespeichert, sie dient nur der
+   Rechnung; das Ergebnis bleibt frei überschreibbar. Früher stand hier Härte × Liter × 0,09 – ein ungeprüfter
+   Faktor, der rund 2,6-mal zu viel Säure empfahl. */
 function wizardWasserRechner(){
-  const hInp=$("#f_wasserhaerte"),hgInp=$("#f_hauptguss"),ngInp=$("#f_nachguss");
+  const hInp=$("#f_wasserhaerte"),hgInp=$("#f_hauptguss"),ngInp=$("#f_nachguss"),zInp=$("#wzZielKh");
   if(!hInp)return;
-  const FAKTOR=0.09;
   const rechne=()=>{
-    const h=Bz.zahl(hInp.value)||0,hg=Bz.zahl(hgInp.value)||0,ng=Bz.zahl(ngInp.value)||0;
-    const rHg=h*hg*FAKTOR,rNg=h*ng*FAKTOR;
-    $("#wzRecHg").textContent=h&&hg?Bz.fmtZahl(rHg,1)+" ml":"–";
-    $("#wzRecNg").textContent=h&&ng?Bz.fmtZahl(rNg,1)+" ml":"–";
+    const rHg=Bz.milchsaeure(hInp.value,hgInp.value,zInp.value),rNg=Bz.milchsaeure(hInp.value,ngInp.value,zInp.value);
+    $("#wzRecHg").textContent=rHg!=null?Bz.fmtZahl(rHg,1)+" ml":"–";
+    $("#wzRecNg").textContent=rNg!=null?Bz.fmtZahl(rNg,1)+" ml":"–";
     return {rHg,rNg};
   };
-  [hInp,hgInp,ngInp].forEach(el=>el.addEventListener("input",rechne));
+  rechne();
+  [hInp,hgInp,ngInp,zInp].forEach(el=>el.addEventListener("input",rechne));
   // Wichtig: .value bei einem <input type="number"> braucht einen Punkt als Dezimaltrennzeichen (HTML-Vorgabe,
   // unabhängig von der Spracheinstellung) – Bz.fmtZahl() liefert ein Komma (deutsches Format) und wurde hier
   // früher versehentlich direkt als .value gesetzt; der Browser verwirft das dann stillschweigend, ohne
   // Fehlermeldung, nur beim erneuten Rendern (z. B. nach Zurück/Vor) erschien der – korrekt gespeicherte –
   // Wert dann wieder, weil field() den rohen Zahlenwert nutzt statt der formatierten Anzeige.
-  $("#wzUebernehmenHg").onclick=()=>{const {rHg}=rechne();const g=Bz.runde(rHg,1);$("#f_milchsaeure_hauptguss").value=g;wizardQueueSave({milchsaeure_hauptguss:g});};
-  $("#wzUebernehmenNg").onclick=()=>{const {rNg}=rechne();const g=Bz.runde(rNg,1);$("#f_milchsaeure_nachguss").value=g;wizardQueueSave({milchsaeure_nachguss:g});};
+  $("#wzUebernehmenHg").onclick=()=>{const {rHg}=rechne();if(rHg==null)return;const g=Bz.runde(rHg,1);$("#f_milchsaeure_hauptguss").value=g;wizardQueueSave({milchsaeure_hauptguss:g});};
+  $("#wzUebernehmenNg").onclick=()=>{const {rNg}=rechne();if(rNg==null)return;const g=Bz.runde(rNg,1);$("#f_milchsaeure_nachguss").value=g;wizardQueueSave({milchsaeure_nachguss:g});};
 }
 /* Zucker-Rechner im Abfüllung-Schritt: wie viel Haushaltszucker je Liter Bier für die gewünschte Karbonisierung
    nötig ist (Brau.primingZucker, siehe lib/brau.js) – bewusst eine Dosierung pro Liter statt einer Gesamtmenge
@@ -776,13 +777,14 @@ function wizardRenderStep(){
     body=`<div class="grid2">${field(["einmaischtemperatur","Einmaischtemperatur in °C","number"],d.einmaischtemperatur)}${field(["abmaischtemperatur","Abmaischtemperatur in °C","number"],d.abmaischtemperatur)}</div>
       <div class="rowlist" id="rl_rasten">${rowsHTML("rasten",d.rasten)}</div><button type="button" class="add" data-wz-add="rasten">+ Rast</button>`;
   } else if(key==="wasser"){
-    body=`<p class="hint">Richtwert pH 5,2–5,6 im Hauptguss. Die Empfehlung ist eine vereinfachte Beispielrechnung – als grobe Orientierung, kein geprüfter Brauwert.</p>
-      <div class="grid2">${field(["wasserhaerte","Wasserhärte in °dH","number"],d.wasserhaerte)}${field(["ph_vorher","pH-Wert vorher","number"],d.ph_vorher)}</div>
+    body=`<p class="hint">Die Empfehlung rechnet mit Milchsäure 80 % und senkt die Karbonathärte (KH) auf die Ziel-KH. Wichtig ist die Karbonathärte, nicht die Gesamthärte – sie steht in der Wasseranalyse deines Versorgers, manchmal als Säurekapazität K<sub>S 4,3</sub> in mmol/l (× 2,8 = °dH). Ziel-KH: je heller das Bier, desto niedriger; dunkle Malze säuern die Maische selbst. Richtwert für die Maische: pH 5,2–5,6.</p>
+      <div class="grid2">${field(["wasserhaerte","Karbonathärte (KH) in °dH","number"],d.wasserhaerte)}<label class="f">Ziel-KH in °dH<input id="wzZielKh" type="number" step="any" inputmode="decimal" value="2"></label></div>
       <div class="grid2">${field(["hauptguss","Hauptguss in Litern","number"],d.hauptguss)}${field(["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],d.milchsaeure_hauptguss)}</div>
       <p class="hint" style="margin:-8px 0 14px">Empfehlung Hauptguss: <b id="wzRecHg">–</b> <button type="button" class="linkbtn" id="wzUebernehmenHg">übernehmen</button></p>
       <div class="grid2">${field(["nachguss","Nachguss in Litern","number"],d.nachguss)}${field(["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],d.milchsaeure_nachguss)}</div>
       <p class="hint" style="margin:-8px 0 14px">Empfehlung Nachguss: <b id="wzRecNg">–</b> <button type="button" class="linkbtn" id="wzUebernehmenNg">übernehmen</button></p>
-      <div class="grid2">${field(["ph_nachher","pH-Wert nachher","number"],d.ph_nachher)}${field(["wasser","Weitere Hinweise zum Brauwasser (frei)"],d.wasser)}</div>`;
+      <div class="grid2">${field(["ph_vorher","pH-Wert vorher","number"],d.ph_vorher)}${field(["ph_nachher","pH-Wert nachher","number"],d.ph_nachher)}</div>
+      ${field(["wasser","Weitere Hinweise zum Brauwasser (frei)"],d.wasser)}`;
   } else if(key==="kochen"){
     body=`<div class="grid2">${WIZARD_FIELDS.kochen.map(f=>field(f,d[f[0]])).join("")}</div>
       <div class="rowlist h5" id="rl_hopfen">${rowsHTML("hopfen",d.hopfen)}</div><button type="button" class="add" data-wz-add="hopfen">+ Hopfengabe</button>`;
