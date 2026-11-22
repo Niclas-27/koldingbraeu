@@ -93,11 +93,11 @@ Seit 07.11.2026 mit eigener `lib/README.md`: Brau-Rechnungen (`brau.js`), QR-Cod
 `bilder.js` – Zuschnitt mit gespeichertem Ausschnitt („Ausschnitt ändern“), sicheres Löschen geteilter Bilder,
 das gemeinsame Galerie-Modul und die Speicher-Regeln. Wer an Fotos arbeitet, liest zuerst diese Datei.
 
-### 2.4 Altlast `sude.json`
+### 2.4 Altbestand `sude.json`
 
 Die Datei im Repo-Root enthält die 22 Sude von 2018 bis 2025 als Rohdaten, aus denen die Datenbank einmalig
-befüllt wurde. Die Seite liest sie nicht (steht so auch in `README.md` → Aufbau). Sie kann als Sicherung
-bleiben oder gelöscht werden – Entscheidung des Betreibers.
+befüllt wurde. Die Seite liest sie nicht (steht so auch in `README.md` → Aufbau). Entscheidung des Betreibers
+(22.11.2026): **bleibt als Sicherung im Repo** und wird nicht gelöscht.
 
 ### 2.5 Datenbank- und Funktionsänderungen: Reihenfolge
 
@@ -155,12 +155,15 @@ normalen Entwicklungsumgebung lief es bisher zuverlässiger.
 ### 2.9 Offene Punkte (Stand dieser Übergabe)
 
 Die laufend aktuelle Liste offener Punkte je Bereich steht in den jeweiligen
-`features/<bereich>/README.md` unter „Offene Punkte". Zusätzlich, bereichsübergreifend:
+`features/<bereich>/README.md` unter „Offene Punkte". Bereichsübergreifend ist aktuell nichts offen.
 
-- GitHub Pages: „Enforce HTTPS" einschalten.
-- Supabase Site URL / Redirect URLs auf `https://kolding.de/` setzen.
-- `sude.json` behalten oder löschen (siehe 2.4).
-- Sud 23 hat zwei verknüpfte Biere „Hazy IPA“ – vermutlich doppelt angelegt, eins prüfen/löschen.
+Am 22.11.2026 erledigt bzw. geklärt:
+
+- GitHub Pages: „Enforce HTTPS" ist eingeschaltet (`http://kolding.de` leitet auf `https://` um).
+- Supabase: Site URL ist `https://kolding.de/`, in den Redirect URLs steht `https://kolding.de/**`
+  (zusätzlich die alte Adresse `niclas-27.github.io/koldingbraeu/**`, darf bleiben).
+- Sud 23: hängt nur noch ein Bier „Hazy IPA“ dran, das Duplikat gibt es nicht mehr (Datenbank geprüft).
+- `sude.json`: bleibt im Repo (siehe 2.4).
 
 ---
 
