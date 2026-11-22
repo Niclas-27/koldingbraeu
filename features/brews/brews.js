@@ -2,7 +2,7 @@
    Übersicht, Liste, Details, Editor und CSV-Export. Anmeldung und Menü kommen aus kern.js. */
 (function () {
 "use strict";
-const {$, esc, state, isBM, isAdmin, fmtDate, fmtDateTime, personName, todayIso, toast, sheet, openSheet, closeSheet, bestaetigen, kv, sec, fehlertext} = KB;
+const {$, esc, state, isBM, isAdmin, fmtDate, fmtDateTime, personName, todayIso, toast, sheet, openSheet, closeSheet, sheetSchutz, bestaetigen, kv, sec, fehlertext} = KB;
 const sb = new Proxy({}, {get: (_, k) => { const v = KB.sb[k]; return typeof v === "function" ? v.bind(KB.sb) : v; }});  // Client entsteht erst beim Start
 // Spalten, die Gäste lesen dürfen (ohne notizen, bewertung); Messwerte seit 25.10.2026 Zahl+Einheit statt Freitext
 const PUBLIC_COLS = "id,nr,datum,datum_geschaetzt,stil,etikett,hauptguss,nachguss,wasser,malz,einmaischtemperatur,abmaischtemperatur,rasten,laeutern,kochzeit,wuerze,stammwuerze,hopfensorten,hopfen,hefe,hefemenge,messungen,restextrakt,ausschlag,biermenge,zucker,flaschen,alkohol,alkohol_geschaetzt,abgefuellt,oeffentlich,rezept_id,bild_foto,bild_etikett,bild_kronkorken,bild_flasche";
@@ -311,7 +311,7 @@ function openEditor(src,asCopy){
   const nextNr=Math.max(0,...state.brews.map(b=>+b.nr||0))+1;
   if(src&&src.ausRezept){draft=Object.assign({nr:nextNr,datum:todayIso(),oeffentlich:false},src.draft);editingId=null;}
   else if(!src){draft={nr:nextNr,datum:todayIso(),oeffentlich:false,malz:[{sorte:"",gramm:"",ebc:null}],rasten:[{temperatur:"",zeit:""}],hopfen:[hopfenNeu(null)]};editingId=null;}
-  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:null,ausschlag:null,biermenge:null,flaschen:null,alkohol:null,abgefuellt:null,notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null,bild_kronkorken:null,bild_flasche:null,ph_vorher:null,ph_nachher:null,refraktometer_anstellen:null,refraktometer_restextrakt:null,wizard_notizen:[]});editingId=null;}
+  else if(asCopy){draft=JSON.parse(JSON.stringify(src));delete draft.id;delete draft.rezept_id;Object.assign(draft,{nr:nextNr,datum:todayIso(),bewertung:"",messungen:"",restextrakt:null,ausschlag:null,biermenge:null,flaschen:null,alkohol:null,alkohol_geschaetzt:false,abgefuellt:null,notizen:"",datum_geschaetzt:false,oeffentlich:false,bild_foto:null,bild_etikett:null,bild_kronkorken:null,bild_flasche:null,ph_vorher:null,ph_nachher:null,refraktometer_anstellen:null,refraktometer_restextrakt:null,wizard_notizen:[]});editingId=null;}
   else{draft=JSON.parse(JSON.stringify(src));editingId=src.id;}
   ["malz","rasten","hopfen"].forEach(k=>{if(!Array.isArray(draft[k]))draft[k]=[];});
   draft.hopfen=draft.hopfen.map(hopfenNeu);
@@ -322,6 +322,9 @@ function openEditor(src,asCopy){
   $("#cancelEdit").onclick=closeSheet;
   $("#saveBtn").onclick=save;
   openSheet();$("#sheetBody").scrollTop=0;
+  // Ungespeicherte Eingaben nicht stillschweigend verwerfen (Abbrechen, Wischen, Esc, Klick daneben)
+  const anfang=aenderungsstand();
+  sheetSchutz(weiter=>{if(aenderungsstand()===anfang)weiter();else bestaetigen("Eingaben verwerfen?","Deine Änderungen an diesem Sud sind noch nicht gespeichert.","Ja, verwerfen",weiter);});
 }
 /* Bestehenden Sud direkt auf seiner Detailseite bearbeiten, ohne Seitenblatt: das Formular ersetzt
    die Ansicht an Ort und Stelle (wie openEditor, aber ohne Sheet). Neuanlegen/Kopieren/Aus-Rezept
@@ -344,7 +347,8 @@ function editInline(b){
       </div>
     </article>`;
   edMessungen=null;drawForm("#sudEditBody");edMessungenLaden(b.id);
-  $("#cancelEdit").onclick=()=>zeigeDetail(b);
+  const anfang=aenderungsstand();
+  $("#cancelEdit").onclick=()=>{if(aenderungsstand()===anfang)zeigeDetail(b);else bestaetigen("Eingaben verwerfen?","Deine Änderungen an diesem Sud sind noch nicht gespeichert.","Ja, verwerfen",()=>zeigeDetail(b));};
   $("#saveBtn").onclick=save;
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -415,6 +419,18 @@ async function edMessungenSpeichern(sudId){
   }
   return null;
 }
+/* Alte Hopfengaben (Freitext wie „40 Min. vor Ende · 14 g Magnum“) werden beim Öffnen umgerechnet (hopfenNeu) und
+   beim Speichern ins neue Format überführt. Den Originaltext sichern wir vorher einmalig in den Notizen, damit er
+   nicht verloren geht – die Umrechnung ist eine Heuristik und kann danebenliegen. */
+function altHopfenInNotizen(hopfen,notizen){
+  const alt=(hopfen||[]).map(h=>h&&h.alt).filter(Boolean);
+  if(!alt.length)return notizen;
+  const kopf="Hopfengaben vor der Umwandlung:";
+  if((notizen||"").includes(kopf))return notizen;
+  return[(notizen||"").trim(),kopf+" "+alt.join("; ")].filter(Boolean).join("\n");
+}
+/* Stand des Formulars als Text – zum Erkennen, ob seit dem Öffnen etwas geändert wurde. */
+function aenderungsstand(){collect();return JSON.stringify(draft);}
 function collect(){
   const f=$("#form");if(!f)return;
   f.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{
@@ -435,7 +451,8 @@ async function save(){
   if(draft.flaschen!=null&&!Number.isInteger(draft.flaschen)){err.textContent="Flaschen bitte als ganze Zahl eintragen.";$("#f_flaschen")?.focus();return;}
   if(draft.bewertung!=null&&(draft.bewertung<0||draft.bewertung>10)){err.textContent="Bitte eine Bewertung zwischen 0 und 10 eintragen.";$("#f_bewertung")?.focus();return;}
   const out={};WRITE_COLS.forEach(k=>{let v=draft[k];if(v==="")v=null;if(v!==undefined)out[k]=v;});
-  out.malz=(draft.malz||[]).filter(m=>m.sorte||m.gramm);out.hopfen=(draft.hopfen||[]).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>({...h,zeit:h.typ==="Stopfen"?null:h.zeit}));out.rasten=(draft.rasten||[]).filter(r=>r.temperatur!=null||r.zeit!=null);
+  out.malz=(draft.malz||[]).filter(m=>m.sorte||m.gramm);out.hopfen=(draft.hopfen||[]).filter(h=>h.sorte||h.gramm).map(({alt,...h})=>({...h,zeit:h.typ==="Stopfen"?null:h.zeit}));
+  out.notizen=altHopfenInNotizen(draft.hopfen,out.notizen);out.rasten=(draft.rasten||[]).filter(r=>r.temperatur!=null||r.zeit!=null);
   out.wizard_notizen=(draft.wizard_notizen||[]).filter(n=>n.label||n.wert);out.oeffentlich=!!draft.oeffentlich;out.datum_geschaetzt=!!draft.datum_geschaetzt;out.alkohol_geschaetzt=!!draft.alkohol_geschaetzt;
   if(editingId&&out.datum!==state.brews.find(b=>b.id===editingId)?.datum)out.datum_geschaetzt=false;
   if(editingId&&out.alkohol!==state.brews.find(b=>b.id===editingId)?.alkohol)out.alkohol_geschaetzt=false;
@@ -451,7 +468,7 @@ async function save(){
     await sb.from("biere").update({bild_kronkorken:data.bild_kronkorken,bild_flasche:data.bild_flasche}).eq("sud_id",editingId);
   if(alt)["bild_foto","bild_kronkorken","bild_flasche","bild_etikett"].forEach(k=>{if(alt[k]&&alt[k]!==data[k])Bilder.loeschen(alt[k]);});
   state.brews=state.brews.filter(b=>b.id!==data.id).concat([data]);
-  if(!bearbeitenInline)closeSheet();
+  if(!bearbeitenInline)closeSheet(true);
   if(editingId&&aktuellerSud&&aktuellerSud.id===editingId){toast("Gespeichert");zeigeDetail(data);}
   else{toast(editingId?"Gespeichert":`Sud ${data.nr} angelegt`);location.href="index.html?sud="+data.id;}
 }
@@ -496,7 +513,8 @@ function draftAusRezept(u,r,ziel,mitAnl){ // mitAnl: verwendete Ausbeute in % (o
   const sorten=[...new Map((u.hopfen||[]).filter(h=>h.sorte).map(h=>[h.sorte,h.alpha])).entries()].map(([s,a])=>a!=null?`${s} ${t(a)} %`:s).join(", ");
   const ziele=[r.stammwuerze!=null?`${t(r.stammwuerze)} °P`:"",r.bittere!=null?`${t(r.bittere)} IBU`:"",r.farbe!=null?`${t(r.farbe)} EBC`:"",r.alkohol!=null?`${t(r.alkohol)} % Alkohol`:""].filter(Boolean).join(" · ");
   const gaer=[r.gaertemperatur?`Gärtemperatur ${r.gaertemperatur}${/°/.test(r.gaertemperatur)?"":" °C"}`:"",r.endvergaerungsgrad!=null?`EVG ${t(r.endvergaerungsgrad)} %`:"",r.karbonisierung!=null?`Karbonisierung ${t(r.karbonisierung)} g/l`:""].filter(Boolean).join(" · ");
-  return{stil:r.name,rezept_id:r.id,
+  const weitere=(u.weitere||r.weitere||[]).filter(w=>w&&w.name).map(w=>`${w.name}${w.menge!=null&&w.menge!==""?" "+t(w.menge)+(w.einheit?" "+w.einheit:""):""}${w.zeitpunkt?" ("+w.zeitpunkt+")":""}`).join(", ");
+  return{stil:r.name,rezept_id:r.id,karbonisierung:r.karbonisierung??null,
     hauptguss:u.hauptguss??null,nachguss:u.nachguss??null,
     einmaischtemperatur:u.einmaischtemperatur??null,abmaischtemperatur:u.abmaischtemperatur??null,
     rasten:(u.rasten||[]).map(x=>({temperatur:x.temperatur,zeit:x.zeit})),
@@ -504,13 +522,13 @@ function draftAusRezept(u,r,ziel,mitAnl){ // mitAnl: verwendete Ausbeute in % (o
     malz:(u.malze||[]).map(m=>({sorte:m.name,gramm:m.gramm,ebc:m.ebc??null})),
     hopfen:(u.hopfen||[]).map(h=>({sorte:h.sorte,gramm:h.gramm,alpha:h.alpha,zeit:h.zeit,typ:h.typ})),
     hopfensorten:sorten,hefe:r.hefe||"",
-    notizen:`Nach Rezept „${r.name}“, umgerechnet auf ${t(ziel)} l Ausschlagwürze${typeof mitAnl==="number"?`, Schüttung für ${t(mitAnl)} % Sudhausausbeute`:mitAnl?" (Anlagenprofil)":""}.${ziele?"\nZiel: "+ziele:""}${gaer?"\n"+gaer:""}`};
+    notizen:`Nach Rezept „${r.name}“, umgerechnet auf ${t(ziel)} l Ausschlagwürze${typeof mitAnl==="number"?`, Schüttung für ${t(mitAnl)} % Sudhausausbeute`:mitAnl?" (Anlagenprofil)":""}.${ziele?"\nZiel: "+ziele:""}${gaer?"\n"+gaer:""}${weitere?"\nWeitere Zutaten: "+weitere:""}`};
 }
 /* Rückweg: aus einem Sud ein Rezept machen */
 async function rezeptAusSud(b){
   const n=v=>v==null||v===""?null:Bz.zahl(v);
   const r={name:title(b),autor:"Koldingbräu",quelle:`aus Sud Nr. ${b.nr} (${fmtDate(b.datum)}${b.datum?b.datum.slice(0,4):""})`,aus_sud_id:b.id,
-    ausschlag:n(b.ausschlag)??n(b.wuerze)??n(b.biermenge),stammwuerze:n(b.stammwuerze),alkohol:n(b.alkohol),
+    ausschlag:n(b.ausschlag)||n(b.wuerze)||n(b.biermenge)||null,stammwuerze:n(b.stammwuerze),alkohol:n(b.alkohol),
     hauptguss:n(b.hauptguss),nachguss:n(b.nachguss),kochzeit:n(b.kochzeit),einmaischtemperatur:n(b.einmaischtemperatur),abmaischtemperatur:n(b.abmaischtemperatur),
     rasten:(b.rasten||[]).map(x=>({temperatur:x.temperatur,zeit:x.zeit})),
     malze:(b.malz||[]).filter(m=>m.sorte||m.gramm).map(m=>({name:m.sorte,gramm:Bz.zahl(m.gramm),ebc:m.ebc!=null&&m.ebc!==""?Bz.zahl(m.ebc):Bz.malzEbc(m.sorte)})),
@@ -556,10 +574,11 @@ const WIZARD_FIELDS={
     ["ausschlag","Ausschlagwürze in Litern","number"],["alkohol","Alkohol in % vol","number"]],
 };
 let wizard=null; // {sud, step, rezept, anlage, messungen}
-let wizardTimer=null,wizardSaving=0,wizardPending={};
+let wizardTimer=null,wizardSaving=0,wizardPending={},wizardOffline=false;
 function wizardIndicator(){
   const el=$("#wzStatus");if(!el)return;
-  if(wizardSaving>0){el.textContent="speichert …";el.classList.add("speichert");}
+  if(wizardOffline){el.textContent="noch nicht gespeichert – neuer Versuch …";el.classList.add("speichert");}
+  else if(wizardSaving>0){el.textContent="speichert …";el.classList.add("speichert");}
   else{el.textContent="gespeichert "+new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"});el.classList.remove("speichert");}
 }
 /* Alle Änderungen sammeln sich in EINEM wizardPending, egal ob einzelnes Feld oder ganze Liste (malz/rasten/
@@ -576,8 +595,17 @@ async function wizardFlush(){
   const patch=wizardPending;wizardPending={};
   const {error}=await sb.from("sude").update(patch).eq("id",wizard.sud.id);
   wizardSaving=Math.max(0,wizardSaving-1);
-  if(error){toast(fehlertext(error));return;}
-  wizardIndicator();
+  if(error){
+    toast(fehlertext(error));
+    // Ohne Datenbank-Fehlercode war es ein Verbindungsproblem: Änderung behalten, später nochmal schicken.
+    // Mit Fehlercode hat die Datenbank sie abgelehnt – ein Wiederholen würde alle folgenden Änderungen mitblockieren.
+    if(!error.code){
+      wizardPending=Object.assign({},patch,wizardPending);wizardOffline=true;
+      if(!wizardTimer){wizardSaving++;wizardTimer=setTimeout(wizardFlush,5000);}
+    }
+    wizardIndicator();return;
+  }
+  wizardOffline=false;wizardIndicator();
   const i=state.brews.findIndex(b=>b.id===wizard.sud.id);if(i>-1)state.brews[i]=Object.assign({},state.brews[i],patch);
 }
 /* Listen (malz/rasten/hopfen) bleiben lokal immer vollständig, auch mit einer gerade erst angelegten,
@@ -623,7 +651,7 @@ function wizardAlkoholAutoberechnen(stammwuerze,restextrakt){
   if(stammwuerze==null||restextrakt==null)return;
   if(wizard.sud.alkohol!=null&&wizard.sud.alkohol_geschaetzt===false)return;
   const berechnet=Bz.runde(Bz.alkoholAusMessung(stammwuerze,restextrakt),1);
-  wizardQueueSave({alkohol:berechnet,alkohol_geschaetzt:true});
+  wizardQueueSave({alkohol:berechnet,alkohol_geschaetzt:berechnet!=null});
 }
 function wizardWireFields(felder){
   felder.forEach(([k,,type])=>{
@@ -631,7 +659,7 @@ function wizardWireFields(felder){
     el.addEventListener("input",()=>{
       let v;
       if(type==="number")v=el.value===""?null:Bz.zahl(el.value);
-      else if(type==="integer")v=el.value===""?null:parseInt(el.value,10)||null;
+      else if(type==="integer")v=el.value===""||Number.isNaN(parseInt(el.value,10))?null:parseInt(el.value,10);
       else if(type==="date")v=el.value||null;
       else v=el.value;
       const patch={[k]:v};
@@ -846,7 +874,12 @@ function wizardAnzeigen(){
   $("#wzZurueck").onclick=e=>{e.preventDefault();zeigeDetail(wizard.sud);};
   wizardRenderStep();
 }
-async function wizardAbschliessen(){
+function wizardAbschliessen(){
+  const fehlt=[["abgefuellt","Abfülldatum"],["flaschen","Flaschen"]].filter(([k])=>wizard.sud[k]==null||wizard.sud[k]==="").map(([,n])=>n);
+  if(fehlt.length)bestaetigen("Sud trotzdem abschließen?",`Es fehlen noch: ${fehlt.join(", ")}. Du kannst den Sud danach über „Bearbeiten“ weiter ergänzen.`,"Ja, abschließen",wizardAbschliessenJetzt,false);
+  else wizardAbschliessenJetzt();
+}
+async function wizardAbschliessenJetzt(){
   $("#wzAbschliessen").disabled=true;
   const {error}=await sb.from("sude").update({status:"dokumentiert"}).eq("id",wizard.sud.id);
   if(error){toast(fehlertext(error));$("#wzAbschliessen").disabled=false;return;}

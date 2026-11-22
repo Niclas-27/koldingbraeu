@@ -175,9 +175,47 @@ Zwischenmessungen werden beim Speichern abgeglichen (`edMessungenSpeichern`: neu
 - Detailseite: „Bearbeiten“/„Braugang-Assistent“ zuerst, dann „Kopie anlegen“ (hieß „Als Vorlage nutzen“),
   „Als Rezept speichern“, „Löschen“. Kennzahlen am Handy 2 × 2, wenn es vier sind.
 
+## Eingaben schützen und Rechnungen glätten (22.11.2026)
+
+Ergebnis einer Prüfung des ganzen Brauvorgangs (Logik, Bedienung, Barrierefreiheit). Die wichtigsten Funde, bei denen
+Eingaben verloren gehen oder falsche Zahlen erscheinen konnten, sind behoben:
+
+- **Abbrechen fragt nach**, wenn seit dem Öffnen etwas geändert wurde – im Editor auf der Detailseite (`editInline`) und im
+  Blatt (`openEditor`, z. B. „Kopie anlegen“; auch bei Esc und Klick daneben). Dafür gibt es in `core/core.js`
+  `KB.sheetSchutz(f)`; `closeSheet(true)` schließt ohne Rückfrage (nach dem Speichern, beim Abmelden). Vergleich über
+  `aenderungsstand()`.
+- **Esc** schließt in einer Rückfrage nur die Rückfrage, nicht auch das Blatt darunter.
+- **„Sud abschließen“** (Schritt 9) fragt nach, wenn Abfülldatum oder Flaschen fehlen.
+- **Autosave im Assistenten:** Bei einem Verbindungsfehler (Fehler ohne Datenbank-Code) bleibt die Änderung erhalten und
+  wird nach 5 s erneut geschickt; die Anzeige sagt „noch nicht gespeichert“. Eine von der Datenbank *abgelehnte* Änderung
+  wird bewusst nicht wiederholt (sie würde sonst alle folgenden Änderungen mitblockieren).
+- **Rezept → Sud** übernimmt jetzt auch die Karbonisierung (damit startet der Zucker-Rechner gefüllt) und die weiteren
+  Zutaten (als Zeile in den Notizen).
+- **Alte Hopfengaben:** Der Originaltext wird beim ersten Speichern einmalig in die Notizen übernommen
+  („Hopfengaben vor der Umwandlung: …“), statt zu verschwinden.
+- **„Kopie anlegen“** setzt auch den Alkohol-Status zurück. **0 Flaschen** ist ein gültiger Wert.
+- **Farbe (EBC)** ist stetig und wird mit mehr Malz nie heller (vorher sprang sie bei 60 EBC, z. B. 58 → 29). Über
+  60 EBC gilt weiter Morey, aber nie weniger als 60.
+- **Alkohol** aus Messung oder Refraktometer wird nie negativ (Restextrakt über Stammwürze → kein Wert).
+- `fmtGramm(999,6)` zeigt „1 kg“ statt „1.000 g“.
+
 ## Offene Punkte
 
-Keine.
+Aus der Prüfung vom 22.11.2026 bewusst noch nicht umgesetzt (jeweils mit Grund):
+
+- **Entwürfe verwerfen:** „Sud aus Rezept“ legt sofort einen Eintrag an; nur der Admin kann löschen. Braucht eine
+  zusätzliche Datenbank-Policy (löschen erlaubt für `status = 'entwurf'`) plus Knopf – Rechteänderung, eigene Entscheidung.
+- **IBU für Whirlpool:** `ibu()` zählt Whirlpool fest wie 0,5 min Kochzeit (Näherung nach MMuM), „Kochen 0 min“ dagegen
+  mit 10 min Nachisomerisierung. Das ist im Code so begründet; ob es für die eigene Anlage stimmt, ist eine fachliche Frage.
+- **Milchsäure-Empfehlung** (`Hauptguss/Nachguss`): rechnet mit Gesamthärte × Liter × 0,09 ml, ohne Säurestärke und
+  Karbonathärte; vermutlich zu hoch. Fachlich prüfen, dann Formel anpassen oder deutlich als grobe Schätzung kennzeichnen.
+- **`stil` bei Sud aus Rezept** wird auf den Rezeptnamen gesetzt (der Bierstil des Rezepts fällt weg) – wirkt sich auf
+  Titel und Stil-Auswahl aus; Entscheidung, was `stil` bedeuten soll.
+- **Rechte:** Wer eingeloggt ist, aber keine Rolle hat, sieht keine öffentlichen Sude (bei Rezepten ist es anders gelöst);
+  ein öffentlich geschalteter Entwurf wäre für Gäste sichtbar.
+- **Bedienung am Handy** (Tippflächen unter 44 px, Schriftgrößen unter 16 px, Rezept-Editor ohne feste Leiste, Schritt 9)
+  und **Barrierefreiheit** (Dialoge mit Fokusführung, Feldrahmen-Kontrast, Fehlermeldungen als `role="alert"`): eigener Block.
+- **Ungespeicherte Eingaben beim Verlassen der Seite** („← Alle Sude“, Zurück-Taste) werden noch nicht abgefangen.
 
 **Entscheidung zu den Altdaten (22.11.2026):** Die Hopfen-Freitexte der alten Sude (Nr. 1–21, aus Google Sheets
 übernommen) werden bewusst **nicht** in einem Rutsch umgeschrieben. Sie haben noch die Form
