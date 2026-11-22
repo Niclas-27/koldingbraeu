@@ -26,6 +26,10 @@ ok("Alkohol aus Refraktometer ohne Endwert → null", Brau.alkoholAusRefraktomet
 ok("Zucker je Liter für 5,5 g/l Ziel (Standard-Restkohlensäure) ≈ 7,2 g/l – passt zur Faustregel ~7 g/l", nah(Brau.primingZucker(5.5), 7.2, 0.5), Brau.primingZucker(5.5).toFixed(2));
 ok("Zucker 0, wenn Ziel unter der Restkohlensäure liegt", Brau.primingZucker(1, 1.7) === 0);
 ok("Zucker je Liter unabhängig von der Biermenge (reine g/l-Dosierung, keine Gesamtmenge)", Brau.primingZucker(5.5) === Brau.primingZucker(5.5, 1.7));
+ok("Milchsäure: Faustregel 1 ml je 10 l und ~3 °dH KH", nah(Brau.milchsaeure(3, 10, 0), 1, 0.1), Brau.milchsaeure(3, 10, 0).toFixed(2));
+ok("Milchsäure: 24 °dH KH, 25,6 l, Ziel 2 °dH ≈ 19 ml (alte Formel lieferte 55 ml)", nah(Brau.milchsaeure(24, 25.6, 2), 19.5, 0.5), Brau.milchsaeure(24, 25.6, 2).toFixed(2));
+ok("Milchsäure: 0, wenn die KH schon unter dem Ziel liegt", Brau.milchsaeure(1, 20, 2) === 0);
+ok("Milchsäure: ohne KH oder Wassermenge → null", Brau.milchsaeure(null, 20, 0) === null && Brau.milchsaeure(10, "", 0) === null);
 const maerzen = { ausschlag: 28, malze: [{ name: "Pilsner Malz", gramm: 3500 }, { name: "Münchner Malz", gramm: 2000 }] };
 ok("Märzen: 5,5 kg auf 28 l bei 67 % Ausbeute ≈ 12,5 °P (MMuM)", nah(Brau.stammwuerze(maerzen, 67), 12.5, 0.15), Brau.stammwuerze(maerzen, 67).toFixed(2));
 ok("Märzen: Magnum 10 g 15 % 60 min + HM 30 g 5 % 10 min ≈ 20 IBU (MMuM)", nah(Brau.ibu({ ausschlag: 28, hopfen: [{ gramm: 10, alpha: 15, zeit: 60, typ: "Kochen" }, { gramm: 30, alpha: 5, zeit: 10, typ: "Kochen" }] }, 12.5), 20, 3), Brau.ibu({ ausschlag: 28, hopfen: [{ gramm: 10, alpha: 15, zeit: 60, typ: "Kochen" }, { gramm: 30, alpha: 5, zeit: 10, typ: "Kochen" }] }, 12.5).toFixed(1));
