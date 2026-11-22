@@ -5,7 +5,7 @@ Unsere Sude seit 2018: Schüttung, Maischplan, Hopfengaben, Hefe, Messwerte und 
 **Online:** <https://kolding.de> (`www.kolding.de` und <https://niclas-27.github.io/koldingbraeu/> leiten dorthin weiter)
 
 **Übergabe/Weiterarbeit:** Alles Bereichsübergreifende, das nicht in dieser README oder einer
-`features/*/README.md` steht – vor allem der zweistufige Deploy-Ablauf (`main` → `production`) –
+`features/*/README.md` steht – etwa der Deploy-Ablauf und die Reihenfolge bei Datenbank-Änderungen –
 steht in [`HANDOVER.md`](HANDOVER.md).
 
 ## Domain
@@ -73,15 +73,15 @@ Neue Zugänge gibt es nur per Einladung (Verwaltung → Braumeister einladen).
 
 Der Ordner `Documents/koldingbraeu` auf dem Mac ist die Arbeitskopie dieses Repos.
 
-- **`main`** ist der Arbeits-Branch. Neue Funktionen entstehen auf einem eigenen Branch (`feature/…`, `fix/…`)
-  und kommen per Pull Request nach `main`. Auf `main` ist noch nichts live.
-- **`production`** ist das, was tatsächlich auf kolding.de steht. Soll etwas veröffentlicht werden, geht `main`
-  per Pull Request nach `production` – etwa eine Minute nach dem Mergen ist die Seite live.
+- Neue Funktionen entstehen auf einem eigenen Branch (`feature/…`, `fix/…`) und kommen per Pull Request nach `main`.
+- **`main`** ist das, was auf kolding.de steht: etwa eine Minute nach dem Mergen ist die Änderung live.
+  Was noch nicht live gehen soll, bleibt einfach als offener Pull Request liegen.
+  (Bis 22.11.2026 gab es zusätzlich einen Branch `production`, auf den extra per zweitem PR veröffentlicht wurde.)
 - Der Veröffentlichen-Workflow (`.github/workflows/pages.yml`) läuft außerdem jede Stunde von selbst (und lässt sich auf GitHub unter Actions → „Veröffentlichen“ → „Run workflow“ sofort von Hand starten), damit
   neue öffentliche Sude, Rezepte, Verkostungen und Biere ihre Vorschauseite bekommen (siehe unten).
 
 - **Erst lokal testen, dann veröffentlichen:** Neue Funktionen werden auf ihrem Branch im Mac-Ordner ausgecheckt und
-  dort gegen die echte Datenbank ausprobiert (siehe „Lokal ansehen“). Erst nach dem OK geht es nach `main` und `production`.
+  dort gegen die echte Datenbank ausprobiert (siehe „Lokal ansehen“). Erst nach dem OK geht es nach `main` (= live).
 - **Datenbank-Änderungen:** Was nur etwas hinzufügt (neue Spalte, neue Funktion), darf vor dem Veröffentlichen
   laufen. Was bestehendes Verhalten ändert oder Daten umschreibt, läuft erst **nach** dem Veröffentlichen der
   passenden Oberfläche – sonst bricht die Live-Seite. Die SQL-Dateien liegen im jeweiligen `schema/`-Ordner und
