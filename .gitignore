@@ -9,3 +9,6 @@ docs/
 # Bildschirmfotos der Tests
 tests/screenshots/
 __pycache__/
+
+# Arbeitskopien der Claude-Sessions
+.claude/worktrees/
