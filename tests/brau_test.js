@@ -69,5 +69,17 @@ ok("Schnitt überspringt unvollständige Sude", sch.anzahl === 2 && nah(sch.wert
 ok("Zielausbeute: Rezept vor Anlage", Brau.zielAusbeute({ eigene_ausbeute: 48 }, { sudhausausbeute: 55 }) === 48 && Brau.zielAusbeute({}, { sudhausausbeute: 55 }) === 55);
 const ue = Brau.umrechnen({ ...r, eigene_ausbeute: 50 }, { ziel: 24, anlage: { sudhausausbeute: 65 } });
 ok("Eigene Ausbeute geht vor: Schüttung × 55/50", ue.malze[0].gramm === Math.round(4230 * 55 / 50), ue.malze[0].gramm);
+// Prüfung vom 22.11.2026: Farbe stetig, Alkohol nie negativ, kg-Grenze beim Runden
+console.log("Farbe, Alkohol, Gramm-Anzeige");
+const farbe = g => Brau.ebc({ ausschlag: 20, malze: [{ gramm: 5000, ebc: 4 }, { gramm: g, ebc: 1000 }] });
+let vorher = -1, steigt = true; for (let g = 0; g <= 600; g += 5) { const f = farbe(g); if (f < vorher - 1e-9) steigt = false; vorher = f; }
+ok("Mehr Röstmalz macht das Bier nie heller (0–600 g)", steigt);
+ok("Kein Sprung bei 60 EBC (125 g → 150 g)", farbe(150) >= farbe(125) - 1e-9, farbe(125).toFixed(1) + " → " + farbe(150).toFixed(1));
+ok("Helle Biere unverändert (5 kg Pils, 20 l ≈ 8 EBC)", nah(farbe(0), 8, 0.01), farbe(0));
+ok("Alkohol: Restextrakt über Stammwürze → null statt negativ", Brau.alkoholAusMessung(12, 13) === null);
+ok("Alkohol: gültige Messung bleibt unverändert", nah(Brau.alkoholAusMessung(12, 3), 4.8, 0.3));
+ok("Alkohol (Refraktometer): Endwert über Anfangswert → null", Brau.alkoholAusRefraktometer(10, 20) === null);
+ok("999,6 g wird „1 kg“, nicht „1.000 g“", Brau.fmtGramm(999.6) === "1 kg", Brau.fmtGramm(999.6));
+ok("999 g bleibt „999 g“, 1500 g bleibt „1,5 kg“", Brau.fmtGramm(999) === "999 g" && Brau.fmtGramm(1500) === "1,5 kg");
 console.log(fehler ? `\n${fehler} Fehler` : "\nAlles grün.");
 process.exit(fehler ? 1 : 0);

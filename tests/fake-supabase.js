@@ -45,6 +45,7 @@ function q(t){
   single(){single=true;return api;}, maybeSingle(){maybe=true;return api;},
   then(res,rej){
    log.push([t,op,payload]);
+   if(window.__netzFehler&&t==="sude"&&op==="update")return Promise.resolve({data:null,error:{message:"TypeError: Failed to fetch",code:""}}).then(res,rej);
    let tab=db[t]||(db[t]=[]);
    if(rolle==="anon"&&t==="rezepte"&&op==="select"){tab=tab.filter(r=>r.oeffentlich);}
    else if(rolle==="anon"&&t!=="sude"&&t!=="bierstile"&&t!=="profile")return Promise.resolve({data:null,error:{message:"permission denied",code:"42501"}}).then(res,rej);

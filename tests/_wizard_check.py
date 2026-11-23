@@ -158,7 +158,11 @@ async def main():
                body.index("Abfüllen") < body.index("Karbonisieren") < body.index("Ergebnis"))
         pruefe("Keine Ausschlagwürze mehr in der Abfüllung", await pg.locator("#f_ausschlag").count() == 0)
         pruefe("Sud abschließen sitzt in der Fußleiste", await pg.locator("#wzFuss #wzAbschliessen").count() == 1)
-        pruefe("Zucker-Empfehlung noch leer ohne Karbonisierungsziel", "Karbonisierung fehlt" in await pg.inner_text("#wzRecZucker"))
+        pruefe("Karbonisierung kommt aus dem Rezept (5 g/l), Empfehlung wartet nur noch auf die Biermenge",
+               await pg.input_value("#f_karbonisierung") == "5" and "Biermenge fehlt" in await pg.inner_text("#wzRecZucker"))
+        await pg.fill("#f_karbonisierung", "")
+        await pg.wait_for_timeout(150)
+        pruefe("Zucker-Empfehlung leer ohne Karbonisierungsziel", "Karbonisierung fehlt" in await pg.inner_text("#wzRecZucker"))
         await pg.fill("#f_karbonisierung", "5.5")
         await pg.wait_for_timeout(150)
         pruefe("Ohne Biermenge Hinweis statt Gesamtmenge", "Biermenge fehlt" in await pg.inner_text("#wzRecZucker"))

@@ -47,9 +47,13 @@ function ladeFlasche(){const id="kbl"+(++ladeNr);return `<svg viewBox="-10 -6 10
 function ladeHtml(text="Wird geladen …",klein=false){return `<div class="kb-lade${klein?" klein":""}" role="status">${ladeFlasche()}<span>${esc(text)}</span></div>`;}
 function ladeFuellen(wurzel=document){wurzel.querySelectorAll(".kb-lade:not(:has(svg))").forEach(el=>el.insertAdjacentHTML("afterbegin",ladeFlasche()));}
 /* --- Seitenblatt (weiterhin genutzt von Rezepten, Verkostungen, Liga, Verwaltung, Neuer Sud) --- */
-let onClose=null;
+let onClose=null,sheetGuard=null;
 function openSheet(){$("#sheet").hidden=false;$("#scrim").hidden=false;document.body.style.overflow="hidden";}
-function closeSheet(){$("#sheet").hidden=true;$("#scrim").hidden=true;document.body.style.overflow="";const f=onClose;onClose=null;if(f)f();}
+/* Wächter: Ein Blatt mit ungespeicherten Eingaben kann sheetSchutz(f) setzen; closeSheet() fragt dann f(weiter),
+   statt sofort zu schließen. closeSheet(true) schließt ohne Rückfrage (nach dem Speichern, beim Abmelden).
+   Wichtig: closeSheet wird auch direkt als Klick-Handler benutzt und bekommt dann ein Event – darum === true. */
+function sheetSchutz(f){sheetGuard=f||null;}
+function closeSheet(force){if(force!==true&&sheetGuard){sheetGuard(()=>closeSheet(true));return;}sheetGuard=null;$("#sheet").hidden=true;$("#scrim").hidden=true;document.body.style.overflow="";const f=onClose;onClose=null;if(f)f();}
 /* Gemeinsame Rückfrage vor dem Löschen/Entfernen für die ganze Seite. Eigenes kleines Fenster statt des
    Seitenblatts, damit sie auch über einem offenen Editor-Blatt funktioniert, ohne dessen Inhalt zu ersetzen.
    bestaetigen(titel, text, knopf, ok, gefahr=true): text ist reiner Text; ok() läuft erst nach "Ja". */
@@ -63,7 +67,7 @@ function bestaetigen(titel,text,knopf,ok,gefahr=true){
   d.querySelector('[data-f="ja"]').onclick=async e=>{e.currentTarget.disabled=true;zu();await ok();};
   document.addEventListener("keydown",esc_);document.body.appendChild(d);d.querySelector('[data-f="nein"]').focus();
 }
-function sheet(titleText,body,foot,opts){$("#sheetTitle").textContent=titleText;$("#sheetBody").innerHTML=body;$("#sheetFoot").innerHTML=foot||"";onClose=(opts&&opts.onClose)||null;openSheet();$("#sheetBody").scrollTop=0;}
+function sheet(titleText,body,foot,opts){sheetGuard=null;$("#sheetTitle").textContent=titleText;$("#sheetBody").innerHTML=body;$("#sheetFoot").innerHTML=foot||"";onClose=(opts&&opts.onClose)||null;openSheet();$("#sheetBody").scrollTop=0;}
 function kv(pairs){const p=pairs.filter(([,v])=>v!=null&&v!=="");if(!p.length)return"";return`<dl class="kv">${p.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;}
 function sec(h,inner){return inner?`<section class="sec"><h3>${esc(h)}</h3>${inner}</section>`:"";}
 
@@ -380,7 +384,7 @@ async function boot(){
   sb=window.supabase.createClient(CONFIG.url,CONFIG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
   KB.sb=sb;
   $("#closeBtn").onclick=closeSheet;$("#scrim").onclick=closeSheet;
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden)closeSheet();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#sheet").hidden&&!document.querySelector(".frage"))closeSheet();});
   if(KB.seite&&KB.seite.start)KB.seite.start();
 
   const {data:{session}}=await sb.auth.getSession();
@@ -402,7 +406,7 @@ async function boot(){
       if(event==="SIGNED_IN"||event==="SIGNED_OUT"||event==="USER_UPDATED"){
         const changed=(state.session?.user?.id||null)!==(s?.user?.id||null);
         state.session=s;
-        if(changed||event==="SIGNED_OUT"){closeSheet();closePanel();await refresh();}
+        if(changed||event==="SIGNED_OUT"){closeSheet(true);closePanel();await refresh();}
       }
       if(event==="TOKEN_REFRESHED")state.session=s;
     },0);
@@ -413,7 +417,7 @@ const KB = window.KB = {
   CONFIG, ROLLEN, $, esc, state, isBM, isAdmin, siteUrl, sb: null, seite: null,
   fmtDate, fmtDateLong, fmtDateTime, fmtZahl, gradeCls, personName, todayIso, toast, notice, lsGet, lsSet,
   ladeHtml, ladeFuellen,
-  sheet, openSheet, closeSheet, bestaetigen, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
+  sheet, openSheet, closeSheet, sheetSchutz, bestaetigen, kv, sec, fehlertext, refresh, renderChrome, loadPeople,
 };
 document.addEventListener("DOMContentLoaded", boot);
 
