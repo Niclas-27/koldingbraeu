@@ -16,7 +16,7 @@
 
 | Datei | Inhalt |
 |-------|--------|
-| `brews.js` | Kennzahlen, Notenverlauf, Liste nach Jahrgang, Suche/Filter, Details, Editor, CSV-Export |
+| `brews.js` | Kennzahlen, Notenverlauf, Liste nach Jahrgang, Suche/Filter, Details, Editor, CSV-Export, Braugang-Assistent mit Brauprotokoll zum Drucken |
 | `brews.css` | Gestaltung nur dieses Bereichs |
 | `schema.sql` | Tabelle `sude` mit Rechten (Stand); `rezept_id` kommt aus `features/recipes/schema.sql` |
 | `schema/01_messwerte_einheiten.sql` | Messwerte von Freitext auf Zahl + Einheit umstellen (noch nicht angewendet, siehe Offene Punkte) |
@@ -267,9 +267,26 @@ ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt wa
   Stand geladen wird. Kein eigener Zwischenspeicher im Browser nötig.
 - **Schüttung/Maischen/Kochen** nutzen dieselben Listen-Felder (`rowsHTML`) wie der normale Editor – „+ Malz“/
   „+ Rast“/„+ Hopfengabe“ funktionieren identisch, nur mit Autosave statt Sammel-Speichern.
-- **Wasserhärte-Rechner** im Wasser-Schritt: aus Wasserhärte (°dH) und Hauptguss/Nachguss eine empfohlene
-  Milchsäuremenge – bewusst eine vereinfachte Beispielrechnung (Härte × Menge × Faktor), kein geprüfter
-  Brauwert, das Ergebnis bleibt frei überschreibbar.
+- **Milchsäure-Rechner** im Wasser-Schritt: aus Karbonathärte (KH, °dH), Ziel-KH und Hauptguss/Nachguss die
+  Menge Milchsäure 80 % je Guss (`Brau.milchsaeure` in `lib/brau.js`, Herleitung dort: ≈ 0,035 ml je Liter
+  und °dH, also 1 ml senkt 10 l um knapp 3 °dH). Die Ziel-KH steht in `ziel_kh` (`schema/12_ziel_kh_speise.sql`),
+  ohne eigenen Wert zeigt das Feld 2 °dH und speichert ihn beim ersten „übernehmen“ (vorher sprang sie beim
+  Zurückblättern auf 2). Die Spalte `wasserhaerte` heißt in der Oberfläche „Karbonathärte (KH)“ – Säure wirkt
+  nur auf die KH. Die erste Fassung rechnete `Härte × Liter × 0,09` (ca. 2,6-mal zu viel Säure).
+- **Speise/Zucker als Auswahl:** `speise_art` (Haushaltszucker, Traubenzucker, Speise) plus `speise_menge`
+  (Zucker in g für die ganze Biermenge, Speise in l), im Assistenten und im Editor. Der Zucker-Rechner rechnet
+  g/l × Biermenge, Traubenzucker × 198/171 (Monohydrat). Für Speise weiter kein Rechner. Die alte Freitextspalte
+  `zucker` erscheint nur noch, wenn sie befüllt ist, die Sud-Seite zeigt beides.
+- **Abfüllung neu geordnet (22.11.2026):** drei Blöcke wie am Abfülltag – Abfüllen (Datum, Biermenge, Flaschen),
+  Karbonisieren (Ziel, höchste Gärtemperatur, Knöpfe Haushaltszucker/Traubenzucker/Speise statt Dropdown,
+  Menge mit Empfehlung direkt darunter), Ergebnis (Alkohol). „Sud abschließen“ sitzt in der Fußleiste statt
+  „Weiter“, die Ausschlagwürze bei „Kühlen & Anstellen“ (im Editor und auf der Sud-Seite bei Läutern & Kochen).
+  Die Gärtemperatur (`gaertemperatur`, `schema/13_gaertemperatur.sql`) bestimmt die Restkohlensäure
+  (`Brau.restkohlensaeure`); ohne Wert gilt weiter 1,7 g/l. Im Editor bleibt Speise/Zucker ein Dropdown.
+- **Hefemenge in g:** Zahlenfeld (Feldtyp `gramm`), gespeichert in der bestehenden Textspalte `hefemenge`.
+  Alte Einträge wie „2 × 11 g“ bleiben ein Textfeld, bis sie geändert werden; reine Zahlen zeigt die Sud-Seite
+  mit „g“.
+- **Kein Undo-Knopf** im Assistenten: bewusst entschieden (22.11.2026), passt nicht zum automatischen Speichern.
 - **Gärung bleibt offen:** Dieser Schritt lässt sich beliebig oft erneut besuchen (über die Sud-Detailseite,
   Knopf „Braugang-Assistent“, oder automatisch beim Öffnen eines noch nicht dokumentierten Suds), um weitere
   Zwischenmessungen nachzutragen, ohne die vorherigen Schritte anzufassen.
@@ -339,3 +356,58 @@ ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt wa
   `neuerSud()` in `brews.js`) – beide riefen zuvor den normalen Editor auf. „Leer beginnen” und „Als Vorlage
   nutzen” (Kopie eines bestehenden Suds) bleiben unverändert beim normalen Editor, da dort kein Rezept-Plan
   zum Vergleich existiert.
+
+## Brauprotokoll drucken (seit 23.11.2026)
+
+Im Braugang-Assistenten sitzt oben rechts im Kopf, auf jedem Schritt neben „gespeichert“, ein kleiner Knopf
+„Drucken“. Er druckt immer den ganzen Sud als **Brauprotokoll auf einem A4-Bogen, Vorder- und Rückseite**,
+egal auf welchem Schritt man gerade ist. Es gibt keine PDF-Bibliothek: Gedruckt wird über den Druckdialog des
+Browsers, dort auch „Als PDF sichern“, genau wie bei den Rezepten. Strg+P während des Assistenten druckt
+ebenfalls den Bogen (`beforeprint`).
+
+- **Gedacht als Arbeitsblatt am Kessel:** Was im Assistenten schon eingetragen ist, wird gedruckt, alles
+  Fehlende ist eine leere Schreiblinie. Darum lohnt es sich, vor dem Drucken z. B. die Karbonathärte
+  einzutragen. Die Rezept-Sollwerte stehen bewusst **nicht** neben jedem Feld, weil die Felder beim Anlegen
+  ohnehin aus dem Rezept vorbefüllt sind. Im Kopf steht nur eine Zeile „Nach Rezept … · Ziel: Liter, °P, IBU,
+  EBC, % vol“.
+- **Gliederung wie die Schritte des Assistenten** (mit derselben Nummer): vorne der Brautag mit Kopf (Rezept
+  & Start), Wasser & Milchsäure, Schüttung, Maischen, Läutern, Kochen. Hinten folgen Kühlen & Anstellen,
+  Gärung, Abfüllung und linierte Notizen bis zum Seitenende.
+- **Zum Mitschreiben:** Rasten und Hopfengaben haben eine Spalte für die Uhrzeit und ein Kästchen zum
+  Abhaken, Schüttung ebenfalls ein Kästchen. Alle drei Tabellen bekommen eine freie Reservezeile. Dazu gibt es
+  leere Felder für Uhrzeiten (Einmaischen, Abmaischen, Läuterbeginn, Kochbeginn), für Anstelltemperatur und
+  „Angestellt am“. Die Gärung hat eine Messtabelle (Datum/Tag, Spindel, Refraktometer, Temperatur, Notiz),
+  vorhandene Zwischenmessungen stehen darin, aufgefüllt auf 7 Zeilen. Stopfhopfen steht nicht beim Kochen,
+  sondern als eigene Tabelle unter der Gärung.
+- **Empfehlungen wie im Assistenten:** Milchsäure je Guss (`Brau.milchsaeure`). Ohne Karbonathärte steht
+  stattdessen die Faustregel (ml je Liter und °dH) zum Selbstrechnen da. Zucker für die Nachgärung
+  (`Brau.primingZucker`): als g/l mal Biermenge, ohne Biermenge mit Lücke zum Ausrechnen. Für Speise gibt es
+  wie im Assistenten keinen Rechner. Die Wahl Haushaltszucker/Traubenzucker/Speise steht als drei Kästchen
+  da, die gewählte ist angekreuzt.
+- Eigene Angaben (`wizard_notizen`) erscheinen beim jeweiligen Schritt.
+- **Technik:** `brauProtokollHtml()` in `brews.js` baut den Bogen bei jedem Druck frisch aus `wizard.sud`
+  (dort stehen alle Änderungen sofort, auch die, deren Autosave noch läuft) und `wizard.messungen`. Der Bogen
+  liegt als `#brauProtokoll` direkt im `body`, außerhalb von `.wrap`, und ist auf dem Bildschirm unsichtbar.
+  `kopfzeileZeigen()` setzt während des Assistenten `body.wz-aktiv`. Damit blendet das Druck-CSS in
+  `brews.css` (`@page` A4, feste Schwarz-Weiß-Farben, also kein Dunkelmodus im Druck) alles andere aus.
+- **Passt auf den Bogen:** `tests/_wizard_check.py` erzeugt das PDF wie der Druckdialog und prüft, dass es
+  2 Seiten sind (auch mit Werten). Von Hand geprüft mit 6 Malzen, 4 Rasten, 5 Koch- und 2 Stopfgaben: Vorne
+  ist dann noch rund ein Fünftel frei. Bei sehr langen Listen (geprüft mit 16 Malzen) läuft der Bogen auf
+  eine dritte Seite über. Abgeschnitten wird nichts, die Abschnitte bleiben ganz, nur die Seitenangabe
+  „Seite 1 / 2“ im Fuß stimmt dann nicht mehr.
+- **Auch auf der Sud-Seite:** Braumeister und Admin haben bei den Aktionen unten (neben „Als Rezept
+  speichern“) einen Knopf „Drucken“, der denselben Bogen druckt, egal ob der Sud abgeschlossen ist oder nicht.
+  Gäste sehen den Knopf nicht. Rezept-Zielwerte und Zwischenmessungen kommen aus den Abfragen, die die
+  Sud-Seite ohnehin macht (`detailDruck`). Wer sehr schnell nach dem Öffnen druckt, bevor sie geladen sind,
+  bekommt den Bogen ohne diese Werte. `sudProtokollDrucken()` setzt `body.bp-druck` (wirkt nur im Druck).
+  Die Klasse fällt erst beim nächsten Tippen/Klicken/Tastendruck oder beim Seitenwechsel weg, nicht mit
+  `afterprint`: auf dem iPad kehrt `window.print()` sofort zurück, `afterprint` feuert unzuverlässig und die
+  Druckvorschau wird erst danach aus der Seite gebaut. Bis zur nächsten Bedienung druckt Strg+P auf der
+  Sud-Seite deshalb ebenfalls den Bogen. `brauProtokollHtml()` bekommt dafür
+  einen Kontext `{sud, rezept, messungen, zielMenge}` statt direkt auf `wizard` zuzugreifen.
+- **Safari/iPad (Stand 23.11.2026, nur im Code abgesichert, nicht in WebKit getestet – hier gibt es nur
+  Chromium):** Seitenhöhe 262 mm statt der vollen A4-Höhe, weil Safari den `@page`-Rand nicht verlässlich
+  übernimmt und eine zu hohe Seite eine leere Zwischenseite erzeugt. Der Fuß sitzt dadurch etwas höher am Rand.
+  Notizlinien sind echte Elemente mit Rahmen statt Hintergrund-Verlauf (Safari druckt Hintergründe nur mit
+  Einstellung). Seitenumbruch-Regeln stehen zusätzlich als `page-break-*`. Wenn der Druck auf dem iPad doch
+  schief aussieht: zuerst Papierformat A4 und „Skalieren 100 %“ in der Druckvorschau prüfen.
