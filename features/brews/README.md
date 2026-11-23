@@ -16,7 +16,7 @@
 
 | Datei | Inhalt |
 |-------|--------|
-| `brews.js` | Kennzahlen, Notenverlauf, Liste nach Jahrgang, Suche/Filter, Details, Editor, CSV-Export |
+| `brews.js` | Kennzahlen, Notenverlauf, Liste nach Jahrgang, Suche/Filter, Details, Editor, CSV-Export, Braugang-Assistent mit Brauprotokoll zum Drucken |
 | `brews.css` | Gestaltung nur dieses Bereichs |
 | `schema.sql` | Tabelle `sude` mit Rechten (Stand); `rezept_id` kommt aus `features/recipes/schema.sql` |
 | `schema/01_messwerte_einheiten.sql` | Messwerte von Freitext auf Zahl + Einheit umstellen (noch nicht angewendet, siehe Offene Punkte) |
@@ -305,3 +305,44 @@ ohnehin direkt aufeinander folgen und eine weitere Aufspaltung nicht verlangt wa
   `neuerSud()` in `brews.js`) – beide riefen zuvor den normalen Editor auf. „Leer beginnen” und „Als Vorlage
   nutzen” (Kopie eines bestehenden Suds) bleiben unverändert beim normalen Editor, da dort kein Rezept-Plan
   zum Vergleich existiert.
+
+## Brauprotokoll drucken (seit 23.11.2026)
+
+Im Braugang-Assistenten sitzt oben rechts im Kopf, auf jedem Schritt neben „gespeichert“, ein kleiner Knopf
+„Drucken“. Er druckt immer den ganzen Sud als **Brauprotokoll auf einem A4-Bogen, Vorder- und Rückseite**,
+egal auf welchem Schritt man gerade ist. Es gibt keine PDF-Bibliothek: Gedruckt wird über den Druckdialog des
+Browsers, dort auch „Als PDF sichern“, genau wie bei den Rezepten. Strg+P während des Assistenten druckt
+ebenfalls den Bogen (`beforeprint`).
+
+- **Gedacht als Arbeitsblatt am Kessel:** Was im Assistenten schon eingetragen ist, wird gedruckt, alles
+  Fehlende ist eine leere Schreiblinie. Darum lohnt es sich, vor dem Drucken z. B. die Karbonathärte
+  einzutragen. Die Rezept-Sollwerte stehen bewusst **nicht** neben jedem Feld, weil die Felder beim Anlegen
+  ohnehin aus dem Rezept vorbefüllt sind. Im Kopf steht nur eine Zeile „Nach Rezept … · Ziel: Liter, °P, IBU,
+  EBC, % vol“.
+- **Gliederung wie die Schritte des Assistenten** (mit derselben Nummer): vorne der Brautag mit Kopf (Rezept
+  & Start), Wasser & Milchsäure, Schüttung, Maischen, Läutern, Kochen. Hinten folgen Kühlen & Anstellen,
+  Gärung, Abfüllung und linierte Notizen bis zum Seitenende.
+- **Zum Mitschreiben:** Rasten und Hopfengaben haben eine Spalte für die Uhrzeit und ein Kästchen zum
+  Abhaken, Schüttung ebenfalls ein Kästchen. Alle drei Tabellen bekommen eine freie Reservezeile. Dazu gibt es
+  leere Felder für Uhrzeiten (Einmaischen, Abmaischen, Läuterbeginn, Kochbeginn), für Anstelltemperatur und
+  „Angestellt am“. Die Gärung hat eine Messtabelle (Datum/Tag, Spindel, Refraktometer, Temperatur, Notiz),
+  vorhandene Zwischenmessungen stehen darin, aufgefüllt auf 7 Zeilen. Stopfhopfen steht nicht beim Kochen,
+  sondern als eigene Tabelle unter der Gärung.
+- **Empfehlungen wie im Assistenten:** Milchsäure je Guss (`Brau.milchsaeure`). Ohne Karbonathärte steht
+  stattdessen die Faustregel (ml je Liter und °dH) zum Selbstrechnen da. Zucker für die Nachgärung
+  (`Brau.primingZucker`): als g/l mal Biermenge, ohne Biermenge mit Lücke zum Ausrechnen. Für Speise gibt es
+  wie im Assistenten keinen Rechner. Die Wahl Haushaltszucker/Traubenzucker/Speise steht als drei Kästchen
+  da, die gewählte ist angekreuzt.
+- Eigene Angaben (`wizard_notizen`) erscheinen beim jeweiligen Schritt.
+- **Technik:** `brauProtokollHtml()` in `brews.js` baut den Bogen bei jedem Druck frisch aus `wizard.sud`
+  (dort stehen alle Änderungen sofort, auch die, deren Autosave noch läuft) und `wizard.messungen`. Der Bogen
+  liegt als `#brauProtokoll` direkt im `body`, außerhalb von `.wrap`, und ist auf dem Bildschirm unsichtbar.
+  `kopfzeileZeigen()` setzt während des Assistenten `body.wz-aktiv`. Damit blendet das Druck-CSS in
+  `brews.css` (`@page` A4, feste Schwarz-Weiß-Farben, also kein Dunkelmodus im Druck) alles andere aus.
+- **Passt auf den Bogen:** `tests/_wizard_check.py` erzeugt das PDF wie der Druckdialog und prüft, dass es
+  2 Seiten sind (auch mit Werten). Von Hand geprüft mit 6 Malzen, 4 Rasten, 5 Koch- und 2 Stopfgaben: Vorne
+  ist dann noch rund ein Fünftel frei. Bei sehr langen Listen (geprüft mit 16 Malzen) läuft der Bogen auf
+  eine dritte Seite über. Abgeschnitten wird nichts, die Abschnitte bleiben ganz, nur die Seitenangabe
+  „Seite 1 / 2“ im Fuß stimmt dann nicht mehr.
+- Auf der fertigen Sud-Seite (nach „Sud abschließen“) gibt es bewusst noch keinen Druckknopf. Das wäre ein
+  naheliegender nächster Schritt, falls gewünscht.
