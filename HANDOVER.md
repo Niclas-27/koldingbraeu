@@ -50,6 +50,10 @@ Datenbank selbst setzt durch, wer was darf.
 - **`main` ist live.** GitHub Pages deployt bei jedem Push auf `main`
   (`.github/workflows/pages.yml`, `on: push: branches: [main]`). Ungefähr eine Minute nach dem
   Merge eines Feature-PRs ist die Änderung auf kolding.de sichtbar.
+- Beim Veröffentlichen bekommen alle eigenen Skripte und Stile in den `*.html` ein `?v=<Commit>` angehängt
+  (Schritt „Versionsnummer an Skripte und Stile hängen“ in `pages.yml`). Sonst nahm Safari nach einem Merge bis
+  zu 10 Minuten lang noch die alten Dateien aus dem Zwischenspeicher. Die HTML-Seite selbst darf der Browser
+  weiterhin bis zu 10 Minuten halten – einmal Neuladen holt sie frisch.
 - Der Merge ist damit die Entscheidung zu veröffentlichen. Was noch nicht live gehen soll, bleibt
   als offener PR liegen.
 - Um zu prüfen, ob etwas wirklich live ist: GitHub → Actions → „Veröffentlichen“ – ein
