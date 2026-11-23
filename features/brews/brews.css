@@ -152,7 +152,8 @@ button.wahl-k:hover{border-color:var(--muted)}
 /* Brauprotokoll (Druck aus dem Assistenten, brauProtokollHtml() in brews.js): kleiner Knopf im Assistenten-Kopf,
    auf dem Bildschirm ist der Bogen unsichtbar. Im Druck ersetzt er während des Assistenten (body.wz-aktiv) die
    ganze Seite: A4, Seite 1 = Brautag, Seite 2 = Anstellen bis Abfüllung + Notizen. Feste Schwarz-Weiß-Farben,
-   damit der Dunkelmodus nicht mitgedruckt wird. Leere Werte sind Schreiblinien. */
+   damit der Dunkelmodus nicht mitgedruckt wird. Leere Werte sind Schreiblinien. Von der Sud-Seite aus gilt
+   dasselbe für genau einen Druck (body.bp-druck, sudProtokollDrucken() in brews.js). */
 .wz-kopf-rechts{display:flex;align-items:center;gap:10px}
 .wz-druck{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);color:var(--muted);
   border-radius:999px;padding:4px 10px;min-height:32px;font:inherit;font-size:.78rem;cursor:pointer}
@@ -160,9 +161,9 @@ button.wahl-k:hover{border-color:var(--muted)}
 #brauProtokoll{display:none}
 @media print{
   @page{size:A4;margin:9mm 11mm}
-  body.wz-aktiv>*:not(#brauProtokoll){display:none!important}
-  body.wz-aktiv{background:#fff!important;padding:0!important;margin:0!important}
-  body.wz-aktiv #brauProtokoll{display:block!important}
+  body.wz-aktiv>*:not(#brauProtokoll),body.bp-druck>*:not(#brauProtokoll){display:none!important}
+  body.wz-aktiv,body.bp-druck{background:#fff!important;padding:0!important;margin:0!important}
+  body.wz-aktiv #brauProtokoll,body.bp-druck #brauProtokoll{display:block!important}
   .bp{--bp-ink:#000;--bp-muted:#555;--bp-line:#999;color:var(--bp-ink);font-family:var(--font-body);font-size:8.6pt;line-height:1.3;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
   .bp-seite{display:flex;flex-direction:column;min-height:274mm;break-after:page;page-break-after:always}

@@ -22,11 +22,11 @@ def pruefe(name, bedingung):
 
 import re
 
-async def drucken(pg, datei):
+async def drucken(pg, datei, knopf="#wzDruck"):
     """Klickt „Drucken“ im Assistenten (window.print abgefangen) und erzeugt das PDF wie der Druckdialog (A4).
     Gibt (Anzahl Druckaufrufe, Seitenzahl, Text des Bogens) zurück."""
     await pg.evaluate("window.__druck = 0; window.print = () => { window.__druck++; }; 0")
-    await pg.click("#wzDruck")
+    await pg.click(knopf)
     await pg.wait_for_timeout(150)
     aufrufe = await pg.evaluate("window.__druck")
     pdf = await pg.pdf(path=str(ROOT / "tests" / "screenshots" / datei), prefer_css_page_size=True, print_background=True)
@@ -210,6 +210,14 @@ async def main():
         pruefe("Sudseite zeigt die Ziel-KH", "ziel-kh" in t.lower())
         list_html = await pg.eval_on_selector("#list", "el => el.innerHTML")
         pruefe("Abschnitt-Reihenfolge auf der Sudseite wie im Assistenten (Brauwasser vor Schüttung)", list_html.index("Brauwasser") < list_html.index("Schüttung"))
+
+        # Sud-Seite: derselbe Bogen über „Drucken“ bei den Braumeister-Aktionen
+        pruefe("Drucken-Knopf auf der Sud-Seite", await pg.locator(".sud-aktionen #druckBtn").is_visible())
+        aufrufe, seiten, text = await drucken(pg, "brauprotokoll_sudseite.pdf", "#druckBtn")
+        pruefe("Sud-Seite: Drucken öffnet den Druckdialog", aufrufe == 1)
+        pruefe("Sud-Seite: Brauprotokoll auf 2 Seiten", seiten == 2)
+        pruefe("Sud-Seite: Bogen mit Rezept, Werten und Zwischenmessung", "Kolding Kölsch" in text and "11,5" in text and "Tag 4" in text)
+        pruefe("Sud-Seite: Druckmodus endet nach dem Druck", "bp-druck" not in await pg.evaluate("document.body.className"))
 
         await pg.screenshot(path=str(ROOT / "tests" / "screenshots" / "wizard_check.png"), full_page=True)
         await ctx.close()

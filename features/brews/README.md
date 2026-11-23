@@ -344,5 +344,11 @@ ebenfalls den Bogen (`beforeprint`).
   ist dann noch rund ein Fünftel frei. Bei sehr langen Listen (geprüft mit 16 Malzen) läuft der Bogen auf
   eine dritte Seite über. Abgeschnitten wird nichts, die Abschnitte bleiben ganz, nur die Seitenangabe
   „Seite 1 / 2“ im Fuß stimmt dann nicht mehr.
-- Auf der fertigen Sud-Seite (nach „Sud abschließen“) gibt es bewusst noch keinen Druckknopf. Das wäre ein
-  naheliegender nächster Schritt, falls gewünscht.
+- **Auch auf der Sud-Seite:** Braumeister und Admin haben bei den Aktionen unten (neben „Als Rezept
+  speichern“) einen Knopf „Drucken“, der denselben Bogen druckt, egal ob der Sud abgeschlossen ist oder nicht.
+  Gäste sehen den Knopf nicht. Rezept-Zielwerte und Zwischenmessungen kommen aus den Abfragen, die die
+  Sud-Seite ohnehin macht (`detailDruck`). Wer sehr schnell nach dem Öffnen druckt, bevor sie geladen sind,
+  bekommt den Bogen ohne diese Werte. Nur für diesen einen Druck setzt `sudProtokollDrucken()`
+  `body.bp-druck`. Die Klasse fällt erst mit `afterprint` wieder weg, weil `window.print()` auf dem Handy sofort
+  zurückkehrt. Strg+P auf der Sud-Seite druckt weiter die normale Seite. `brauProtokollHtml()` bekommt dafür
+  einen Kontext `{sud, rezept, messungen, zielMenge}` statt direkt auf `wizard` zuzugreifen.
