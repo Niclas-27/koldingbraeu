@@ -44,6 +44,15 @@ jobs:
           find _site/core _site/features -type f ! -name '*.js' ! -name '*.css' -delete
           find _site -type d -empty -delete
           [ -f CNAME ] && cp CNAME _site/ || true
+      - name: Versionsnummer an Skripte und Stile hängen
+        # GitHub Pages erlaubt Browsern, Dateien 10 Minuten zwischenzuspeichern (Cache-Control: max-age=600).
+        # Ohne Versionsnummer nahm Safari nach einem Merge darum oft noch die alte brews.js/brews.css, obwohl
+        # die neue längst online war. Mit ?v=<Commit> heißt jede Datei nach jedem Merge neu und wird frisch
+        # geholt; die Dateien selbst bleiben unverändert. Bricht ab, wenn index.html danach keine Version trägt.
+        run: |
+          v="${GITHUB_SHA::8}"
+          sed -i -E "s#((src|href)=\"(core|features|lib|vendor|fonts)/[^\"?]+\.(js|css))\"#\1?v=${v}\"#g" _site/*.html
+          grep -q "features/brews/brews.js?v=${v}\"" _site/index.html
       - name: Vorschauseiten für geteilte Links erzeugen
         run: node scripts/build-previews.mjs _site
       - uses: actions/upload-pages-artifact@v3
