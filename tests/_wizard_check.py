@@ -20,6 +20,20 @@ def pruefe(name, bedingung):
     if not bedingung:
         fehler.append(name)
 
+import re
+
+async def drucken(pg, datei, knopf="#wzDruck"):
+    """Klickt „Drucken“ im Assistenten (window.print abgefangen) und erzeugt das PDF wie der Druckdialog (A4).
+    Gibt (Anzahl Druckaufrufe, Seitenzahl, Text des Bogens) zurück."""
+    await pg.evaluate("window.__druck = 0; window.print = () => { window.__druck++; }; 0")
+    await pg.click(knopf)
+    await pg.wait_for_timeout(150)
+    aufrufe = await pg.evaluate("window.__druck")
+    pdf = await pg.pdf(path=str(ROOT / "tests" / "screenshots" / datei), prefer_css_page_size=True, print_background=True)
+    seiten = len(re.findall(rb"/Type\s*/Page[^s]", pdf))
+    text = await pg.eval_on_selector("#brauProtokoll", "el => el.textContent")
+    return aufrufe, seiten, " ".join(text.split())
+
 async def gehe_zu(pg, index):
     """Per Punkt in der Fußleiste zu Schritt `index` (0-basiert) springen."""
     await pg.click(f'[data-wz-goto="{index}"]')
@@ -52,6 +66,12 @@ async def main():
         pruefe("Plan-Hinweis zum Rezept sichtbar", "Kolding Kölsch" in await pg.inner_text("#wzBody"))
         pruefe("Status Entwurf", "Entwurf" in await pg.inner_text("#wzBody"))
         pruefe("Kein großes Schritt-Menü mehr (nur die kleinen Punkte)", await pg.locator(".wz-steps").count() == 0)
+        pruefe("Drucken-Knopf im Assistenten-Kopf", await pg.locator(".wz-kopf #wzDruck").is_visible())
+        aufrufe, seiten, text = await drucken(pg, "brauprotokoll_leer.pdf")
+        pruefe("Drucken öffnet den Druckdialog", aufrufe == 1)
+        pruefe("Brauprotokoll passt auf einen A4-Bogen (2 Seiten)", seiten == 2)
+        pruefe("Brauprotokoll nennt Rezept und Schüttung", "Kolding Kölsch" in text and "Schüttung" in text and "Abfüllung" in text)
+        pruefe("Brauprotokoll ohne Karbonathärte mit Faustregel", "Faustregel Milchsäure" in text)
         await pg.click('[data-wz-extra-add="uebersicht"]')
         await pg.wait_for_timeout(150)
         await pg.fill('[data-wz-extra-label="0"]', "Testfeld")
@@ -169,6 +189,13 @@ async def main():
         await pg.fill("#f_flaschen", "40")
         await pg.fill("#f_abgefuellt", "2026-11-05")
         await pg.wait_for_timeout(700)
+        await gehe_zu(pg, 3)  # Drucken geht auf jedem Schritt und druckt immer den ganzen Sud
+        aufrufe, seiten, text = await drucken(pg, "brauprotokoll.pdf")
+        pruefe("Brauprotokoll mit Werten bleibt bei 2 Seiten", seiten == 2)
+        pruefe("Brauprotokoll zeigt Milchsäure-Empfehlung", "Empfehlung Milchsäure 80 %" in text)
+        pruefe("Brauprotokoll zeigt Zwischenmessung und Werte", "Tag 4" in text and "8,2 °P" in text and "11,5" in text)
+        pruefe("Brauprotokoll zeigt eigene Angabe", "Testfeld" in text)
+        await gehe_zu(pg, 8)
         await pg.click("#wzAbschliessen")
         await pg.wait_for_selector(".sud-blatt:not(.wz)", timeout=5000)
         pruefe("Nach Abschluss zurück auf der normalen Sud-Seite", await pg.locator(".wz").count() == 0)
@@ -183,6 +210,16 @@ async def main():
         pruefe("Sudseite zeigt die Ziel-KH", "ziel-kh" in t.lower())
         list_html = await pg.eval_on_selector("#list", "el => el.innerHTML")
         pruefe("Abschnitt-Reihenfolge auf der Sudseite wie im Assistenten (Brauwasser vor Schüttung)", list_html.index("Brauwasser") < list_html.index("Schüttung"))
+
+        # Sud-Seite: derselbe Bogen über „Drucken“ bei den Braumeister-Aktionen
+        pruefe("Drucken-Knopf auf der Sud-Seite", await pg.locator(".sud-aktionen #druckBtn").is_visible())
+        aufrufe, seiten, text = await drucken(pg, "brauprotokoll_sudseite.pdf", "#druckBtn")
+        pruefe("Sud-Seite: Drucken öffnet den Druckdialog", aufrufe == 1)
+        pruefe("Sud-Seite: Brauprotokoll auf 2 Seiten", seiten == 2)
+        pruefe("Sud-Seite: Bogen mit Rezept, Werten und Zwischenmessung", "Kolding Kölsch" in text and "11,5" in text and "Tag 4" in text)
+        pruefe("Sud-Seite: Druckmodus bleibt, bis die Seite wieder bedient wird (iPad: afterprint unzuverlässig)", "bp-druck" in await pg.evaluate("document.body.className"))
+        await pg.mouse.click(5, 5)
+        pruefe("Sud-Seite: Druckmodus endet beim nächsten Tippen", "bp-druck" not in await pg.evaluate("document.body.className"))
 
         await pg.screenshot(path=str(ROOT / "tests" / "screenshots" / "wizard_check.png"), full_page=True)
         await ctx.close()

@@ -151,14 +151,17 @@ function rowHTML(b){
 function kopfzeileZeigen(zeigen){
   const h=document.querySelector(".site-header"),f=document.querySelector(".foot");
   if(h)h.hidden=!zeigen;if(f)f.hidden=!zeigen;
+  document.body.classList.toggle("wz-aktiv",!zeigen); // druckt statt der Seite das Brauprotokoll (brews.css)
+  document.body.classList.remove("bp-druck");
 }
 function renderAll(){kopfzeileZeigen(true);renderStats();renderChips();renderList();}
 
 /* --- Details (eigene Seite index.html?sud=<id>, wie bei den Rezepten) --- */
 let aktuellerSud=null;
+let detailDruck=null; // {rezept, messungen} der Sud-Seite fürs Brauprotokoll, lädt nach (zeigeDetail/messungenDetailLaden)
 function zeigeDetail(b){
   kopfzeileZeigen(true);
-  aktuellerSud=b;
+  aktuellerSud=b;detailDruck={rezept:null,messungen:[]};
   $("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;
   document.title=title(b)+" · Koldingbräu";
   const bm=isBM();const total=malzSum(b);
@@ -221,17 +224,18 @@ function zeigeDetail(b){
       <section class="sec" id="sudGalerieSec" hidden><h3>Fotos vom Brautag</h3><div id="sudGalerie"></div></section>
       ${changed}
     </article>
-    ${bm?`<div class="top-actions noprint sud-aktionen">${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}<button class="btn" id="dupBtn">Kopie anlegen</button><button class="btn" id="rzBtn">Als Rezept speichern</button>${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}</div>`:""}`;
+    ${bm?`<div class="top-actions noprint sud-aktionen">${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}<button class="btn" id="dupBtn">Kopie anlegen</button><button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="druckBtn" title="Brauprotokoll drucken oder als PDF sichern (A4, Vorder- und Rückseite)">Drucken</button>${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}</div>`:""}`;
   $("#list").innerHTML=body;
   if(bm){
     if(b.status!=="dokumentiert")$("#wzFortBtn").onclick=async()=>{wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.findIndex(s=>s[0]==="gaerung"):0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();};
     else $("#editBtn").onclick=()=>editInline(b);
-    $("#dupBtn").onclick=()=>openEditor(b,true);$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
+    $("#dupBtn").onclick=()=>openEditor(b,true);
+    $("#druckBtn").onclick=()=>sudProtokollDrucken({sud:b,rezept:detailDruck.rezept,messungen:detailDruck.messungen,zielMenge:detailDruck.rezept?.ausschlag});$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
   }
   const bp=[b.bild_foto,b.bild_kronkorken,b.bild_flasche||b.bild_etikett].filter(Boolean);
   if($("#sudFoto"))$("#sudFoto").onclick=()=>Bilder.zeigen(bp,0);
   $("#list").querySelectorAll(".sud-kk-fl [data-zeig]").forEach(btn=>btn.onclick=()=>Bilder.zeigen(bp,Math.max(0,bp.indexOf(btn.dataset.zeig))));
-  if(b.rezept_id)sb.from("rezepte").select("id,name").eq("id",b.rezept_id).maybeSingle().then(({data})=>{const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
+  if(b.rezept_id)sb.from("rezepte").select("id,name,ausschlag,stammwuerze,bittere,farbe,alkohol").eq("id",b.rezept_id).maybeSingle().then(({data})=>{if(data&&aktuellerSud===b)detailDruck.rezept=data;const el=$("#rezeptVerweis");if(!el)return;if(data)el.innerHTML=`Nach Rezept <a href="rezepte.html?id=${esc(data.id)}">${esc(data.name)}</a>`;else el.remove();});
   galerieLaden(b.id);
   messungenDetailLaden(b.id);
 }
@@ -243,6 +247,7 @@ function messungenDetailLaden(sudId){
   if(!isBM()){el.hidden=true;return;}
   sb.from("sud_messungen").select("*").eq("sud_id",sudId).order("angelegt").then(({data,error})=>{
     if(error||!data||!data.length){el.hidden=true;return;}
+    if(aktuellerSud?.id===sudId)detailDruck.messungen=data; // auch fürs Brauprotokoll
     el.hidden=false;
     $("#sudMessungenListe").innerHTML=`<ul class="steps">${data.map(m=>`<li><b>${esc(m.bezeichnung)}</b><span class="num">${esc([m.plato!=null?Bz.fmtZahl(m.plato)+" °P":"",m.refraktometer!=null?Bz.fmtZahl(m.refraktometer)+" °Brix":""].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>`;
   });
@@ -880,17 +885,153 @@ function wizardRenderStep(){
   };
   document.querySelectorAll("[data-wz-goto]").forEach(b=>b.onclick=()=>{wizard.step=+b.dataset.wzGoto;wizardRenderStep();});
 }
+/* --- Brauprotokoll zum Ausdrucken (seit 23.11.2026) ---
+   Ein A4-Bogen, Vorder- und Rückseite, gegliedert wie die Schritte des Assistenten: vorne der Brautag (Rezept &
+   Start bis Kochen), hinten Kühlen & Anstellen, Gärung, Abfüllung und Platz für Notizen. Gedacht als
+   Arbeitsblatt am Kessel: Was im Assistenten schon steht, wird gedruckt, alles andere bleibt eine leere Linie
+   zum Ausfüllen mit dem Stift. Rasten und Hopfengaben haben eine Uhrzeit-Spalte und ein Kästchen zum Abhaken,
+   die Gärung leere Zeilen für Zwischenmessungen. Gedruckt wird über den Druckdialog des Browsers (dort auch
+   „Als PDF sichern“), wie bei den Rezepten – keine PDF-Bibliothek. Der Bogen wird bei jedem Druck frisch aus
+   wizard.sud gezeichnet (dort stehen alle Änderungen sofort, auch die noch nicht geschriebenen) und liegt
+   außerhalb von .wrap; im Druck blendet brews.css während des Assistenten alles andere aus (body.wz-aktiv).
+   Die Sud-Seite druckt denselben Bogen (Knopf „Drucken“ bei den Braumeister-Aktionen, body.bp-druck nur für
+   diesen einen Druck) – darum bekommt brauProtokollHtml() einen Kontext {sud, rezept, messungen, zielMenge}
+   statt direkt auf wizard zuzugreifen. */
+const BP_KASTEN=`<span class="bp-kasten" aria-hidden="true"></span>`;
+function bpWert(v,einheit,stellen=2){
+  const leer=v==null||v==="";
+  const txt=leer?"":typeof v==="number"?Bz.fmtZahl(v,stellen):String(v);
+  return `<span class="bp-v${leer?" leer":""}">${esc(txt)}</span>${einheit?`<span class="bp-e">${esc(einheit)}</span>`:""}`;
+}
+function bpFeld(label,v,einheit,{stellen,breit}={}){
+  return `<div class="bp-f${breit?" breit":""}"><span class="bp-l">${esc(label)}</span><span class="bp-z">${bpWert(v,einheit,stellen)}</span></div>`;
+}
+/* Tabelle mit festen Spalten [Beschriftung, Klasse]; füllt bis `mindestens` Zeilen mit leeren Schreibzeilen auf
+   (Schüttung, Rasten, Hopfen: eine freie Zeile zum Nachtragen am Kessel; Gärung: Platz für Messungen über Wochen) */
+function bpTabelle(kopf,zeilen,mindestens,fuss=""){
+  const leer=Array.from({length:Math.max(0,mindestens-zeilen.length)},()=>kopf.map(([,c])=>c==="kasten"?BP_KASTEN:""));
+  const zelle=(inh,i)=>`<td class="${kopf[i][1]||""}">${inh}</td>`;
+  return `<table class="bp-tab"><thead><tr>${kopf.map(([l,c])=>`<th class="${c||""}">${esc(l)}</th>`).join("")}</tr></thead>
+    <tbody>${zeilen.concat(leer).map(z=>`<tr>${z.map(zelle).join("")}</tr>`).join("")}</tbody>${fuss}</table>`;
+}
+const bpZahl=(v,st=1)=>v==null||v===""?"":esc(Bz.fmtZahl(Bz.zahl(v),st));
+/* Eigene Angaben (wizard_notizen) eines Schritts als zusätzliche Felder */
+function bpExtra(d,schritt){
+  return (d.wizard_notizen||[]).filter(n=>n.schritt===schritt&&(n.label||n.wert)).map(n=>bpFeld(n.label||"Eigene Angabe",n.wert||null,"",{breit:true})).join("");
+}
+function bpAbschnitt(stepKey,inner){
+  const i=WIZARD_STEPS.findIndex(([k])=>k===stepKey);
+  return `<section class="bp-sec"><h2><span class="bp-nr">${i+1}</span>${esc(WIZARD_STEPS[i][1])}</h2>${inner}</section>`;
+}
+function brauProtokollHtml(q){
+  const d=q.sud,r=q.rezept,heute=new Date().toLocaleDateString("de-DE");
+  const hopfen=(d.hopfen||[]).map(hopfenNeu).filter(h=>h.sorte||h.gramm);
+  const kochHopfen=hopfen.filter(h=>h.typ!=="Stopfen"),stopfHopfen=hopfen.filter(h=>h.typ==="Stopfen");
+  const malz=(d.malz||[]).filter(m=>m.sorte||m.gramm),rasten=(d.rasten||[]).filter(x=>x.temperatur!=null||x.zeit!=null);
+  // Kopf: Ziele laut Rezept in einer Zeile (die Felder selbst sind beim Anlegen schon aus dem Rezept vorbefüllt)
+  // Zielmenge: wie beim Anlegen umgerechnet (steht in den Notizen), sonst wie der Assistent sie annimmt
+  const zm=(d.notizen||"").match(/umgerechnet auf ([\d.,]+) l/),ziel=zm?Bz.zahl(zm[1]):q.zielMenge;
+  const ziele=r?[ziel?`${Bz.fmtZahl(ziel)} l Ausschlagwürze`:"",r.stammwuerze!=null?`${Bz.fmtZahl(r.stammwuerze)} °P`:"",r.bittere!=null?`${Bz.fmtZahl(r.bittere,0)} IBU`:"",
+    r.farbe!=null?`${Bz.fmtZahl(r.farbe,0)} EBC`:"",r.alkohol!=null?`${Bz.fmtZahl(r.alkohol)} % vol`:""].filter(Boolean).join(" · "):"";
+  const fuss=seite=>`<footer class="bp-fuss"><span>Koldingbräu · Sud Nr. ${esc(d.nr)} · ${esc(title(d))}</span><span>gedruckt am ${esc(heute)} · Seite ${seite} / 2</span></footer>`;
+  // Milchsäure-Empfehlung wie im Wasser-Schritt; ohne Karbonathärte die Faustregel zum Selbstrechnen
+  const zielKh=d.ziel_kh??ZIEL_KH_STANDARD;
+  const msHg=Bz.milchsaeure(d.wasserhaerte,d.hauptguss,zielKh),msNg=Bz.milchsaeure(d.wasserhaerte,d.nachguss,zielKh);
+  const msText=msHg!=null||msNg!=null
+    ?`Empfehlung Milchsäure 80 %: Hauptguss <b>${msHg!=null?esc(Bz.fmtZahl(msHg,1))+" ml":"–"}</b> · Nachguss <b>${msNg!=null?esc(Bz.fmtZahl(msNg,1))+" ml":"–"}</b> (KH ${esc(Bz.fmtZahl(d.wasserhaerte))} → ${esc(Bz.fmtZahl(zielKh))} °dH)`
+    :`Faustregel Milchsäure 80 %: ${esc(Bz.fmtZahl(Bz.milchsaeure(1,1,0),3))} ml je Liter Guss und °dH über der Ziel-KH (${esc(Bz.fmtZahl(zielKh))} °dH).`;
+  // Zucker-Empfehlung wie im Abfüllung-Schritt (Speise: bewusst ohne Rechner)
+  const art=d.speise_art==="traubenzucker"?"traubenzucker":"zucker",rest=Bz.restkohlensaeure(d.gaertemperatur);
+  const gl=d.speise_art==="speise"?null:Bz.primingZucker(d.karbonisierung,rest,art);
+  const zuckerText=d.speise_art==="speise"?"":gl==null
+    ?`Zucker-Empfehlung: Karbonisierung eintragen – der Assistent rechnet dann die Menge aus.`
+    :`Empfehlung ${esc(art==="traubenzucker"?"Traubenzucker":"Haushaltszucker")}: <b>${esc(Bz.fmtZahl(gl,1))} g/l</b> × ${d.biermenge?esc(Bz.fmtZahl(d.biermenge))+" l = <b>"+esc(Bz.fmtZahl(gl*d.biermenge,0))+" g</b>":"____ l Biermenge"} (Restkohlensäure ca. ${esc(Bz.fmtZahl(rest,1))} g/l)`;
+  const hefemenge=d.hefemenge==null||d.hefemenge===""?null:istGrammZahl(d.hefemenge)?Bz.zahl(String(d.hefemenge).replace(/g/i,"")):d.hefemenge;
+  const mengeEinheit=d.speise_art==="speise"?"l":d.speise_art?"g":"g / l";
+  const speiseWahl=Object.entries(SPEISE_ART).map(([a,l])=>`<span class="bp-wahl">${d.speise_art===a?`<span class="bp-kasten an" aria-hidden="true">✕</span>`:BP_KASTEN}${esc(l)}</span>`).join("");
+
+  const seite1=`<div class="bp-seite">
+    <header class="bp-kopf">
+      <div><p class="bp-kicker">Koldingbräu · Brauprotokoll</p><h1>${esc(title(d))}</h1>
+        ${r?`<p class="bp-rezept">Nach Rezept „${esc(r.name)}“${ziele?` · Ziel: ${esc(ziele)}`:""}</p>`:""}</div>
+      <div class="bp-kopf-werte">${bpFeld("Sud-Nr.",d.nr!=null?String(d.nr):null)}${bpFeld("Braudatum",d.datum?fmtDate(d.datum)+d.datum.slice(0,4):null)}</div>
+    </header>
+    ${bpExtra(d,"uebersicht")?`<div class="bp-grid">${bpExtra(d,"uebersicht")}</div>`:""}
+    ${bpAbschnitt("wasser",`<div class="bp-grid">
+      ${bpFeld("Karbonathärte (KH)",d.wasserhaerte,"°dH")}${bpFeld("Ziel-KH",zielKh,"°dH")}${bpFeld("pH vorher",d.ph_vorher,"")}${bpFeld("pH nachher",d.ph_nachher,"")}
+      ${bpFeld("Hauptguss",d.hauptguss,"l")}${bpFeld("Milchsäure Hauptguss",d.milchsaeure_hauptguss,"ml")}${bpFeld("Nachguss",d.nachguss,"l")}${bpFeld("Milchsäure Nachguss",d.milchsaeure_nachguss,"ml")}
+      ${d.wasser?bpFeld("Hinweise zum Brauwasser",d.wasser,"",{breit:true}):""}${bpExtra(d,"wasser")}</div>
+      <p class="bp-hinweis">${msText}</p>`)}
+    ${bpAbschnitt("schuettung",`${bpTabelle([["Malz","sorte"],["Menge","zahl"],["EBC","zahl"],["✓","kasten"]],
+      malz.map(m=>[esc(m.sorte||""),m.gramm!=null&&m.gramm!==""?esc(Bz.fmtGramm(Bz.zahl(m.gramm))):"",bpZahl(m.ebc,0),BP_KASTEN]),malz.length+1,
+      malz.length?`<tfoot><tr><td>Gesamt</td><td class="zahl">${esc(fmtKg(malzSum(d)))}</td><td></td><td></td></tr></tfoot>`:"")}
+      ${bpExtra(d,"schuettung")?`<div class="bp-grid">${bpExtra(d,"schuettung")}</div>`:""}`)}
+    ${bpAbschnitt("maischen",`<div class="bp-grid">${bpFeld("Einmaischtemperatur",d.einmaischtemperatur,"°C")}${bpFeld("Abmaischtemperatur",d.abmaischtemperatur,"°C")}${bpFeld("Einmaischen um",null,"Uhr")}${bpFeld("Abmaischen um",null,"Uhr")}</div>
+      ${bpTabelle([["Rast","sorte"],["Temperatur","zahl"],["Dauer","zahl"],["Beginn","uhr"],["✓","kasten"]],
+        rasten.map((x,i)=>[`${i+1}. Rast`,x.temperatur!=null&&x.temperatur!==""?bpZahl(x.temperatur)+" °C":"",x.zeit!=null&&x.zeit!==""?bpZahl(x.zeit,0)+" min":"","",BP_KASTEN]),rasten.length+1)}
+      ${bpExtra(d,"maischen")?`<div class="bp-grid">${bpExtra(d,"maischen")}</div>`:""}`)}
+    ${bpAbschnitt("laeutern",`<div class="bp-grid">${bpFeld("Läutern",d.laeutern||null,"",{breit:true})}${bpFeld("Würze vor dem Ausschlagen",d.wuerze,"l")}${bpFeld("Läuterbeginn",null,"Uhr")}${bpExtra(d,"laeutern")}</div>`)}
+    ${bpAbschnitt("kochen",`<div class="bp-grid">${bpFeld("Kochzeit",d.kochzeit,"min",{stellen:0})}${bpFeld("Kochbeginn",null,"Uhr")}${d.hopfensorten?bpFeld("Hopfensorten",d.hopfensorten,"",{breit:true}):""}${bpExtra(d,"kochen")}</div>
+      ${bpTabelle([["Hopfen","sorte"],["Menge","zahl"],["Alpha","zahl"],["Zeit","zahl"],["Art",""],["Uhrzeit","uhr"],["✓","kasten"]],
+        kochHopfen.map(h=>[esc(h.sorte||""),h.gramm!=null?bpZahl(h.gramm)+" g":"",h.alpha!=null?bpZahl(h.alpha)+" %":"",h.zeit!=null?bpZahl(h.zeit,0)+" min":"",esc(TYP[h.typ]||h.typ||""),"",BP_KASTEN]),kochHopfen.length+1)}`)}
+    ${fuss(1)}
+  </div>`;
+
+  const seite2=`<div class="bp-seite">
+    <header class="bp-kopf klein"><p class="bp-kicker">Brauprotokoll · Sud Nr. ${esc(d.nr)}</p><h1>${esc(title(d))}</h1></header>
+    ${bpAbschnitt("anstellen",`<div class="bp-grid">${bpFeld("Stammwürze (Spindel)",d.stammwuerze,"°P")}${bpFeld("Refraktometer",d.refraktometer_anstellen,"°Brix")}${bpFeld("Ausschlagwürze",d.ausschlag,"l")}${bpFeld("Anstelltemperatur",null,"°C")}
+      ${bpFeld("Hefe",d.hefe||null,"",{breit:true})}${bpFeld("Hefemenge",hefemenge,typeof hefemenge==="number"?"g":"")}${bpFeld("Angestellt am",null,"")}${bpExtra(d,"anstellen")}</div>`)}
+    ${bpAbschnitt("gaerung",`${bpTabelle([["Datum / Tag","datum"],["Spindel","zahl"],["Refraktometer","zahl"],["Temperatur","zahl"],["Notiz",""]],
+        (q.messungen||[]).filter(m=>m.bezeichnung||m.plato!=null||m.refraktometer!=null).map(m=>[esc(m.bezeichnung||""),m.plato!=null?bpZahl(m.plato)+" °P":"",m.refraktometer!=null?bpZahl(m.refraktometer)+" °Brix":"","",""]),7)}
+      <div class="bp-grid">${bpFeld("Restextrakt endgültig (Spindel)",d.restextrakt,"°P")}${bpFeld("Refraktometer endgültig",d.refraktometer_restextrakt,"°Brix")}${bpExtra(d,"gaerung")}</div>
+      ${stopfHopfen.length?`<p class="bp-titel">Hopfenstopfen</p>${bpTabelle([["Hopfen","sorte"],["Menge","zahl"],["Alpha","zahl"],["Gestopft am","uhr"],["✓","kasten"]],
+        stopfHopfen.map(h=>[esc(h.sorte||""),h.gramm!=null?bpZahl(h.gramm)+" g":"",h.alpha!=null?bpZahl(h.alpha)+" %":"","",BP_KASTEN]),0)}`:""}`)}
+    ${bpAbschnitt("abfuellung",`<p class="bp-titel">Abfüllen</p>
+      <div class="bp-grid">${bpFeld("Abfülldatum",d.abgefuellt?fmtDate(d.abgefuellt)+d.abgefuellt.slice(0,4):null)}${bpFeld("Biermenge",d.biermenge,"l")}${bpFeld("Flaschen",d.flaschen,"",{stellen:0})}</div>
+      <p class="bp-titel">Karbonisieren</p>
+      <div class="bp-grid">${bpFeld("Gewünschte Karbonisierung",d.karbonisierung,"g/l")}${bpFeld("Höchste Gärtemperatur",d.gaertemperatur,"°C")}
+        <div class="bp-f breit"><span class="bp-l">Nachgärung mit</span><span class="bp-z bp-wahlen">${speiseWahl}</span></div>${bpFeld("Menge",d.speise_menge,mengeEinheit,{stellen:1})}</div>
+      ${zuckerText?`<p class="bp-hinweis">${zuckerText}</p>`:""}
+      <p class="bp-titel">Ergebnis</p>
+      <div class="bp-grid">${bpFeld("Alkohol",d.alkohol,"% vol",{stellen:1})}${bpExtra(d,"abfuellung")}</div>`)}
+    <section class="bp-sec bp-notizen"><h2>Notizen</h2><div class="bp-linien">${"<i></i>".repeat(10)}</div></section>
+    ${fuss(2)}
+  </div>`;
+  return seite1+seite2;
+}
+function brauProtokollZeichnen(q){
+  let el=$("#brauProtokoll");
+  if(!el){el=document.createElement("div");el.id="brauProtokoll";el.className="bp";el.hidden=true;document.body.appendChild(el);}
+  el.innerHTML=brauProtokollHtml(q);
+}
+const wizardProtokoll=()=>({sud:wizard.sud,rezept:wizard.rezept,messungen:wizard.messungen,zielMenge:wizard.zielMenge});
+// Auch Strg+P / „Drucken“ im Browser-Menü während des Assistenten druckt den frischen Bogen
+addEventListener("beforeprint",()=>{if(wizard&&document.body.classList.contains("wz-aktiv"))brauProtokollZeichnen(wizardProtokoll());});
+/* Sud-Seite: Bogen zeichnen und statt der Seite drucken (body.bp-druck, wirkt nur im Druck). Die Klasse fällt
+   NICHT mit afterprint weg: auf dem iPad kehrt window.print() sofort zurück und afterprint feuert unzuverlässig,
+   die Druckvorschau wird aber erst danach (und bei jeder Papieränderung neu) aus der Seite gebaut. Sie fällt beim
+   nächsten Tippen/Klicken/Tastendruck weg – während der Druckdialog offen ist, geht das nicht – und beim
+   Seitenwechsel (kopfzeileZeigen). */
+function sudProtokollDrucken(q){
+  brauProtokollZeichnen(q);
+  document.body.classList.add("bp-druck");
+  const ende=()=>{document.body.classList.remove("bp-druck");["pointerdown","keydown"].forEach(t=>removeEventListener(t,ende,true));};
+  setTimeout(()=>["pointerdown","keydown"].forEach(t=>addEventListener(t,ende,true)),0);
+  window.print();
+}
+const DRUCK_ICON=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>`;
 function wizardAnzeigen(){
   kopfzeileZeigen(false);
   $("#overview").hidden=true;$("#filter").hidden=true;$("#sudeActions").hidden=true;
   $("#list").innerHTML=`<p class="noprint"><a class="back" id="wzZurueck" href="index.html?sud=${esc(wizard.sud.id)}">← Zurück zum Sud</a></p>
     <article class="sud-blatt wz">
-      <div class="wz-kopf"><p class="kicker">${esc(title(wizard.sud))}</p><span class="num" id="wzStatus">gespeichert</span></div>
+      <div class="wz-kopf"><p class="kicker">${esc(title(wizard.sud))}</p><span class="wz-kopf-rechts"><span class="num" id="wzStatus">gespeichert</span><button type="button" class="wz-druck" id="wzDruck" title="Brauprotokoll drucken oder als PDF sichern (A4, Vorder- und Rückseite)">${DRUCK_ICON}Drucken</button></span></div>
       <h2 id="wzStepTitel" class="wz-schritt-titel"></h2>
       <div id="wzBody"></div>
       <div id="wzFuss"></div>
     </article>`;
   $("#wzZurueck").onclick=e=>{e.preventDefault();zeigeDetail(wizard.sud);};
+  $("#wzDruck").onclick=()=>{brauProtokollZeichnen(wizardProtokoll());window.print();};
   wizardRenderStep();
 }
 async function wizardAbschliessen(){
@@ -909,6 +1050,7 @@ async function wizardRezeptLaden(){
   if(!rz.data)return;
   wizard.rezept=rz.data;wizard.anlage=an.data;
   const ziel=wizard.sud.ausschlag||wizard.sud.wuerze||an.data?.standard_menge||rz.data.ausschlag;
+  wizard.zielMenge=ziel;
   wizard.rezeptUmgerechnet=Bz.umrechnen(rz.data,{ziel,anlage:an.data&&rz.data.sudhausausbeute?an.data:null});
   wizardRenderStep();
 }
