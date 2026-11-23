@@ -994,7 +994,7 @@ function brauProtokollHtml(q){
       ${zuckerText?`<p class="bp-hinweis">${zuckerText}</p>`:""}
       <p class="bp-titel">Ergebnis</p>
       <div class="bp-grid">${bpFeld("Alkohol",d.alkohol,"% vol",{stellen:1})}${bpExtra(d,"abfuellung")}</div>`)}
-    <section class="bp-sec bp-notizen"><h2>Notizen</h2><div class="bp-linien"></div></section>
+    <section class="bp-sec bp-notizen"><h2>Notizen</h2><div class="bp-linien">${"<i></i>".repeat(10)}</div></section>
     ${fuss(2)}
   </div>`;
   return seite1+seite2;
@@ -1007,12 +1007,16 @@ function brauProtokollZeichnen(q){
 const wizardProtokoll=()=>({sud:wizard.sud,rezept:wizard.rezept,messungen:wizard.messungen,zielMenge:wizard.zielMenge});
 // Auch Strg+P / „Drucken“ im Browser-Menü während des Assistenten druckt den frischen Bogen
 addEventListener("beforeprint",()=>{if(wizard&&document.body.classList.contains("wz-aktiv"))brauProtokollZeichnen(wizardProtokoll());});
-/* Sud-Seite: Bogen zeichnen und nur für diesen Druck (body.bp-druck) statt der Seite drucken. Die Klasse
-   fällt erst mit afterprint weg – auf dem Handy kehrt window.print() sofort zurück, bevor gedruckt ist. */
+/* Sud-Seite: Bogen zeichnen und statt der Seite drucken (body.bp-druck, wirkt nur im Druck). Die Klasse fällt
+   NICHT mit afterprint weg: auf dem iPad kehrt window.print() sofort zurück und afterprint feuert unzuverlässig,
+   die Druckvorschau wird aber erst danach (und bei jeder Papieränderung neu) aus der Seite gebaut. Sie fällt beim
+   nächsten Tippen/Klicken/Tastendruck weg – während der Druckdialog offen ist, geht das nicht – und beim
+   Seitenwechsel (kopfzeileZeigen). */
 function sudProtokollDrucken(q){
   brauProtokollZeichnen(q);
   document.body.classList.add("bp-druck");
-  addEventListener("afterprint",()=>document.body.classList.remove("bp-druck"),{once:true});
+  const ende=()=>{document.body.classList.remove("bp-druck");["pointerdown","keydown"].forEach(t=>removeEventListener(t,ende,true));};
+  setTimeout(()=>["pointerdown","keydown"].forEach(t=>addEventListener(t,ende,true)),0);
   window.print();
 }
 const DRUCK_ICON=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>`;

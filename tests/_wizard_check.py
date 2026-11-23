@@ -217,7 +217,9 @@ async def main():
         pruefe("Sud-Seite: Drucken öffnet den Druckdialog", aufrufe == 1)
         pruefe("Sud-Seite: Brauprotokoll auf 2 Seiten", seiten == 2)
         pruefe("Sud-Seite: Bogen mit Rezept, Werten und Zwischenmessung", "Kolding Kölsch" in text and "11,5" in text and "Tag 4" in text)
-        pruefe("Sud-Seite: Druckmodus endet nach dem Druck", "bp-druck" not in await pg.evaluate("document.body.className"))
+        pruefe("Sud-Seite: Druckmodus bleibt, bis die Seite wieder bedient wird (iPad: afterprint unzuverlässig)", "bp-druck" in await pg.evaluate("document.body.className"))
+        await pg.mouse.click(5, 5)
+        pruefe("Sud-Seite: Druckmodus endet beim nächsten Tippen", "bp-druck" not in await pg.evaluate("document.body.className"))
 
         await pg.screenshot(path=str(ROOT / "tests" / "screenshots" / "wizard_check.png"), full_page=True)
         await ctx.close()

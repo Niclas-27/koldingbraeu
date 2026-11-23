@@ -348,7 +348,15 @@ ebenfalls den Bogen (`beforeprint`).
   speichern“) einen Knopf „Drucken“, der denselben Bogen druckt, egal ob der Sud abgeschlossen ist oder nicht.
   Gäste sehen den Knopf nicht. Rezept-Zielwerte und Zwischenmessungen kommen aus den Abfragen, die die
   Sud-Seite ohnehin macht (`detailDruck`). Wer sehr schnell nach dem Öffnen druckt, bevor sie geladen sind,
-  bekommt den Bogen ohne diese Werte. Nur für diesen einen Druck setzt `sudProtokollDrucken()`
-  `body.bp-druck`. Die Klasse fällt erst mit `afterprint` wieder weg, weil `window.print()` auf dem Handy sofort
-  zurückkehrt. Strg+P auf der Sud-Seite druckt weiter die normale Seite. `brauProtokollHtml()` bekommt dafür
+  bekommt den Bogen ohne diese Werte. `sudProtokollDrucken()` setzt `body.bp-druck` (wirkt nur im Druck).
+  Die Klasse fällt erst beim nächsten Tippen/Klicken/Tastendruck oder beim Seitenwechsel weg, nicht mit
+  `afterprint`: auf dem iPad kehrt `window.print()` sofort zurück, `afterprint` feuert unzuverlässig und die
+  Druckvorschau wird erst danach aus der Seite gebaut. Bis zur nächsten Bedienung druckt Strg+P auf der
+  Sud-Seite deshalb ebenfalls den Bogen. `brauProtokollHtml()` bekommt dafür
   einen Kontext `{sud, rezept, messungen, zielMenge}` statt direkt auf `wizard` zuzugreifen.
+- **Safari/iPad (Stand 23.11.2026, nur im Code abgesichert, nicht in WebKit getestet – hier gibt es nur
+  Chromium):** Seitenhöhe 262 mm statt der vollen A4-Höhe, weil Safari den `@page`-Rand nicht verlässlich
+  übernimmt und eine zu hohe Seite eine leere Zwischenseite erzeugt. Der Fuß sitzt dadurch etwas höher am Rand.
+  Notizlinien sind echte Elemente mit Rahmen statt Hintergrund-Verlauf (Safari druckt Hintergründe nur mit
+  Einstellung). Seitenumbruch-Regeln stehen zusätzlich als `page-break-*`. Wenn der Druck auf dem iPad doch
+  schief aussieht: zuerst Papierformat A4 und „Skalieren 100 %“ in der Druckvorschau prüfen.
