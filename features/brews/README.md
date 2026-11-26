@@ -416,3 +416,12 @@ ebenfalls den Bogen (`beforeprint`).
   Nachgemessen in Chromium mit entfernter `@page`-Regel: A4 und Letter mit 9, 18 und 25 mm Rand ergeben alle
   2 Seiten (der alte Stand: 4 Seiten ab 18 mm Rand oder bei Letter). In WebKit selbst nicht getestet. Wenn der
   Druck auf dem iPad doch schief aussieht: Papierformat A4 und „Skalieren 100 %“ in der Druckvorschau prüfen.
+
+## Assistent merkt sich den letzten Schritt (seit 26.11.2026)
+
+Wer den Assistenten verlässt („Zurück zum Sud“, Neuladen, Browser zu) und wieder öffnet, landet im zuletzt
+besuchten Schritt statt immer bei der Gärung (`wizardStartSchritt()` in `brews.js`). Der Schritt steht pro Sud
+im `localStorage` dieses Geräts (`kb_wz_schritt_<sud-id>`), nicht in der Datenbank: kein SQL nötig, dafür gilt er
+nicht geräteübergreifend (iPad und Mac merken sich ihren Schritt je für sich). Ohne gemerkten Schritt oder bei
+nicht verfügbarem Speicher (privates Fenster) gilt wie vorher: bei „Gärung läuft“ die Gärung, sonst Schritt 1.
+Nach „Sud abschließen“ wird der Eintrag gelöscht. Ein neu angelegter Sud beginnt bei Schritt 1.
