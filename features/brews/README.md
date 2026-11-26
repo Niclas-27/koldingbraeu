@@ -416,3 +416,12 @@ ebenfalls den Bogen (`beforeprint`).
   Nachgemessen in Chromium mit entfernter `@page`-Regel: A4 und Letter mit 9, 18 und 25 mm Rand ergeben alle
   2 Seiten (der alte Stand: 4 Seiten ab 18 mm Rand oder bei Letter). In WebKit selbst nicht getestet. Wenn der
   Druck auf dem iPad doch schief aussieht: Papierformat A4 und „Skalieren 100 %“ in der Druckvorschau prüfen.
+
+## Sud umbenennen (seit 26.11.2026)
+
+Der Name eines Suds ist die Spalte `stil` („Name des Suds (Stil)“, ohne Name steht „Sud Nr. …“). Er lässt sich
+jederzeit ändern: bei abgeschlossenen Suden im normalen Editor („Bearbeiten“), solange der Sud noch Entwurf oder
+„Gärung läuft“ ist im ersten Schritt des Braugang-Assistenten („Rezept & Start“, Feld „Name des Suds“, vorbefüllt
+mit dem Rezeptnamen). Vorher fehlte das Feld im Assistenten, und weil der Knopf bei laufenden Suden nur in den
+Assistenten führt, ließ sich ein Entwurf gar nicht umbenennen. Die Kopfzeile des Assistenten zieht beim Tippen
+nach, ein leerer Name wird als „kein Name“ gespeichert. Keine Datenbank-Änderung.
