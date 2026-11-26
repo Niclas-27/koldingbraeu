@@ -227,7 +227,7 @@ function zeigeDetail(b){
     ${bm?`<div class="top-actions noprint sud-aktionen">${b.status!=="dokumentiert"?`<button class="btn primary" id="wzFortBtn">Braugang-Assistent</button>`:`<button class="btn primary" id="editBtn">Bearbeiten</button>`}<button class="btn" id="dupBtn">Kopie anlegen</button><button class="btn" id="rzBtn">Als Rezept speichern</button><button class="btn" id="druckBtn" title="Brauprotokoll drucken oder als PDF sichern (A4, Vorder- und Rückseite)">Drucken</button>${isAdmin()?`<button class="btn danger" id="delBtn">Löschen</button>`:""}</div>`:""}`;
   $("#list").innerHTML=body;
   if(bm){
-    if(b.status!=="dokumentiert")$("#wzFortBtn").onclick=async()=>{wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.findIndex(s=>s[0]==="gaerung"):0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();};
+    if(b.status!=="dokumentiert")$("#wzFortBtn").onclick=async()=>{wizard={sud:b,step:wizardStartSchritt(b),messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();};
     else $("#editBtn").onclick=()=>editInline(b);
     $("#dupBtn").onclick=()=>openEditor(b,true);
     $("#druckBtn").onclick=()=>sudProtokollDrucken({sud:b,rezept:detailDruck.rezept,messungen:detailDruck.messungen,zielMenge:detailDruck.rezept?.ausschlag});$("#rzBtn").onclick=()=>rezeptAusSud(b);if(isAdmin())$("#delBtn").onclick=()=>confirmDelete(b);
@@ -603,6 +603,15 @@ const WIZARD_FIELDS={
     ["speise_menge","","number"],["alkohol","Alkohol in % vol","number"]],
 };
 let wizard=null; // {sud, step, rezept, anlage, messungen}
+/* Letzter Schritt je Sud: bleibt im Browser dieses Geräts (localStorage, keine Datenbank-Änderung), damit man nach
+   „Zurück zum Sud“ oder Neuladen dort weitermacht, wo man war. Ohne gemerkten Schritt: bei „Gärung läuft“ die
+   Gärung, sonst der erste. Speicher kann fehlen oder werfen (privates Fenster) – dann gilt der Rückfall. */
+const wzSchrittKey=id=>"kb_wz_schritt_"+id;
+function wizardStartSchritt(b){
+  try{const n=parseInt(localStorage.getItem(wzSchrittKey(b.id)),10);if(n>=0&&n<WIZARD_STEPS.length)return n;}catch(e){}
+  return b.status==="gaerung"?WIZARD_STEPS.findIndex(s=>s[0]==="gaerung"):0;
+}
+function wizardSchrittMerken(){try{localStorage.setItem(wzSchrittKey(wizard.sud.id),String(wizard.step));}catch(e){}}
 let wizardTimer=null,wizardSaving=0,wizardPending={},wizardOffline=false;
 function wizardIndicator(){
   const el=$("#wzStatus");if(!el)return;
@@ -837,6 +846,7 @@ function wizardPlanHinweis(){
 }
 function wizardRenderStep(){
   const[key,titel]=WIZARD_STEPS[wizard.step],d=wizard.sud;
+  wizardSchrittMerken();
   const fs=inner=>`<fieldset>${inner}</fieldset>`;
   let body="";
   if(key==="uebersicht"){
@@ -1073,6 +1083,7 @@ async function wizardAbschliessenJetzt(){
   const {error}=await sb.from("sude").update({status:"dokumentiert"}).eq("id",wizard.sud.id);
   if(error){toast(fehlertext(error));$("#wzAbschliessen").disabled=false;return;}
   wizard.sud.status="dokumentiert";
+  try{localStorage.removeItem(wzSchrittKey(wizard.sud.id));}catch(e){}
   const i=state.brews.findIndex(b=>b.id===wizard.sud.id);if(i>-1)state.brews[i]=Object.assign({},state.brews[i],{status:"dokumentiert"});
   toast("Sud abgeschlossen");
   zeigeDetail(wizard.sud);
@@ -1149,7 +1160,7 @@ KB.seite = {
     if(sudId){
       const b=state.brews.find(x=>x.id===sudId);
       if(b&&isBM()&&b.status!=="dokumentiert"){
-        wizard={sud:b,step:b.status==="gaerung"?WIZARD_STEPS.findIndex(s=>s[0]==="gaerung"):0,messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};
+        wizard={sud:b,step:wizardStartSchritt(b),messungen:[],rezept:null,anlage:null,rezeptUmgerechnet:null};
         await wizardMessungenLaden();wizardAnzeigen();wizardRezeptLaden();
       }
       else if(b)zeigeDetail(b);

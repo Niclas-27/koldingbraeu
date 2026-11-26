@@ -425,3 +425,12 @@ jederzeit ändern: bei abgeschlossenen Suden im normalen Editor („Bearbeiten�
 mit dem Rezeptnamen). Vorher fehlte das Feld im Assistenten, und weil der Knopf bei laufenden Suden nur in den
 Assistenten führt, ließ sich ein Entwurf gar nicht umbenennen. Die Kopfzeile des Assistenten zieht beim Tippen
 nach, ein leerer Name wird als „kein Name“ gespeichert. Keine Datenbank-Änderung.
+
+## Assistent merkt sich den letzten Schritt (seit 26.11.2026)
+
+Wer den Assistenten verlässt („Zurück zum Sud“, Neuladen, Browser zu) und wieder öffnet, landet im zuletzt
+besuchten Schritt statt immer bei der Gärung (`wizardStartSchritt()` in `brews.js`). Der Schritt steht pro Sud
+im `localStorage` dieses Geräts (`kb_wz_schritt_<sud-id>`), nicht in der Datenbank: kein SQL nötig, dafür gilt er
+nicht geräteübergreifend (iPad und Mac merken sich ihren Schritt je für sich). Ohne gemerkten Schritt oder bei
+nicht verfügbarem Speicher (privates Fenster) gilt wie vorher: bei „Gärung läuft“ die Gärung, sonst Schritt 1.
+Nach „Sud abschließen“ wird der Eintrag gelöscht. Ein neu angelegter Sud beginnt bei Schritt 1.

@@ -115,6 +115,14 @@ async def main():
         await pg.wait_for_timeout(700)  # Autosave-Debounce
         pruefe("Gespeichert-Anzeige aktualisiert", "gespeichert" in (await pg.inner_text("#wzStatus")).lower())
 
+        # Letzten Schritt merken: raus aus dem Assistenten und wieder hinein landet im zuletzt besuchten Schritt
+        await gehe_zu(pg, 4)
+        await pg.click("#wzZurueck"); await pg.wait_for_selector("#wzFortBtn")
+        await pg.click("#wzFortBtn"); await pg.wait_for_selector(".fortschritt")
+        pruefe("Assistent öffnet wieder im zuletzt besuchten Schritt (5 / 9)", "5 / 9" in await pg.inner_text(".zahl"))
+        await pg.reload(); await pg.wait_for_selector(".fortschritt")
+        pruefe("Auch nach Neuladen im selben Schritt", "5 / 9" in await pg.inner_text(".zahl"))
+
         # Schritt 3: Schüttung – weitere Zutat
         await gehe_zu(pg, 2)
         vor = await pg.locator("#rl_malz .r").count()
