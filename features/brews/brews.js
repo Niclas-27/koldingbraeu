@@ -283,7 +283,7 @@ function confirmDelete(b){
 }
 /* --- Editor --- */
 const FIELDS=[
- ["Grunddaten",[["datum","Braudatum","date"],["stil","Stil / Name"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (0–10, 10 = beste Note)","note"]]],
+ ["Grunddaten",[["datum","Braudatum","date"],["stil","Name des Suds (Stil)"],["etikett","Kronkorken","cap"],["bewertung","Bewertung (0–10, 10 = beste Note)","note"]]],
  ["Brauwasser",[["wasserhaerte","Karbonathärte (KH) in °dH","number"],["ziel_kh","Ziel-KH in °dH","number"],["hauptguss","Hauptguss in Litern","number"],["milchsaeure_hauptguss","Milchsäure Hauptguss in ml","number"],["nachguss","Nachguss in Litern","number"],["milchsaeure_nachguss","Milchsäure Nachguss in ml","number"],["ph_vorher","pH-Wert vorher","number"],["ph_nachher","pH-Wert nachher","number"],["wasser","Weitere Hinweise zum Brauwasser (frei)"]]],
  ["Läutern & Kochen",[["laeutern","Läutern"],["kochzeit","Kochzeit in Minuten","integer"],["wuerze","Würzemenge in Litern","number"],["ausschlag","Ausschlagwürze in Litern","number"],["stammwuerze","Stammwürze in °P – Spindel","number"],["refraktometer_anstellen","Stammwürze Refraktometer in °Brix","number"]]],
  ["Gärung",[["hefe","Hefesorte"],["hefemenge","Hefemenge in g","gramm"],["restextrakt","Restextrakt in °P – Spindel","number"],["refraktometer_restextrakt","Restextrakt Refraktometer in °Brix","number"],["gaertemperatur","Höchste Gärtemperatur in °C","number"]]],
@@ -693,6 +693,7 @@ function wizardWireFields(felder){
       else if(type==="gramm")v=el.type==="number"?(el.value===""?null:String(Bz.zahl(el.value))):el.value;
       else v=el.value;
       const patch={[k]:v};
+      if(k==="stil"){patch.stil=(v||"").trim()||null;const kk=document.querySelector(".wz-kopf .kicker");if(kk)kk.textContent=title({...wizard.sud,stil:patch.stil});} // Name nachträglich änderbar, Kopfzeile zieht live nach
       if(k==="alkohol")patch.alkohol_geschaetzt=false; // von Hand eingetragen/korrigiert: nicht mehr automatisch überschreiben
       wizardQueueSave(patch);
       if(k==="restextrakt")wizardAlkoholAutoberechnen(wizard.sud.stammwuerze,v);
@@ -839,7 +840,7 @@ function wizardRenderStep(){
   const fs=inner=>`<fieldset>${inner}</fieldset>`;
   let body="";
   if(key==="uebersicht"){
-    body=`${wizardPlanHinweis()}<div class="grid2">${field(["datum","Braudatum","date"],d.datum)}<label class="f">Sud-Nr.<input value="${esc(d.nr)}" disabled></label></div><p class="hint">Status: ${esc({entwurf:"Entwurf",gaerung:"Gärung läuft",dokumentiert:"Dokumentiert"}[d.status])} – erscheint damit schon in der normalen Sudliste.</p>`;
+    body=`${wizardPlanHinweis()}${field(["stil","Name des Suds"],d.stil)}<div class="grid2">${field(["datum","Braudatum","date"],d.datum)}<label class="f">Sud-Nr.<input value="${esc(d.nr)}" disabled></label></div><p class="hint">Status: ${esc({entwurf:"Entwurf",gaerung:"Gärung läuft",dokumentiert:"Dokumentiert"}[d.status])} – erscheint damit schon in der normalen Sudliste.</p>`;
   } else if(key==="schuettung"){
     body=`<div class="rowlist m3" id="rl_malz">${rowsHTML("malz",d.malz)}</div><button type="button" class="add" data-wz-add="malz">+ Malz</button>`;
   } else if(key==="maischen"){
@@ -900,7 +901,7 @@ function wizardRenderStep(){
     if(zur)zur.onclick=()=>{const w=Bz.alkoholAusMessung(d.stammwuerze,d.restextrakt);wizardQueueSave({alkohol:Bz.runde(w,1),alkohol_geschaetzt:true});wizardRenderStep();};
   }
   else if(key==="wasser"){wizardWireFields(WIZARD_FIELDS.wasser);wizardWasserRechner();}
-  else if(key==="uebersicht")wizardWireFields([["datum",0,"date"]]);
+  else if(key==="uebersicht")wizardWireFields([["stil",0,"text"],["datum",0,"date"]]);
   else wizardWireFields(WIZARD_FIELDS[key]); // laeutern, anstellen: reine Feldschritte ohne Rowlist/Rechner
   wizardWireExtra(key);
   $("#wzStepTitel").textContent=titel;
