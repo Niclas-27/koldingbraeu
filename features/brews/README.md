@@ -392,7 +392,7 @@ ebenfalls den Bogen (`beforeprint`).
   `brews.css` (`@page` A4, feste Schwarz-Weiß-Farben, also kein Dunkelmodus im Druck) alles andere aus.
 - **Passt auf den Bogen:** `tests/_wizard_check.py` erzeugt das PDF wie der Druckdialog und prüft, dass es
   2 Seiten sind (auch mit Werten). Von Hand geprüft mit 6 Malzen, 4 Rasten, 5 Koch- und 2 Stopfgaben: Vorne
-  ist dann noch rund ein Fünftel frei. Bei sehr langen Listen (geprüft mit 16 Malzen) läuft der Bogen auf
+  ist dann noch etwas Platz. Bei sehr langen Listen (geprüft mit 16 Malzen) läuft der Bogen auf
   eine dritte Seite über. Abgeschnitten wird nichts, die Abschnitte bleiben ganz, nur die Seitenangabe
   „Seite 1 / 2“ im Fuß stimmt dann nicht mehr.
 - **Auch auf der Sud-Seite:** Braumeister und Admin haben bei den Aktionen unten (neben „Als Rezept
@@ -405,12 +405,17 @@ ebenfalls den Bogen (`beforeprint`).
   Druckvorschau wird erst danach aus der Seite gebaut. Bis zur nächsten Bedienung druckt Strg+P auf der
   Sud-Seite deshalb ebenfalls den Bogen. `brauProtokollHtml()` bekommt dafür
   einen Kontext `{sud, rezept, messungen, zielMenge}` statt direkt auf `wizard` zuzugreifen.
-- **Safari/iPad (Stand 23.11.2026, nur im Code abgesichert, nicht in WebKit getestet – hier gibt es nur
-  Chromium):** Seitenhöhe 262 mm statt der vollen A4-Höhe, weil Safari den `@page`-Rand nicht verlässlich
-  übernimmt und eine zu hohe Seite eine leere Zwischenseite erzeugt. Der Fuß sitzt dadurch etwas höher am Rand.
-  Notizlinien sind echte Elemente mit Rahmen statt Hintergrund-Verlauf (Safari druckt Hintergründe nur mit
-  Einstellung). Seitenumbruch-Regeln stehen zusätzlich als `page-break-*`. Wenn der Druck auf dem iPad doch
-  schief aussieht: zuerst Papierformat A4 und „Skalieren 100 %“ in der Druckvorschau prüfen.
+- **Safari/iPad und Papierformat (Stand 26.11.2026):** Der Bogen hat keine feste Seitenhöhe und kein Flex-Layout
+  mehr, nur der Umbruch zwischen Vorder- und Rückseite ist erzwungen. Vorher bekam jede Seite 262 mm Mindesthöhe.
+  Wo der bedruckbare Bereich kleiner ist als A4 minus `@page`-Rand (Safari/iPad übernimmt den Rand nicht
+  verlässlich, auch Papier „Letter“), lief jede Seite auf ein zweites Blatt über: vier statt zwei Seiten. Jetzt
+  messen die Seiten mit den Beispielwerten rund 235 mm (vorne) und 236 mm (hinten), mit leerem Sud 187 und 216 mm,
+  und der Fuß folgt dem Inhalt statt am Seitenende zu kleben. Dafür hat die Rückseite 7 Notizzeilen (je 7 mm) und
+  die Gärungstabelle 5 Leerzeilen. Notizlinien sind echte Elemente statt Hintergrund-Verlauf (Safari druckt
+  Hintergründe nur mit Einstellung), Seitenumbruch-Regeln stehen zusätzlich als `page-break-*`.
+  Nachgemessen in Chromium mit entfernter `@page`-Regel: A4 und Letter mit 9, 18 und 25 mm Rand ergeben alle
+  2 Seiten (der alte Stand: 4 Seiten ab 18 mm Rand oder bei Letter). In WebKit selbst nicht getestet. Wenn der
+  Druck auf dem iPad doch schief aussieht: Papierformat A4 und „Skalieren 100 %“ in der Druckvorschau prüfen.
 
 ## Sud umbenennen (seit 26.11.2026)
 
