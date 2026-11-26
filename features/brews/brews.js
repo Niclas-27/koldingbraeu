@@ -1010,7 +1010,7 @@ function brauProtokollHtml(q){
     ${bpAbschnitt("anstellen",`<div class="bp-grid">${bpFeld("Stammwürze (Spindel)",d.stammwuerze,"°P")}${bpFeld("Refraktometer",d.refraktometer_anstellen,"°Brix")}${bpFeld("Ausschlagwürze",d.ausschlag,"l")}${bpFeld("Anstelltemperatur",null,"°C")}
       ${bpFeld("Hefe",d.hefe||null,"",{breit:true})}${bpFeld("Hefemenge",hefemenge,typeof hefemenge==="number"?"g":"")}${bpFeld("Angestellt am",null,"")}${bpExtra(d,"anstellen")}</div>`)}
     ${bpAbschnitt("gaerung",`${bpTabelle([["Datum / Tag","datum"],["Spindel","zahl"],["Refraktometer","zahl"],["Temperatur","zahl"],["Notiz",""]],
-        (q.messungen||[]).filter(m=>m.bezeichnung||m.plato!=null||m.refraktometer!=null).map(m=>[esc(m.bezeichnung||""),m.plato!=null?bpZahl(m.plato)+" °P":"",m.refraktometer!=null?bpZahl(m.refraktometer)+" °Brix":"","",""]),7)}
+        (q.messungen||[]).filter(m=>m.bezeichnung||m.plato!=null||m.refraktometer!=null).map(m=>[esc(m.bezeichnung||""),m.plato!=null?bpZahl(m.plato)+" °P":"",m.refraktometer!=null?bpZahl(m.refraktometer)+" °Brix":"","",""]),5)}
       <div class="bp-grid">${bpFeld("Restextrakt endgültig (Spindel)",d.restextrakt,"°P")}${bpFeld("Refraktometer endgültig",d.refraktometer_restextrakt,"°Brix")}${bpExtra(d,"gaerung")}</div>
       ${stopfHopfen.length?`<p class="bp-titel">Hopfenstopfen</p>${bpTabelle([["Hopfen","sorte"],["Menge","zahl"],["Alpha","zahl"],["Gestopft am","uhr"],["✓","kasten"]],
         stopfHopfen.map(h=>[esc(h.sorte||""),h.gramm!=null?bpZahl(h.gramm)+" g":"",h.alpha!=null?bpZahl(h.alpha)+" %":"","",BP_KASTEN]),0)}`:""}`)}
@@ -1022,7 +1022,7 @@ function brauProtokollHtml(q){
       ${zuckerText?`<p class="bp-hinweis">${zuckerText}</p>`:""}
       <p class="bp-titel">Ergebnis</p>
       <div class="bp-grid">${bpFeld("Alkohol",d.alkohol,"% vol",{stellen:1})}${bpExtra(d,"abfuellung")}</div>`)}
-    <section class="bp-sec bp-notizen"><h2>Notizen</h2><div class="bp-linien">${"<i></i>".repeat(10)}</div></section>
+    <section class="bp-sec bp-notizen"><h2>Notizen</h2><div class="bp-linien">${"<i></i>".repeat(7)}</div></section>
     ${fuss(2)}
   </div>`;
   return seite1+seite2;

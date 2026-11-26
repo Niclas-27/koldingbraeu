@@ -166,9 +166,11 @@ button.wahl-k:hover{border-color:var(--muted)}
   body.wz-aktiv #brauProtokoll,body.bp-druck #brauProtokoll{display:block!important}
   .bp{--bp-ink:#000;--bp-muted:#555;--bp-line:#999;color:var(--bp-ink);font-family:var(--font-body);font-size:8.6pt;line-height:1.3;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  /* Mindesthöhe bewusst kleiner als das A4-Maß abzüglich @page-Rand (297 − 18 = 279 mm): Safari/iPad übernimmt den
-     @page-Rand nicht verlässlich (eher 12–17 mm), eine zu hohe Seite erzeugte dort eine leere Zwischenseite. */
-  .bp-seite{display:flex;flex-direction:column;min-height:262mm;break-after:page;page-break-after:always}
+  /* Keine feste Seitenhöhe und kein Flex: Safari/iPad setzt den bedruckbaren Bereich anders an als Chrome
+     (@page-Rand wird nicht verlässlich übernommen) und machte aus einer 262 mm hohen Seite zwei Blätter, also
+     vier statt zwei. Jetzt hat jede Seite ihre natürliche Höhe (rund 200–215 mm) und nur der Umbruch zwischen
+     Vorder- und Rückseite ist erzwungen. Der Fuß folgt dem Inhalt. */
+  .bp-seite{display:block;break-after:page;page-break-after:always}
   .bp-seite:last-child{break-after:auto;page-break-after:auto}
   .bp-kopf{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;border-bottom:1.5pt solid var(--bp-ink);padding-bottom:2mm;margin-bottom:2.5mm}
   .bp-kopf h1{font-family:var(--font-display);font-size:17pt;font-weight:800;font-stretch:85%;line-height:1.1;margin:0}
@@ -207,9 +209,8 @@ button.wahl-k:hover{border-color:var(--muted)}
   .bp-tab .bp-kasten{margin-bottom:.8mm}
   .bp-wahlen{gap:4mm;flex-wrap:wrap}
   .bp-wahl{display:inline-flex;align-items:center;gap:1.2mm;font-size:8pt}
-  .bp-notizen{flex:1;display:flex;flex-direction:column;min-height:30mm;margin-bottom:0}
+  .bp-notizen{margin-bottom:0}
   /* Echte Linien statt Hintergrund-Verlauf: Safari druckt Hintergründe nur mit Einstellung „Hintergründe drucken“ */
-  .bp-linien{flex:1;display:flex;flex-direction:column}
-  .bp-linien i{display:block;flex:1;min-height:5mm;border-bottom:.5pt solid var(--bp-line)}
-  .bp-fuss{display:flex;justify-content:space-between;gap:4mm;margin-top:auto;padding-top:1.5mm;border-top:.5pt solid var(--bp-line);font-size:6.6pt;color:var(--bp-muted)}
+  .bp-linien i{display:block;height:7mm;border-bottom:.5pt solid var(--bp-line)}
+  .bp-fuss{display:flex;justify-content:space-between;gap:4mm;margin-top:4mm;padding-top:1.5mm;border-top:.5pt solid var(--bp-line);font-size:6.6pt;color:var(--bp-muted)}
 }
