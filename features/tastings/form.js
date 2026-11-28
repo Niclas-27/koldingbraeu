@@ -282,19 +282,29 @@ function karteVerdrahten(inhalt, f, k, geaendert = () => {}){
     return {x: ((e.clientX - r.left) / r.width) * 2 - 1, y: 1 - ((e.clientY - r.top) / r.height) * 2};
   };
   let zieht = false;
+  const anfangen = e => { zieht = true; feld.classList.add("zieht"); setzen(ausZeiger(e)); blase.classList.add("an"); };
+  // Gemerkt wird erst beim Loslassen, nicht bei jeder Bewegung.
+  // Blase sofort weg (seit 19.11.2026; vorher blieb sie 1,6 s stehen): Solange sie zeitverzögert verschwinden sollte,
+  // wertete Safari auf dem iPhone den ersten Tipp auf „Weiter“ nicht als Klick. Der Text steht ohnehin unter der Karte.
+  const beenden = () => { if(!zieht) return; zieht = false; feld.classList.remove("zieht"); geaendert(); blase.classList.remove("an"); };
+  // Finger (seit 28.11.2026): eigene Touch-Ereignisse statt Pointer-Capture. Nach dem Ziehen mit eingefangenem Finger
+  // reagierte „Weiter“ auf dem iPhone wieder erst beim zweiten Tippen (Duftbild). Touch-Ereignisse bleiben ohnehin beim
+  // Element, auf dem der Finger aufsetzt – Einfangen ist unnötig. preventDefault: kein Scrollen, kein Klick/Hover danach.
+  feld.addEventListener("touchstart", e => { if(e.touches.length !== 1) return; e.preventDefault(); anfangen(e.touches[0]); }, {passive: false});
+  feld.addEventListener("touchmove", e => { if(!zieht) return; e.preventDefault(); setzen(ausZeiger(e.touches[0])); }, {passive: false});
+  feld.addEventListener("touchend", beenden); feld.addEventListener("touchcancel", beenden);
+  // Maus und Stift wie bisher über Pointer-Ereignisse mit Einfangen (Ziehen über den Rand hinaus); Finger laufen oben.
   feld.addEventListener("pointerdown", e => {
-    zieht = true; try{ feld.setPointerCapture(e.pointerId); }catch(_){}   // Fangen ist nur fürs Ziehen nötig – scheitert es, zählt der Tipp trotzdem
-    feld.classList.add("zieht"); setzen(ausZeiger(e)); e.preventDefault();
-    blase.classList.add("an");
+    if(e.pointerType === "touch") return;
+    try{ feld.setPointerCapture(e.pointerId); }catch(_){}   // Fangen ist nur fürs Ziehen nötig – scheitert es, zählt der Klick trotzdem
+    anfangen(e); e.preventDefault();
   });
-  feld.addEventListener("pointermove", e => { if(zieht) setzen(ausZeiger(e)); });
-  // Gemerkt wird erst beim Loslassen, nicht bei jeder Bewegung. Den Finger dabei ausdrücklich wieder freigeben (seit 19.11.2026).
+  feld.addEventListener("pointermove", e => { if(zieht && e.pointerType !== "touch") setzen(ausZeiger(e)); });
   const ende = e => {
-    if(e && e.pointerId != null && feld.hasPointerCapture && feld.hasPointerCapture(e.pointerId)) feld.releasePointerCapture(e.pointerId);
-    if(!zieht) return; zieht = false; feld.classList.remove("zieht"); geaendert();
-    // Blase sofort weg (seit 19.11.2026; vorher blieb sie 1,6 s stehen): Solange sie zeitverzögert verschwinden sollte,
-    // wertete Safari auf dem iPhone den ersten Tipp auf „Weiter“ nicht als Klick. Der Text steht ohnehin unter der Karte.
-    blase.classList.remove("an"); };
+    if(e.pointerType === "touch") return;
+    if(e.pointerId != null && feld.hasPointerCapture && feld.hasPointerCapture(e.pointerId)) feld.releasePointerCapture(e.pointerId);
+    beenden();
+  };
   feld.addEventListener("pointerup", ende); feld.addEventListener("pointercancel", ende); feld.addEventListener("lostpointercapture", ende);
   feld.addEventListener("keydown", e => {
     const d = {ArrowUp:[0,1], ArrowDown:[0,-1], ArrowLeft:[-1,0], ArrowRight:[1,0]}[e.key];

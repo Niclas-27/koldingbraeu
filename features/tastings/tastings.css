@@ -346,9 +346,10 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .karte.eingabe.zieht .k-punkt{box-shadow:0 0 0 1px var(--amber),0 0 0 12px var(--amber-soft)}
 .kreis-text{margin:0;text-align:center;font-weight:700;font-size:1.05rem;min-height:1.4em}
 /* Blase über dem Daumen, solange man tippt/zieht (seit 19.11.2026 nicht mehr danach, siehe kreisVerdrahten); ganz oben ragt sie über die Überschrift */
-.kreis-blase{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 30px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.kreis-blase.an{opacity:1}
-@media (prefers-reduced-motion:reduce){.kreis-blase{transition:none}}
+.kreis-blase{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 30px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+/* nur einblenden mit Übergang, ausblenden sofort (iPhone: laufende Übergänge schlucken sonst den nächsten Tipp) */
+.kreis-blase.an{opacity:1;transition:opacity .15s}
+@media (prefers-reduced-motion:reduce){.kreis-blase,.kreis-blase.an{transition:none}}
 .bogen-seite fieldset:has(.karte){gap:10px}
 /* Überschrift mit Symbol-Knöpfen (Geschmacksbild: Zurücksetzen, Glossar) */
 #bogenInhalt legend.mit-knoepfen{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:0}
