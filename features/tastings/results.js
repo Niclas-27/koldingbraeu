@@ -10,6 +10,8 @@ async function ergebnisLaden(){
   const meinTxt = p => meine[p.bier_id] != null ? `deine Note ${meine[p.bier_id]}` : "";
   // Eigene Lage auf der Geschmackskarte je Bier ([suesse, bitter]) – ebenfalls nur auf diesem Gerät (guest.js)
   let meineK = {}; try{ meineK = JSON.parse(lsGet("kb_meine_k_"+ergebnisId)||"{}") || {}; }catch(_){}
+  // … und auf der Duftkarte ([richtung, staerke], seit 28.11.2026)
+  let meineD = {}; try{ meineD = JSON.parse(lsGet("kb_meine_d_"+ergebnisId)||"{}") || {}; }catch(_){}
   document.title = v.titel + " · Koldingbräu";
   // Plätze vergeben (gleicher Schnitt und gleiche Nochmal-Zahl = gleicher Platz)
   plaetzeVergeben(proben);
@@ -42,6 +44,21 @@ async function ergebnisLaden(){
       <p class="k-zus">Ø ${esc(kWorte(ds).toLowerCase())}${du?` · du: ${esc(kWorte(du).toLowerCase())}`:""}</p>
       ${n?`<p class="k-legende"><span><i class="lg-g"></i>Gäste</span>${du?`<span><i class="lg-d"></i>deine Wahl</span>`:""}<span><i class="lg-s"></i>Schnitt</span></p>`:""}</div>`;
   };
+  // Duftkarte (seit 28.11.2026): je Gast ein Punkt (p.duft = [[richtung, staerke], …], schema/19), Kreuz = Schnitt.
+  // Ältere Verkostungen haben keine Duftwerte – dann keine Karte.
+  const dSchnitt = p => p.duft && p.duft.length ? [p.duft.reduce((a,k) => a + k[0], 0) / p.duft.length, p.duft.reduce((a,k) => a + k[1], 0) / p.duft.length] : null;
+  const dWorte = ([r,s]) => duftText({x: (r-5)/5, y: (s-5)/5});
+  const duftKarte = p => {
+    const ds = dSchnitt(p); if(!ds) return "";
+    const n = p.duft.length, du = meineD[p.bier_id];
+    const punkte = p.duft.map(([r,s]) => `<i class="k-gast" style="${kartePos(r,s)}"></i>`).join("")
+      + (du ? `<i class="k-gast du" style="${kartePos(du[0],du[1])}" title="deine Wahl"></i>` : "")
+      + `<i class="k-schnitt" style="${kartePos(ds[0],ds[1])}" title="Schnitt"></i>`;
+    return `<div><h4>Duft · ${n} ${n===1?"Stimme":"Stimmen"}</h4>
+      ${karteHtml({klein: true, pole: POLE_DUFT, attr: ` role="img" aria-label="Duftkarte: im Schnitt ${esc(dWorte(ds).toLowerCase())}"`, innen: punkte})}
+      <p class="k-zus">Ø ${esc(dWorte(ds).toLowerCase())}${du?` · du: ${esc(dWorte(du).toLowerCase())}`:""}</p>
+      <p class="k-legende"><span><i class="lg-g"></i>Gäste</span>${du?`<span><i class="lg-d"></i>deine Wahl</span>`:""}<span><i class="lg-s"></i>Schnitt</span></p></div>`;
+  };
   const profil = p => MERKMALE.flatMap(([,l])=>l).filter(([k]) => p.merkmale[k] && !(kSchnitt(p) && (k === "bitter" || k === "suesse"))).map(([k,label,l,r]) =>
       `<div class="pf"><span class="pf-l">${esc(l)}</span><span class="pf-t"><i style="left:${p.merkmale[k].wert*10}%"></i></span><span class="pf-r">${esc(r)}</span><small class="pf-n">${esc(label)}</small></div>`).join("");
   const tags = o => Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag">${esc(eindruck(t))}${n>1?` ${n}×`:""}</span>`).join(" ");
@@ -49,6 +66,7 @@ async function ergebnisLaden(){
   const detail = p => `${kurz(p)}${meinTxt(p)?`<p class="meine-detail">Ø ${note(p.schnitt)} · <b>${meinTxt(p)}</b></p>`:""}${Bilder.bierFotos(p)}
         ${p.noten.length?`<div><h4>Einzelnoten</h4>${noten(p)}</div>`:""}
         ${p.kommentare.length?`<div><h4>Gesagt wurde</h4><ul class="zitate">${p.kommentare.map(k=>`<li>${esc(k)}</li>`).join("")}</ul></div>`:""}
+        ${duftKarte(p)}
         ${karte(p)}
         ${profil(p)?`<div><h4>Geschmacksprofil</h4>${profil(p)}</div>`:""}
         ${(() => { const g = Object.fromEntries(Object.entries(p.geruch).filter(([t]) => !istGeschmack(t))), s = Object.fromEntries(Object.entries(p.geruch).filter(([t]) => istGeschmack(t)));

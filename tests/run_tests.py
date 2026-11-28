@@ -135,6 +135,9 @@ async def main():
             pruefe("Ergebnis zeigt dem Gast seine eigene Note", "deine Note 7" in await pg.inner_text("main"))
             pruefe("Punktwolke: je Gast ein Punkt, Schnitt und eigene Wahl", await pg.locator("details:has-text('Einbecker') .k-gast:not(.du)").count() == 3
                    and await pg.locator("details:has-text('Einbecker') .k-gast.du").count() == 1 and await pg.locator("details:has-text('Einbecker') .k-schnitt").count() == 1)
+            pruefe("Duftkarte: Punkte je Gast und Schnitt in Worten (nur wo es Duftwerte gibt)", await pg.locator("details:has-text('Pilsner Urquell') .karte.klein .k-pol:has-text('Fruchtig')").count() == 1
+                   and "sehr kräftig und eher malzig" in await pg.text_content("details:has-text('Pilsner Urquell') .erg-detail")
+                   and await pg.locator("details:has-text('Einbecker') .k-pol:has-text('Fruchtig')").count() == 0)
             pruefe("Alte Regler Bittere/Süße nicht doppelt im Profil", "Bittere" not in await pg.inner_text("details:has-text('Einbecker') .erg-detail"))
             pruefe("Alle Biere auf einer Karte (nur Biere mit Werten)", await pg.locator(".karte.alle .k-bier").count() == 3 and "Einbecker" in await pg.inner_text(".alle-liste"))
         await seite("anon", "verkostung.html?e=v9", "vk_ergebnis_meine", ergebnis_meine)
@@ -201,37 +204,49 @@ async def main():
         async def gast(pg):
             await pg.fill("#j_name", "Clara"); await pg.click("#joinBtn"); await pg.wait_for_timeout(400)
             await pg.click(".probe >> nth=2")
-            # Seit 13.11.2026 vier Seiten: Riechen, Schmecken (Tags), Geschmacksbild (Kreis), Urteil (Note + Satz) – keine Regler
-            pruefe("Bogen hat vier Seiten ohne Regler", await pg.locator(".bogen-seite").count() == 4 and await pg.locator("#bogenInhalt input[type=range]").count() == 0)
-            await pg.click(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']")
-            pruefe("Riechen: acht Kacheln mit Beispielen, Auswahl markiert, kein Glossar-Link mehr", await pg.locator(".bogen-seite[data-i='0'] .kachel").count() == 8
-                   and "Apfel" in await pg.inner_text(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']")
-                   and await pg.get_attribute(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']", "aria-pressed") == "true"
-                   and await pg.locator(".bogen-seite[data-i='0'] [data-glossar], .bogen-seite[data-i='1'] [data-glossar]").count() == 0)
+            # Seit 28.11.2026 fünf Seiten: Riechen (Duftkarte), Duftnoten (Tags), Schmecken (Tags), Geschmacksbild (Karte), Urteil
+            pruefe("Bogen hat fünf Seiten ohne Regler", await pg.locator(".bogen-seite").count() == 5 and await pg.locator("#bogenInhalt input[type=range]").count() == 0)
+            # Duftkarte: Tippen oben rechts = kräftig + fruchtig; Glossar erklärt die Pole; Wischen auf der Karte blättert nicht
+            dbox = await pg.locator("#duftFeld").bounding_box()
+            dtext = await pg.inner_text("#duftFeld")
+            pruefe("Duftkarte mit eigenen Polen", all(w in dtext for w in ("Kräftig", "Dezent", "Malzig", "Fruchtig")))
+            await pg.mouse.click(dbox["x"] + dbox["width"]*0.9, dbox["y"] + dbox["height"]*0.1)
+            pruefe("Duftkarte beschreibt die Wahl in Worten", (await pg.inner_text("#duftText")).lower() == "sehr kräftig und fruchtig")
+            await pg.click(".bogen-seite[data-i='0'] [data-glossar]"); await pg.wait_for_selector(".glossar")
+            pruefe("Glossar bei der Duftkarte erklärt die Pole", "Hopfen" in await pg.inner_text(".glossar"))
+            await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
+            await wische(pg, "#duftFeld", -200); await pg.wait_for_timeout(350)
+            pruefe("Wischen auf der Duftkarte blättert nicht", "Seite 1 von 5" in await pg.inner_text(".fortschritt .zahl"))
+            await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
+            await pg.click(".bogen-seite[data-i='1'] .kachel[data-t='fruchtig']")
+            pruefe("Duftnoten: acht Kacheln mit Beispielen, Auswahl markiert, kein Glossar-Link mehr", await pg.locator(".bogen-seite[data-i='1'] .kachel").count() == 8
+                   and "Apfel" in await pg.inner_text(".bogen-seite[data-i='1'] .kachel[data-t='fruchtig']")
+                   and await pg.get_attribute(".bogen-seite[data-i='1'] .kachel[data-t='fruchtig']", "aria-pressed") == "true"
+                   and await pg.locator(".bogen-seite[data-i='1'] [data-glossar], .bogen-seite[data-i='2'] [data-glossar]").count() == 0)
             await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
-            pruefe("Wischen blättert zur Seite „Schmecken“", "Seite 2 von 4" in await pg.inner_text(".fortschritt .zahl"))
-            await pg.click(".bogen-seite[data-i='1'] .kachel[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
+            pruefe("Wischen blättert zur Seite „Schmecken“", "Seite 3 von 5" in await pg.inner_text(".fortschritt .zahl"))
+            await pg.click(".bogen-seite[data-i='2'] .kachel[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
             # Geschmackskarte: Tippen oben rechts = bitter + süß; Wischen auf der Karte blättert nicht; Karte mittig
             box = await pg.locator("#karteFeld").bounding_box()
-            vb = await pg.evaluate("(() => { const r = document.querySelector(`.bogen-seite[data-i='2'] fieldset`).getBoundingClientRect(); return {x: r.x, width: r.width}; })()")
+            vb = await pg.evaluate("(() => { const r = document.querySelector(`.bogen-seite[data-i='3'] fieldset`).getBoundingClientRect(); return {x: r.x, width: r.width}; })()")
             pruefe("Geschmackskarte steht waagerecht mittig", abs((box["x"] + box["width"]/2) - (vb["x"] + vb["width"]/2)) < 2)
             await pg.mouse.click(box["x"] + box["width"]*0.75, box["y"] + box["height"]*0.2)
             pruefe("Kreis beschreibt die Wahl in Worten", "bitter" in (await pg.inner_text("#kreisText")).lower())
             await pg.mouse.click(box["x"] + box["width"]*0.98, box["y"] + box["height"]*0.02)
             lage = await pg.evaluate("[document.querySelector('.kreis-blase').getBoundingClientRect().bottom, document.querySelector('.k-punkt').getBoundingClientRect().top]")
             pruefe("Blase steht auch ganz oben über dem Punkt (nicht unter dem Daumen)", lage[0] <= lage[1])
-            await pg.click(".bogen-seite[data-i='2'] [data-glossar]"); await pg.wait_for_selector(".glossar")
+            await pg.click(".bogen-seite[data-i='3'] [data-glossar]"); await pg.wait_for_selector(".glossar")
             pruefe("Glossar beim Geschmacksbild erklärt die Begriffe", "Grapefruit" in await pg.inner_text(".glossar"))
             await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
             pruefe("Escape schließt nur das Glossar, nicht den Bogen", await pg.locator(".glossar").count() == 0 and await pg.locator("#bogenInhalt").count() == 1)
-            pruefe("Kein Hinweistext und keine Links unter der Karte mehr", await pg.locator(".bogen-seite[data-i='2'] .hint, .kreis-links").count() == 0
+            pruefe("Kein Hinweistext und keine Links unter der Karte mehr", await pg.locator(".bogen-seite[data-i='3'] .hint, .kreis-links").count() == 0
                    and await pg.locator("#kreisWeg.ikon-knopf").count() == 1)
             pruefe("Ecke der Karte erreichbar (sehr bitter und sehr süß)", "sehr bitter und sehr süß" in (await pg.inner_text("#kreisText")).lower())
             await wische(pg, "#karteFeld", -200); await pg.wait_for_timeout(350)
-            pruefe("Wischen auf der Karte blättert nicht", "Seite 3 von 4" in await pg.inner_text(".fortschritt .zahl"))
+            pruefe("Wischen auf der Karte blättert nicht", "Seite 4 von 5" in await pg.inner_text(".fortschritt .zahl"))
             await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
             await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
-            pruefe("Wischen auf der letzten Seite speichert nicht", "Seite 4 von 4" in await pg.inner_text(".fortschritt .zahl") and await pg.evaluate("!window.__letzte"))
+            pruefe("Wischen auf der letzten Seite speichert nicht", "Seite 5 von 5" in await pg.inner_text(".fortschritt .zahl") and await pg.evaluate("!window.__letzte"))
             await pg.click("#bWeiter")
             pruefe("Bogen verlangt eine Note", "Note" in await pg.inner_text("#bNoteErr"))
             await pg.click(".nstufen button[data-n='3']")
@@ -241,6 +256,8 @@ async def main():
             await pg.fill("#b_kom", "Schmeckt nach Sommer"); await pg.click("#bWeiter"); await pg.wait_for_timeout(400)
             letzte = await pg.evaluate("JSON.stringify(window.__letzte)")
             pruefe("Bewertung gesendet (Note, Tags, Kreis, Satz)", '"p_note":7' in letzte and '"bitter":' in letzte and '"p_geruch":["fruchtig","hopfig"]' in letzte and "Sommer" in letzte)
+            pruefe("Duftkarte gespeichert (duft_staerke / duft_richtung, nicht die alten Regler)", '"duft_staerke":9' in letzte and '"duft_richtung":9' in letzte and "intensitaet" not in letzte)
+            pruefe("Empfehlung aus der Note abgeleitet (7 → ja)", '"p_nochmal":true' in letzte)
             pruefe("Nach dem Speichern: Weiter zum nächsten offenen Bier", "Weiter zu" in await pg.inner_text("#bNaechste"))
             await pg.click("#bFertig"); await pg.wait_for_timeout(400)
             pruefe("Gast sieht Foto-Knopf (0 von 9)", "0 von 9" in await pg.inner_text("#fotoBtn"))
@@ -266,11 +283,12 @@ async def main():
             pruefe("Hinweis-Meldung ist eine Leiste, keine Pille", await pg.evaluate("parseFloat(getComputedStyle(document.querySelector('.toast')).borderTopLeftRadius) < 20"))
             await pg.click(".rank li[data-id] >> nth=1"); await pg.wait_for_timeout(300)
             await pg.click("[data-ed] >> nth=0")
-            await pg.click("#bWeiter"); await pg.click("#bWeiter"); await pg.click("#bWeiter")  # Riechen, Schmecken, Kreis überspringen
+            await pg.click("#bWeiter"); await pg.click("#bWeiter"); await pg.click("#bWeiter"); await pg.click("#bWeiter")  # Riechen, Duftnoten, Schmecken, Kreis überspringen
             await pg.click(".nstufen button[data-n='4']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(500)
             pruefe("Admin ändert Bewertung", '"p_note":4' in await pg.evaluate("JSON.stringify(window.__admin)"))
+            pruefe("Admin: Empfehlung aus der Note abgeleitet (4 → nein)", '"p_nochmal":false' in await pg.evaluate("JSON.stringify(window.__admin)"))
             await pg.click("#nachtragen"); await pg.select_option("#nt_wer", "neu"); await pg.fill("#nt_name", "Manu")
-            await pg.click("#bWeiter"); await pg.click("#bWeiter"); await pg.click("#bWeiter")
+            await pg.click("#bWeiter"); await pg.click("#bWeiter"); await pg.click("#bWeiter"); await pg.click("#bWeiter")
             await pg.click(".nstufen button[data-n='6']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(500)
             pruefe("Admin trägt Bewertung nach", "vom Admin nachgetragen" in await pg.inner_text("#sheetBody"))
             await pg.click("#bAbbr") if await pg.locator("#bAbbr").count() else None

@@ -325,15 +325,16 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .gg-raster small{color:var(--muted);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zugang-link{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-/* Geschmackskarte (Seite „Geschmacksbild“ und Ergebnisseite, seit 13.11.2026 statt des Kreises): Quadrat mit den
+/* Geschmackskarte (Seite „Geschmacksbild“ und Ergebnisseite, seit 13.11.2026 statt des Kreises) und Duftkarte (Seite
+   „Riechen“, seit 28.11.2026; Eingabe-Karten tragen die Klasse .eingabe): Quadrat mit den
    Polen am Rand und Bierstil-Beispielen in den Ecken. Die Beschriftung sitzt in der Karte, damit sie exakt mittig
    steht. Höhe begrenzt, damit die Seite auch auf kleinen Handys ohne Scrollen passt. touch-action:none, damit Ziehen
    weder scrollt noch blättert. */
 .karte{position:relative;width:100%;max-width:max(200px,min(100%,calc(100svh - 305px)));aspect-ratio:1;margin:0 auto;border-radius:var(--radius);overflow:hidden;
   background:var(--surface);border:1px solid var(--line);box-sizing:border-box}
-#karteFeld{touch-action:none;cursor:crosshair;-webkit-tap-highlight-color:transparent;overflow:visible}
-#karteFeld{border-color:color-mix(in srgb,var(--ink) 35%,var(--line))}
-#karteFeld:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
+.karte.eingabe{touch-action:none;cursor:crosshair;-webkit-tap-highlight-color:transparent;overflow:visible}
+.karte.eingabe{border-color:color-mix(in srgb,var(--ink) 35%,var(--line))}
+.karte.eingabe:focus-visible{outline:3px solid var(--amber);outline-offset:4px}
 .k-achse{position:absolute;pointer-events:none}
 .k-achse.v{left:50%;top:0;bottom:0;border-left:1px dashed var(--line)}.k-achse.h{top:50%;left:0;right:0;border-top:1px dashed var(--line)}
 /* Pole im Stil der Tags/Chips der Seite */
@@ -342,7 +343,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
 .k-pol.l{left:8px;top:50%;transform:translateY(-50%)}.k-pol.r{right:8px;top:50%;transform:translateY(-50%)}
 .k-punkt{position:absolute;z-index:2;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--amber);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--amber),0 2px 6px rgba(0,0,0,.18);pointer-events:none}
 .k-punkt[hidden]{display:none}
-#karteFeld.zieht .k-punkt{box-shadow:0 0 0 1px var(--amber),0 0 0 12px var(--amber-soft)}
+.karte.eingabe.zieht .k-punkt{box-shadow:0 0 0 1px var(--amber),0 0 0 12px var(--amber-soft)}
 .kreis-text{margin:0;text-align:center;font-weight:700;font-size:1.05rem;min-height:1.4em}
 /* Blase über dem Daumen, solange man tippt/zieht (seit 19.11.2026 nicht mehr danach, siehe kreisVerdrahten); ganz oben ragt sie über die Überschrift */
 .kreis-blase{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 30px));padding:7px 12px;border-radius:999px;background:var(--ink);color:var(--surface);font-weight:700;font-size:.95rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
@@ -365,7 +366,7 @@ h4.sub{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(
   .kachel{min-height:58px}
   .sheet-foot:has(.bogen-fuss){padding-top:23px;padding-bottom:8px}
   #bogenInhalt fieldset:has(.tagpick){gap:8px}
-  #karteFeld{max-width:min(100%,41vh);margin-inline:auto}
+  .karte.eingabe{max-width:min(100%,41vh);margin-inline:auto}
   /* die Frage der Seite fällt hier weg (bleibt im aria-label der Kacheln), sonst müsste man scrollen */
   .seite-frage{display:none}
   .seite-frage + .seite-frei{margin-top:-6px}

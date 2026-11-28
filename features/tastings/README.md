@@ -303,6 +303,30 @@ stiller Gleichstand-Brecher in der Sortierung). Keine Datenbank-Änderung nötig
 Nach dem Speichern bietet der Bogen „Weiter zu Probe X“ an (nächstes noch nicht bewertetes Bier). Wischen zwischen den
 Bieren gibt es bewusst nicht: versehentliches Wischen beim Antippen der Tags, die Biere kommen ohnehin nacheinander.
 
+## Duftkarte und Empfehlung aus der Note (seit 28.11.2026)
+
+Die Verkoster wollten die **Intensität des Geruchs** bewerten. Der Bogen beginnt darum mit einer **Duftkarte** nach dem
+Muster der Geschmackskarte (dieselbe `karteHtml`, Pole über `POLE_DUFT`, Worte über `duftText`, Glossar `DUFT_BEGRIFFE`,
+alles in `common.js`): oben kräftig, unten dezent (Intensität), links malzig, rechts fruchtig (Hopfen und Hefe). Damit
+hat der Bogen fünf Seiten: **Riechen** (Duftkarte) → **Duftnoten** (Tags `TAGS_GERUCH`) → **Schmecken** →
+**Geschmacksbild** → **Dein Urteil**. In der Fußleiste heißt das Geschmacksbild kurz „Geschmack“ (`kurz` in `BOGEN_SEITEN`),
+sonst würde es bei fünf Schritten abgeschnitten. Beide Eingabe-Karten verdrahtet `karteVerdrahten` mit ihrem Eintrag in
+`BOGEN_KARTEN` (`form.js`); das CSS hängt an `.karte.eingabe` statt an `#karteFeld`.
+
+Gespeichert wird in `bewertungen.merkmale` unter den **neuen** Schlüsseln `duft_staerke` (0 = dezent … 10 = kräftig) und
+`duft_richtung` (0 = malzig … 10 = fruchtig) – bewusst nicht in den alten Reglern `intensitaet`/`malzhopfen`: Rund 70
+ältere Bewertungen tragen diese Werte, und `malzhopfen` war damals eine Geschmacksfrage. `vk_bewerten` und
+`vk_admin_bewerten` lassen die zwei Schlüssel zu (vorher wurden unbekannte Schlüssel stillschweigend verworfen),
+`vk_ergebnis` liefert je Probe `duft` = `[[richtung, staerke], …]` (`schema/19_duftkarte.sql`, additiv, **vor** dem Release
+ausführen). Die Ergebnisseite zeigt je Bier die Punktwolke „Duft“ mit Schnitt und der eigenen Wahl
+(`kb_meine_d_<verkostung>` auf dem Gerät des Gastes, guest.js); ältere Verkostungen haben keine Duftwerte und keine Karte.
+
+**Empfehlung:** Seit dem 13.11. fragte der Bogen „Weiterempfehlen?“ nicht mehr ab, `bewertungen.nochmal` blieb leer – damit
+konnte es den Titel „Einstimmig empfohlen“ nicht mehr geben und der Gleichstand-Entscheider der Rangliste lief ins Leere.
+Jetzt setzt der Bogen `nochmal = note >= EMPFEHLUNG_AB` (7, ab „Gut · Gerne wieder“). Eine alte, ausdrücklich gegebene
+Antwort bleibt, solange die Note beim erneuten Speichern gleich bleibt. Die Lücke seit dem 13.11. füllt
+`schema/20_empfehlung_aus_note.sql` mit derselben Regel (schreibt Daten um: nach dem Release, mit Freigabe).
+
 ## Abschluss: Zusammenfassung, Titel, Siegerehrung (seit 14.11.2026)
 
 Ziel: ein lustigerer Abschluss. Drei Bausteine, bewusst klein gehalten – der Nutzer will das später ausbauen

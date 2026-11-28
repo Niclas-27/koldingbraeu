@@ -17,12 +17,18 @@
    Noch am selben Tag wurde aus dem Kreis eine quadratische „Geschmackskarte“ (karteHtml in common.js): Der Kreis saß
    nicht mittig (ungleich breite Beschriftung links/rechts), ließ die Ecken leer und kappte sie sogar – „sehr bitter
    und sehr süß“ war nicht erreichbar. Das Quadrat bildet die beiden Werte 0–10 genau ab; die Ecken nennen Bierstile
-   als Orientierung. Im Code heißt es weiter „kreis“ (f.kreis, kreisText …). */
+   als Orientierung. Im Code heißt es weiter „kreis“ (f.kreis, kreisText …).
+   Seit 28.11.2026 (Wunsch der Verkoster: die Intensität des Geruchs bewerten) beginnt der Bogen mit einer Duftkarte nach
+   demselben Muster: oben kräftig, unten dezent, links malzig, rechts fruchtig. Gespeichert in merkmale unter den neuen
+   Schlüsseln duft_staerke / duft_richtung (0–10, schema/19) – nicht in den alten Reglern intensitaet/malzhopfen, deren
+   historische Werte eine andere Frage beantworteten. Die Duft-Kacheln folgen als eigene Seite „Duftnoten“.
+   Ebenfalls seit 28.11.2026: Die Empfehlung (nochmal) wird aus der Note abgeleitet (ab EMPFEHLUNG_AB, common.js). */
 "use strict";
 const BOGEN_SEITEN = [
-  {art:"tags", label:"Riechen", frage:"Woran erinnert dich der Geruch?", tags: () => TAGS_GERUCH},
+  {art:"duft", label:"Riechen", frage:"Wie stark und wonach riecht es?", tags: () => DUFT_BEGRIFFE},
+  {art:"tags", label:"Duftnoten", frage:"Woran erinnert dich der Geruch?", tags: () => TAGS_GERUCH},
   {art:"tags", label:"Schmecken", frage:"Wie schmeckt es?", tags: () => TAGS_GESCHMACK},
-  {art:"kreis", label:"Geschmacksbild", tags: () => KREIS_BEGRIFFE},
+  {art:"kreis", label:"Geschmacksbild", kurz:"Geschmack", tags: () => KREIS_BEGRIFFE},   // kurz: Name in der Fußleiste (5 Schritte)
   {art:"urteil", label:"Dein Urteil"},
 ];
 
@@ -33,6 +39,17 @@ const kreisAusMerkmalen = m => (m && typeof m.bitter === "number" && typeof m.su
   ? {x: (m.suesse - 5) / 5, y: (m.bitter - 5) / 5} : null;
 const kreisZuMerkmalen = p => ({bitter: Math.round(5 + 5*p.y), suesse: Math.round(5 + 5*p.x)});
 const kreisBegrenzen = p => ({x: Math.max(-1, Math.min(1, p.x)), y: Math.max(-1, Math.min(1, p.y))});
+/* Duftkarte: x nach rechts = fruchtig (duft_richtung), y nach oben = kräftig (duft_staerke), beide 0–10 */
+const duftAusMerkmalen = m => (m && typeof m.duft_richtung === "number" && typeof m.duft_staerke === "number")
+  ? {x: (m.duft_richtung - 5) / 5, y: (m.duft_staerke - 5) / 5} : null;
+const duftZuMerkmalen = p => ({duft_richtung: Math.round(5 + 5*p.x), duft_staerke: Math.round(5 + 5*p.y)});
+/* Die beiden Eingabe-Karten des Bogens: Wert in f[schluessel], Löschen merkt f[schluessel+"Geloescht"] */
+const BOGEN_KARTEN = {
+  duft: {schluessel: "duft", feld: "duftFeld", text: "duftText", weg: "duftWeg", pole: POLE_DUFT, inWorten: p => duftText(p),
+    aria: "Duftkarte: oben kräftig, unten dezent, links malzig, rechts fruchtig. Mitte = mittelstark und ausgewogen. Mit den Pfeiltasten verschieben."},
+  kreis: {schluessel: "kreis", feld: "karteFeld", text: "kreisText", weg: "kreisWeg", pole: POLE_GESCHMACK, inWorten: p => kreisText(p),
+    aria: "Geschmackskarte: oben bitter, unten mild, links trocken, rechts süß. Mitte = ausgewogen, Rand = sehr ausgeprägt. Mit den Pfeiltasten verschieben."},
+};
 
 /* opts: {titel, hint, oben (zusätzliches HTML über dem Bogen), alt, speichern(werte) → Promise<{error}>, fertig(),
           naechste() → {label, oeffnen} | null  (optional: nach dem Speichern „Weiter zu Probe X“ anbieten),
@@ -51,6 +68,8 @@ function entwurfLesen(schluessel){
     kommentar: typeof e.kommentar === "string" ? e.kommentar.slice(0, 140) : "",
     kreis: e.kreis && typeof e.kreis.x === "number" && typeof e.kreis.y === "number" ? kreisBegrenzen(e.kreis) : null,
     kreisGeloescht: !!e.kreisGeloescht,
+    duft: e.duft && typeof e.duft.x === "number" && typeof e.duft.y === "number" ? kreisBegrenzen(e.duft) : null,
+    duftGeloescht: !!e.duftGeloescht,
     seite: Number.isInteger(e.seite) ? e.seite : 0,
   };
 }
@@ -58,20 +77,22 @@ function bogenZeigen(opts){
   const alt = opts.alt || {};
   const entwurf = entwurfLesen(opts.entwurf);
   const f = entwurf || { note: alt.note ?? null, tags: new Set(alt.geruch||[]), kommentar: alt.kommentar || "",
-              kreis: kreisAusMerkmalen(alt.merkmale), kreisGeloescht: false };
+              kreis: kreisAusMerkmalen(alt.merkmale), kreisGeloescht: false,
+              duft: duftAusMerkmalen(alt.merkmale), duftGeloescht: false };
   let seite = 0, hatEntwurf = !!entwurf;
   const letzte = BOGEN_SEITEN.length - 1;
   const merken = () => {
     if(!opts.entwurf) return;
     hatEntwurf = true;
     lsSet(opts.entwurf, JSON.stringify({note: f.note, tags: [...f.tags], kommentar: f.kommentar, kreis: f.kreis,
-      kreisGeloescht: f.kreisGeloescht, seite}));
+      kreisGeloescht: f.kreisGeloescht, duft: f.duft, duftGeloescht: f.duftGeloescht, seite}));
   };
 
   const seiteHtml = (s, i) => {
-    // Geschmacksbild: Glossar und Zurücksetzen als kleine Symbol-Knöpfe in der Überschrift, damit die Karte Platz hat
-    const kopfKnoepfe = s.art === "kreis" ? `<span class="kopf-knoepfe">
-        <button type="button" class="ikon-knopf" id="kreisWeg" aria-label="Auswahl zurücksetzen" title="Zurücksetzen">↺</button>
+    // Karten (Riechen, Geschmacksbild): Glossar und Zurücksetzen als kleine Symbol-Knöpfe in der Überschrift, damit die Karte Platz hat
+    const k = BOGEN_KARTEN[s.art];
+    const kopfKnoepfe = k ? `<span class="kopf-knoepfe">
+        <button type="button" class="ikon-knopf" id="${k.weg}" aria-label="Auswahl zurücksetzen" title="Zurücksetzen">↺</button>
         <button type="button" class="ikon-knopf glossar-auf" data-glossar="${i}" aria-label="Was heißt das?" title="Was heißt das?">?</button></span>` : "";
     // Seit 19.11.2026 sagt auch „Dein Urteil“ vorab, was gilt – die anderen Seiten sagen „Freiwillig“
     const kopfRechts = kopfKnoepfe || (s.art === "tags" ? `<small class="kopf-hinweis">mehrere möglich</small>`
@@ -83,11 +104,11 @@ function bogenZeigen(opts){
     if(s.art === "tags"){
       // Kacheln in zwei Spalten (seit 14.11.2026 statt Chips): Emoji, Wort, Beispiele; Haken oben rechts zeigt die Auswahl
       h += `<div class="tagpick" role="group" aria-label="${esc(s.frage)} Mehrere möglich.">${s.tags().map(([t,e,bsp])=>`<button type="button" class="kachel" data-t="${esc(t)}" aria-pressed="${f.tags.has(t)}"><span class="k-emoji" aria-hidden="true">${e}</span><b>${esc(t)}</b><small>${esc(bsp)}</small></button>`).join("")}</div>`;
-    } else if(s.art === "kreis"){
+    } else if(k){
       // Ohne Hinweistext und Ecken-Beschriftung (14.11.2026): die Zeile unter der Karte erklärt, was zu tun ist
-      h += `${karteHtml({attr: ` id="karteFeld" tabindex="0" role="group" aria-label="Geschmackskarte: oben bitter, unten mild, links trocken, rechts süß. Mitte = ausgewogen, Rand = sehr ausgeprägt. Mit den Pfeiltasten verschieben." aria-describedby="kreisText"`,
+      h += `${karteHtml({pole: k.pole, eingabe: true, attr: ` id="${k.feld}" tabindex="0" role="group" aria-label="${esc(k.aria)}" aria-describedby="${k.text}"`,
           innen: `<span class="k-punkt" hidden></span><span class="kreis-blase" aria-hidden="true"></span>`})}
-        <p class="kreis-text" id="kreisText" aria-live="polite"></p>`;
+        <p class="kreis-text" id="${k.text}" aria-live="polite"></p>`;
     } else {
       // Seit 14.11.2026: fünf Stufen mit Erklärung, Zahlen direkt in der Zeile. Das Textfeld darunter fragt passend zur
       // gewählten Stufe nach („Was hat dir gefehlt?“) und rollt nach der Wahl ins Bild, damit es nicht untergeht.
@@ -108,7 +129,7 @@ function bogenZeigen(opts){
   // Fortschritt seit 14.11.2026 als dünne Linie an der Oberkante der Fußleiste; „3 / 4“ nur noch für Screenreader
   const foot = `<div class="bogen-fuss">
       <div class="fortschritt"><span class="punkte" aria-hidden="true">${BOGEN_SEITEN.map(()=>"<i></i>").join("")}</span>
-        <span class="schritte" aria-hidden="true">${BOGEN_SEITEN.map(s=>`<b>${esc(s.label.replace("Dein ",""))}</b>`).join("")}</span><span class="zahl vh" aria-live="polite"></span></div>
+        <span class="schritte" aria-hidden="true">${BOGEN_SEITEN.map(s=>`<b>${esc(s.kurz || s.label.replace("Dein ",""))}</b>`).join("")}</span><span class="zahl vh" aria-live="polite"></span></div>
       <div class="bogen-knoepfe"><button class="btn" id="bZurueck" aria-label="Zurück">←</button><button class="btn primary" id="bWeiter"></button></div>
     </div>`;
   sheet(opts.titel, body, foot, {onClose: opts.geschlossen});   // geschlossen: z. B. Liste neu zeichnen („weitermachen“)
@@ -160,7 +181,7 @@ function bogenZeigen(opts){
   const kom = $("#b_kom");
   kom.addEventListener("input", () => { f.kommentar = kom.value; merken(); });
   kom.addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); kom.blur(); } });
-  kreisVerdrahten(inhalt, f, merken);
+  Object.values(BOGEN_KARTEN).forEach(k => karteVerdrahten(inhalt, f, k, merken));
 
   // Wischen: nur eine überwiegend waagerechte Geste über einer Mindestlänge zählt (wie in der Foto-Ansicht, lib/bilder.js),
   // damit ein leicht schräger Tap auf einen Tag nicht blättert. Im Textfeld nie (dort verschiebt man den Cursor) und
@@ -190,10 +211,14 @@ function bogenZeigen(opts){
     const merkmale = {...(alt.merkmale || {})};
     if(f.kreis) Object.assign(merkmale, kreisZuMerkmalen(f.kreis));
     else if(f.kreisGeloescht){ delete merkmale.bitter; delete merkmale.suesse; }
+    if(f.duft) Object.assign(merkmale, duftZuMerkmalen(f.duft));
+    else if(f.duftGeloescht){ delete merkmale.duft_richtung; delete merkmale.duft_staerke; }
+    // Empfehlung aus der Note (seit 28.11.2026). Eine alte, ausdrücklich gegebene Antwort bleibt, solange die Note gleich bleibt.
+    const nochmal = alt.nochmal != null && alt.note === f.note ? alt.nochmal : f.note >= EMPFEHLUNG_AB;
     // Auch ein Abbruch (Netz weg) landet als Meldung – vorher blieb der Knopf dann für immer grau (seit 19.11.2026)
     let error;
     try{ ({error} = await opts.speichern({p_note: f.note, p_merkmale: merkmale, p_geruch: [...f.tags], p_fehler: alt.fehler || [],
-      p_nochmal: alt.nochmal ?? null, p_kommentar: f.kommentar.trim() || null})); }
+      p_nochmal: nochmal, p_kommentar: f.kommentar.trim() || null})); }
     catch(e){ error = e || {}; }
     if(error){ knopf.disabled = false; knopf.textContent = "Speichern"; $("#bErr").textContent = fehlertext(error) + " Deine Eingaben bleiben erhalten."; return; }
     if(opts.entwurf) lsSet(opts.entwurf, null);
@@ -228,29 +253,29 @@ function bogenZeigen(opts){
   if(entwurf) toast("Dein Entwurf ist wieder da");
 }
 
-/* Geschmackskarte: Tippen setzt den Punkt, Ziehen verschiebt ihn.
-   Pfeiltasten verschieben ihn in Schritten. Der Wert steht in f.kreis ({x, y} oder null). */
-function kreisVerdrahten(inhalt, f, geaendert = () => {}){
-  const feld = inhalt.querySelector("#karteFeld");
+/* Eingabe-Karten (Geschmackskarte, seit 28.11.2026 auch Duftkarte): Tippen setzt den Punkt, Ziehen verschiebt ihn.
+   Pfeiltasten verschieben ihn in Schritten. Der Wert steht in f[k.schluessel] ({x, y} oder null), k aus BOGEN_KARTEN. */
+function karteVerdrahten(inhalt, f, k, geaendert = () => {}){
+  const feld = inhalt.querySelector("#"+k.feld);
   if(!feld) return;
   const punkt = feld.querySelector(".k-punkt"), blase = feld.querySelector(".kreis-blase");
   const anzeigen = () => {
-    const p = f.kreis;
+    const p = f[k.schluessel];
     punkt.hidden = !p;
     if(p){ punkt.style.left = (50 + p.x*50) + "%"; punkt.style.top = (50 - p.y*50) + "%"; }
-    inhalt.querySelector("#kreisText").textContent = kreisText(p);
+    inhalt.querySelector("#"+k.text).textContent = k.inWorten(p);
     // Blase über dem Daumen: der Finger verdeckt den Punkt.
     if(p){
-      blase.textContent = kreisText(p);
+      blase.textContent = k.inWorten(p);
       // nach ihrer echten Breite eingerückt, damit sie höchstens 8 px über die Karte hinausragt
       const fw = feld.clientWidth, halb = blase.offsetWidth / 2, x = (50 + p.x*50) / 100 * fw;
       blase.style.left = Math.min(fw + 8 - halb, Math.max(halb - 8, x)) + "px";
       // immer über dem Finger – ganz oben ragt sie über die Überschrift (darunter verdeckt sie der Daumen)
       blase.style.top = (50 - p.y*50) + "%";
     } else blase.classList.remove("an");
-    inhalt.querySelector("#kreisWeg").hidden = !p;
+    inhalt.querySelector("#"+k.weg).hidden = !p;
   };
-  const setzen = p => { f.kreis = kreisBegrenzen(p); f.kreisGeloescht = false; anzeigen(); };
+  const setzen = p => { f[k.schluessel] = kreisBegrenzen(p); f[k.schluessel+"Geloescht"] = false; anzeigen(); };
   const ausZeiger = e => {
     const r = feld.getBoundingClientRect();
     return {x: ((e.clientX - r.left) / r.width) * 2 - 1, y: 1 - ((e.clientY - r.top) / r.height) * 2};
@@ -274,10 +299,10 @@ function kreisVerdrahten(inhalt, f, geaendert = () => {}){
     const d = {ArrowUp:[0,1], ArrowDown:[0,-1], ArrowLeft:[-1,0], ArrowRight:[1,0]}[e.key];
     if(!d) return;
     e.preventDefault();
-    const p = f.kreis || {x: 0, y: 0}, schritt = 0.1;
+    const p = f[k.schluessel] || {x: 0, y: 0}, schritt = 0.1;
     setzen({x: p.x + d[0]*schritt, y: p.y + d[1]*schritt}); geaendert();
   });
-  inhalt.querySelector("#kreisWeg").onclick = () => { f.kreis = null; f.kreisGeloescht = true; anzeigen(); geaendert(); feld.focus(); };
+  inhalt.querySelector("#"+k.weg).onclick = () => { f[k.schluessel] = null; f[k.schluessel+"Geloescht"] = true; anzeigen(); geaendert(); feld.focus(); };
   anzeigen();
 }
 
