@@ -21,12 +21,13 @@
    Seit 28.11.2026 (Wunsch der Verkoster: die Intensität des Geruchs bewerten) beginnt der Bogen mit einer Duftkarte nach
    demselben Muster: oben kräftig, unten dezent, links malzig, rechts fruchtig. Gespeichert in merkmale unter den neuen
    Schlüsseln duft_staerke / duft_richtung (0–10, schema/19) – nicht in den alten Reglern intensitaet/malzhopfen, deren
-   historische Werte eine andere Frage beantworteten. Die Duft-Kacheln folgen als eigene Seite „Duftnoten“.
+   historische Werte eine andere Frage beantworteten. Reihenfolge wie beim Schmecken: erst die Duft-Kacheln („Riechen“),
+   dann die Karte („Duftbild“, ohne Frage darüber wie das Geschmacksbild).
    Ebenfalls seit 28.11.2026: Die Empfehlung (nochmal) wird aus der Note abgeleitet (ab EMPFEHLUNG_AB, common.js). */
 "use strict";
 const BOGEN_SEITEN = [
-  {art:"duft", label:"Riechen", frage:"Wie stark und wonach riecht es?", tags: () => DUFT_BEGRIFFE},
-  {art:"tags", label:"Duftnoten", frage:"Woran erinnert dich der Geruch?", tags: () => TAGS_GERUCH},
+  {art:"tags", label:"Riechen", frage:"Woran erinnert dich der Geruch?", tags: () => TAGS_GERUCH},
+  {art:"duft", label:"Duftbild", tags: () => DUFT_BEGRIFFE},   // wie beim Schmecken: erst Kacheln, dann Karte (28.11.)
   {art:"tags", label:"Schmecken", frage:"Wie schmeckt es?", tags: () => TAGS_GESCHMACK},
   {art:"kreis", label:"Geschmacksbild", kurz:"Geschmack", tags: () => KREIS_BEGRIFFE},   // kurz: Name in der Fußleiste (5 Schritte)
   {art:"urteil", label:"Dein Urteil"},

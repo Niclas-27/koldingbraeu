@@ -308,8 +308,9 @@ Bieren gibt es bewusst nicht: versehentliches Wischen beim Antippen der Tags, di
 Die Verkoster wollten die **Intensität des Geruchs** bewerten. Der Bogen beginnt darum mit einer **Duftkarte** nach dem
 Muster der Geschmackskarte (dieselbe `karteHtml`, Pole über `POLE_DUFT`, Worte über `duftText`, Glossar `DUFT_BEGRIFFE`,
 alles in `common.js`): oben kräftig, unten dezent (Intensität), links malzig, rechts fruchtig (Hopfen und Hefe). Damit
-hat der Bogen fünf Seiten: **Riechen** (Duftkarte) → **Duftnoten** (Tags `TAGS_GERUCH`) → **Schmecken** →
-**Geschmacksbild** → **Dein Urteil**. In der Fußleiste heißt das Geschmacksbild kurz „Geschmack“ (`kurz` in `BOGEN_SEITEN`),
+hat der Bogen fünf Seiten: **Riechen** (Tags `TAGS_GERUCH`) → **Duftbild** (Duftkarte) → **Schmecken** →
+**Geschmacksbild** → **Dein Urteil** – Riechen und Schmecken laufen gleich ab: erst Kacheln, dann Karte; über den
+Karten steht keine Frage (Wunsch des Nutzers, 28.11.). In der Fußleiste heißt das Geschmacksbild kurz „Geschmack“ (`kurz` in `BOGEN_SEITEN`),
 sonst würde es bei fünf Schritten abgeschnitten. Beide Eingabe-Karten verdrahtet `karteVerdrahten` mit ihrem Eintrag in
 `BOGEN_KARTEN` (`form.js`); das CSS hängt an `.karte.eingabe` statt an `#karteFeld`.
 

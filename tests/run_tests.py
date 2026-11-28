@@ -204,27 +204,30 @@ async def main():
         async def gast(pg):
             await pg.fill("#j_name", "Clara"); await pg.click("#joinBtn"); await pg.wait_for_timeout(400)
             await pg.click(".probe >> nth=2")
-            # Seit 28.11.2026 fünf Seiten: Riechen (Duftkarte), Duftnoten (Tags), Schmecken (Tags), Geschmacksbild (Karte), Urteil
+            # Seit 28.11.2026 fünf Seiten: Riechen (Tags), Duftbild (Karte), Schmecken (Tags), Geschmacksbild (Karte), Urteil
             pruefe("Bogen hat fünf Seiten ohne Regler", await pg.locator(".bogen-seite").count() == 5 and await pg.locator("#bogenInhalt input[type=range]").count() == 0)
-            # Duftkarte: Tippen oben rechts = kräftig + fruchtig; Glossar erklärt die Pole; Wischen auf der Karte blättert nicht
+            await pg.click(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']")
+            pruefe("Riechen: acht Kacheln mit Beispielen, Auswahl markiert, kein Glossar-Link mehr", await pg.locator(".bogen-seite[data-i='0'] .kachel").count() == 8
+                   and "Apfel" in await pg.inner_text(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']")
+                   and await pg.get_attribute(".bogen-seite[data-i='0'] .kachel[data-t='fruchtig']", "aria-pressed") == "true"
+                   and await pg.locator(".bogen-seite[data-i='0'] [data-glossar], .bogen-seite[data-i='2'] [data-glossar]").count() == 0)
+            await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
+            pruefe("Wischen blättert zur Seite „Duftbild“", "Seite 2 von 5" in await pg.inner_text(".fortschritt .zahl"))
+            # Duftkarte (wie das Geschmacksbild ohne Frage darüber): Tippen oben rechts = kräftig + fruchtig
+            pruefe("Duftbild ohne Zusatzfrage", await pg.locator(".bogen-seite[data-i='1'] .seite-frage").count() == 0
+                   and "Wie stark" not in await pg.inner_text(".bogen-seite[data-i='1']"))
             dbox = await pg.locator("#duftFeld").bounding_box()
             dtext = await pg.inner_text("#duftFeld")
             pruefe("Duftkarte mit eigenen Polen", all(w in dtext for w in ("Kräftig", "Dezent", "Malzig", "Fruchtig")))
             await pg.mouse.click(dbox["x"] + dbox["width"]*0.9, dbox["y"] + dbox["height"]*0.1)
             pruefe("Duftkarte beschreibt die Wahl in Worten", (await pg.inner_text("#duftText")).lower() == "sehr kräftig und fruchtig")
-            await pg.click(".bogen-seite[data-i='0'] [data-glossar]"); await pg.wait_for_selector(".glossar")
+            await pg.click(".bogen-seite[data-i='1'] [data-glossar]"); await pg.wait_for_selector(".glossar")
             pruefe("Glossar bei der Duftkarte erklärt die Pole", "Hopfen" in await pg.inner_text(".glossar"))
             await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
             await wische(pg, "#duftFeld", -200); await pg.wait_for_timeout(350)
-            pruefe("Wischen auf der Duftkarte blättert nicht", "Seite 1 von 5" in await pg.inner_text(".fortschritt .zahl"))
+            pruefe("Wischen auf der Duftkarte blättert nicht", "Seite 2 von 5" in await pg.inner_text(".fortschritt .zahl"))
             await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
-            await pg.click(".bogen-seite[data-i='1'] .kachel[data-t='fruchtig']")
-            pruefe("Duftnoten: acht Kacheln mit Beispielen, Auswahl markiert, kein Glossar-Link mehr", await pg.locator(".bogen-seite[data-i='1'] .kachel").count() == 8
-                   and "Apfel" in await pg.inner_text(".bogen-seite[data-i='1'] .kachel[data-t='fruchtig']")
-                   and await pg.get_attribute(".bogen-seite[data-i='1'] .kachel[data-t='fruchtig']", "aria-pressed") == "true"
-                   and await pg.locator(".bogen-seite[data-i='1'] [data-glossar], .bogen-seite[data-i='2'] [data-glossar]").count() == 0)
-            await wische(pg, "#bogenInhalt", -200); await pg.wait_for_timeout(350)
-            pruefe("Wischen blättert zur Seite „Schmecken“", "Seite 3 von 5" in await pg.inner_text(".fortschritt .zahl"))
+            pruefe("Weiter zur Seite „Schmecken“", "Seite 3 von 5" in await pg.inner_text(".fortschritt .zahl"))
             await pg.click(".bogen-seite[data-i='2'] .kachel[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
             # Geschmackskarte: Tippen oben rechts = bitter + süß; Wischen auf der Karte blättert nicht; Karte mittig
             box = await pg.locator("#karteFeld").bounding_box()
