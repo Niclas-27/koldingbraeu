@@ -68,10 +68,15 @@ const noteStufe = n => NOTE_STUFEN.find(s => s[3].includes(n));
 /* Geschmackskarte (seit 13.11.2026 statt des Kreises): Quadrat mit den vier Polen am Rand (die Bierstil-Beispiele in
    den Ecken gab es nur am 13.11.). Gemeinsam für den Bogen (Eingabe) und die Ergebnisseite (Punktwolke). Lage als x/y von -1 bis 1:
    x = Süße (links trocken, rechts süß), y = Bittere (unten mild, oben bitter) – 1:1 die Werte 0–10 in merkmale. */
-function karteHtml({klein = false, attr = "", innen = ""} = {}){
-  return `<div class="karte${klein?" klein":""}"${attr}><i class="k-achse v" aria-hidden="true"></i><i class="k-achse h" aria-hidden="true"></i>
-    <span class="k-pol o" aria-hidden="true">${klein?"":"☕ "}Bitter</span><span class="k-pol u" aria-hidden="true">${klein?"":"🥛 "}Mild</span>
-    <span class="k-pol l" aria-hidden="true">${klein?"":"🌵 "}Trocken</span><span class="k-pol r" aria-hidden="true">Süß${klein?"":" 🍯"}</span>
+/* Pole je Karte: [emoji, wort] für oben/unten/links/rechts. Die Duftkarte (seit 28.11.2026, Seite „Riechen“) nutzt
+   dasselbe Quadrat: y = Intensität (unten dezent, oben kräftig), x = Richtung (links malzig, rechts fruchtig). */
+const POLE_GESCHMACK = {o: ["☕","Bitter"], u: ["🥛","Mild"], l: ["🌵","Trocken"], r: ["🍯","Süß"]};
+const POLE_DUFT = {o: ["💥","Kräftig"], u: ["🌬️","Dezent"], l: ["🍞","Malzig"], r: ["🍊","Fruchtig"]};
+function karteHtml({klein = false, eingabe = false, attr = "", innen = "", pole = POLE_GESCHMACK} = {}){
+  const pol = (k, rechts) => { const [e, w] = pole[k]; return klein ? w : rechts ? `${w} ${e}` : `${e} ${w}`; };
+  return `<div class="karte${klein?" klein":""}${eingabe?" eingabe":""}"${attr}><i class="k-achse v" aria-hidden="true"></i><i class="k-achse h" aria-hidden="true"></i>
+    <span class="k-pol o" aria-hidden="true">${pol("o")}</span><span class="k-pol u" aria-hidden="true">${pol("u")}</span>
+    <span class="k-pol l" aria-hidden="true">${pol("l")}</span><span class="k-pol r" aria-hidden="true">${pol("r", true)}</span>
     ${innen}</div>`;
 }
 // Position in Prozent aus den gespeicherten Werten 0–10 (suesse, bitter)
@@ -85,6 +90,24 @@ function kreisText(p){
   if(!t.length) return "Ausgewogen";
   const s = t.join(" und "); return s[0].toUpperCase() + s.slice(1);
 }
+/* Duftkarte in Worten, z. B. „Kräftig und fruchtig“ (p = {x, y} von -1 bis 1; y = Intensität, x = Richtung) */
+function duftText(p){
+  if(!p) return "Noch nichts gewählt – tipp auf die Karte.";
+  const staerke = p.y > 0.6 ? "sehr kräftig" : p.y > 0.2 ? "kräftig" : p.y < -0.6 ? "kaum wahrnehmbar" : p.y < -0.2 ? "dezent" : "mittelstark";
+  const a = Math.abs(p.x), richtung = a < 0.2 ? "ausgewogen" : (a < 0.6 ? "eher " : "") + (p.x > 0 ? "fruchtig" : "malzig");
+  const s = staerke + " und " + richtung; return s[0].toUpperCase() + s.slice(1);
+}
+/* Glossar der Duftkarte */
+const DUFT_BEGRIFFE = [
+  ["kräftig","💥","Der Geruch springt einen schon aus dem Glas an."],
+  ["dezent","🌬️","Man muss erst die Nase ins Glas halten, um etwas zu riechen."],
+  ["malzig","🍞","Kommt vom Malz: Brot, Teig, Honig, Karamell, Röstaromen wie Kaffee oder Schokolade."],
+  ["fruchtig","🍊","Kommt vom Hopfen und von der Hefe: Zitrus, Beeren, Blüten, Kräuter, Banane."],
+  ["ausgewogen","⚖️","Die Mitte zwischen links und rechts: weder Malz noch Frucht stehen vorn."],
+];
+/* Empfehlung (seit 28.11.2026): wird aus der Note abgeleitet statt abgefragt – ab „Gut · Gerne wieder“. Speist
+   bewertungen.nochmal, davon hängen „Einstimmig empfohlen“ und der Gleichstand-Entscheider der Rangliste ab. */
+const EMPFEHLUNG_AB = 7;
 const eindruck = t => { const e = [...TAGS_GERUCH, ...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].find(([x]) => x === t); return e ? e[1]+" "+t : t; };
 const istGeschmack = t => [...TAGS_GESCHMACK, ...TAGS_GESCHMACK_FRUEHER].some(([x]) => x === t);
 const MIN_LIVE = 15000; // Abstand der Aktualisierung während einer laufenden Verkostung

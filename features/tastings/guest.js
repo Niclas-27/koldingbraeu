@@ -32,6 +32,10 @@ async function gastLaden(still){
     const meineK = {}; (data.ich?.bewertungen||[]).forEach(b => { const id = bierVon.get(b.probe_id), m = b.merkmale || {};
       if(id && typeof m.suesse === "number" && typeof m.bitter === "number") meineK[id] = [m.suesse, m.bitter]; });
     if(Object.keys(meineK).length) lsSet("kb_meine_k_"+data.verkostung.id, JSON.stringify(meineK));
+    // … und auf der Duftkarte ([richtung, staerke], seit 28.11.2026)
+    const meineD = {}; (data.ich?.bewertungen||[]).forEach(b => { const id = bierVon.get(b.probe_id), m = b.merkmale || {};
+      if(id && typeof m.duft_richtung === "number" && typeof m.duft_staerke === "number") meineD[id] = [m.duft_richtung, m.duft_staerke]; });
+    if(Object.keys(meineD).length) lsSet("kb_meine_d_"+data.verkostung.id, JSON.stringify(meineD));
     // Schlüssel für die Fotos vom Abend auf der Ergebnisseite (die kennt den Code nicht)
     if(data.ich && g) lsSet("kb_gast_e_"+data.verkostung.id, g.token);
     // „&ehrung=1“: die Ergebnisseite beginnt direkt nach dem Aufdecken mit der Siegerehrung (seit 14.11.2026)

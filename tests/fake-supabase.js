@@ -92,7 +92,7 @@ const rpcs={
     P(1,"Tyskie","Lager",6,3,{merkmale:{suesse:{wert:3,n:1},koerper:{wert:3,n:1}},kreis:[[6,3]],kommentare:["Wenig Charakter."]}),
     P(2,"Einbecker","Pils",9,3,{noten:[10,9,8],merkmale:{bitter:{wert:7,n:1},kohlensaeure:{wert:7,n:1}},kreis:[[3,8],[2,7],[4,9]],geruch:{blumig:1},kommentare:["Geheimtipp! Prickelbitterness.","Geheimtipp – der Hopfen ist gut da."],zusammenfassung:"Dreimal fiel das Wort Geheimtipp: florales Hopfenaroma und gute Bittere."}),
     P(3,"Störtebeker","Pils",4,0),P(4,"Budweiser","Lager",5,0,{fehler:{Butter:2},noten:[8,5,2]}),P(5,"Flensburger","Pils",2,0,{zusammenfassung:"Metallisch bitter – mehr gab es nicht zu sagen."}),
-    P(6,"Pilsner Urquell","Pils",8,3,{geruch:{brotig:1,"röstig":1},kreis:[[4,7],[5,6]]}),P(7,"Staropramen","Lager",7,3)]},error:null};},
+    P(6,"Pilsner Urquell","Pils",8,3,{geruch:{brotig:1,"röstig":1},kreis:[[4,7],[5,6]],duft:[[2,8],[3,9]]}),P(7,"Staropramen","Lager",7,3)]},error:null};},
  liga_daten(){const r=[];const add=(id,n,br,e,s,d,sum,an,no)=>r.push({bier_id:id,name:n,brauerei:br,eigen:e,stil:s,verkostung_id:"v"+d,titel:"Runde "+d,datum:d,summe:sum,anzahl:an,nochmal:no});
    add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2026-04-01",45,6,4);add("00000000-0000-0000-0000-0000000000b1","Kolding Kölsch","Koldingbräu",true,"Kölsch","2025-10-01",30,4,2);
    add("b2","Augustiner Hell","Augustiner",false,"Helles","2026-04-01",57,7,6);add("00000000-0000-0000-0000-0000000000b3","Hazy Hops","Kehrwieder",false,"IPA","2026-04-01",20,3,1);return {data:r,error:null};},
