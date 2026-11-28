@@ -226,8 +226,13 @@ async def main():
             await pg.keyboard.press("Escape"); await pg.wait_for_timeout(150)
             await wische(pg, "#duftFeld", -200); await pg.wait_for_timeout(350)
             pruefe("Wischen auf der Duftkarte blättert nicht", "Seite 2 von 5" in await pg.inner_text(".fortschritt .zahl"))
-            await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
-            pruefe("Weiter zur Seite „Schmecken“", "Seite 3 von 5" in await pg.inner_text(".fortschritt .zahl"))
+            # Finger (Touch-Ereignisse statt Pointer-Capture, seit 28.11.2026): Tippen setzt den Punkt, danach reicht EIN Tipp auf „Weiter“
+            await pg.touchscreen.tap(dbox["x"] + dbox["width"]*0.1, dbox["y"] + dbox["height"]*0.9)
+            pruefe("Duftkarte per Finger gesetzt", (await pg.inner_text("#duftText")).lower() == "kaum wahrnehmbar und malzig"
+                   and await pg.locator(".kreis-blase.an").count() == 0)
+            wb = await pg.locator("#bWeiter").bounding_box()
+            await pg.touchscreen.tap(wb["x"] + wb["width"]/2, wb["y"] + wb["height"]/2); await pg.wait_for_timeout(350)
+            pruefe("Ein Tipp auf „Weiter“ nach der Duftkarte reicht", "Seite 3 von 5" in await pg.inner_text(".fortschritt .zahl"))
             await pg.click(".bogen-seite[data-i='2'] .kachel[data-t='hopfig']"); await pg.click("#bWeiter"); await pg.wait_for_timeout(350)
             # Geschmackskarte: Tippen oben rechts = bitter + süß; Wischen auf der Karte blättert nicht; Karte mittig
             box = await pg.locator("#karteFeld").bounding_box()
@@ -259,7 +264,7 @@ async def main():
             await pg.fill("#b_kom", "Schmeckt nach Sommer"); await pg.click("#bWeiter"); await pg.wait_for_timeout(400)
             letzte = await pg.evaluate("JSON.stringify(window.__letzte)")
             pruefe("Bewertung gesendet (Note, Tags, Kreis, Satz)", '"p_note":7' in letzte and '"bitter":' in letzte and '"p_geruch":["fruchtig","hopfig"]' in letzte and "Sommer" in letzte)
-            pruefe("Duftkarte gespeichert (duft_staerke / duft_richtung, nicht die alten Regler)", '"duft_staerke":9' in letzte and '"duft_richtung":9' in letzte and "intensitaet" not in letzte)
+            pruefe("Duftkarte gespeichert (duft_staerke / duft_richtung, nicht die alten Regler)", '"duft_staerke":1' in letzte and '"duft_richtung":1' in letzte and "intensitaet" not in letzte)
             pruefe("Empfehlung aus der Note abgeleitet (7 → ja)", '"p_nochmal":true' in letzte)
             pruefe("Nach dem Speichern: Weiter zum nächsten offenen Bier", "Weiter zu" in await pg.inner_text("#bNaechste"))
             await pg.click("#bFertig"); await pg.wait_for_timeout(400)
